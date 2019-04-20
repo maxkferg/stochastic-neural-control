@@ -1,6 +1,10 @@
 # DBM Server
 A real-time geometry server for applications in robotics and building management.
 
+# Quick start
+docker build -t maxkferg/dbm-ui ui
+docker-compose up
+
 ## About
 The design principles of the DBM-server:
 * Persistance: The full object trajectories are persisted for future data analysis

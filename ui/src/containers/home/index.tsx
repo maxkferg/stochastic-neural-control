@@ -94,11 +94,11 @@ export default class Home extends React.Component {
             //var materials = container.materials;
             //...
             var axis = new BABYLON.Vector3(1, 0, 0);
-            var angle = Math.PI / 2;
+            var angle = -Math.PI / 2;
             var quaternion = BABYLON.Quaternion.RotationAxis(axis, angle);
 
             for (let i = 0; i < container.meshes.length; i++){
-                container.meshes[i].setPositionWithLocalVector(new BABYLON.Vector3(1, 2, 2));
+                container.meshes[i].setPositionWithLocalVector(new BABYLON.Vector3(1, 0, 2));
                 container.meshes[i].scaling = (new BABYLON.Vector3(20, 20, 20));
                 container.meshes[i].rotationQuaternion = quaternion;
             }

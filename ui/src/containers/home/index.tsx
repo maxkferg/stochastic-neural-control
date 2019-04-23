@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Container, Row, Col } from 'reactstrap';
-import { Vector3, HemisphericLight, DirectionalLight, CannonJSPlugin, ArcRotateCamera,
-    MeshBuilder, ShadowGenerator, StandardMaterial, PhysicsImpostor, Mesh, Color3 } from 'babylonjs';
+import { Vector3, HemisphericLight, DirectionalLight, CannonJSPlugin, ArcRotateCamera, DepthOfFieldEffectBlurLevel,
+    MeshBuilder, DefaultRenderingPipeline, ShadowGenerator, StandardMaterial, PhysicsImpostor, Mesh, Color3 } from 'babylonjs';
 import { AdvancedDynamicTexture, Button } from 'babylonjs-gui';
 import { Scene, Engine } from 'react-babylonjs';
 
@@ -21,24 +21,6 @@ export type SceneOptions = {
   options: {},
 };
 
-// @ts-ignore
-/*BABYLON.Scene.prototype.clone = function(engine){
-    var s = new BABYLON.Scene(engine);
-    var props = Object.keys(this);
-    for(var i=0; i < props.length; i++){
-        if(Object.prototype.toString.call(this[props[i]]) == '[object Array]'){
-            for(var j=0; j<this[props[i]]; j++){
-                if(this[props[i]][j].clone){
-                    s[props[i]].push(this[props[i]][j].clone());
-                }else{
-                    s[props[i]].push(this[props[i]][j]);
-                }
-            }
-        }
-    }
-    return s;
-}
-*/
 
 export default class Home extends React.Component {
 
@@ -53,7 +35,11 @@ export default class Home extends React.Component {
         scene.enablePhysics(gravityVector, new CannonJSPlugin());
 
         let light = new HemisphericLight('hemi', new Vector3(0, -1, 0), scene);
-        light.intensity = 0.8;
+        light.intensity = 0.9;
+
+        var lightbulb = new BABYLON.PointLight("pointLight", new BABYLON.Vector3(1, 10, 1), scene);
+        lightbulb.intensity = 0.8
+        //console.log(lightbulb)
 
         let shadowLight = new DirectionalLight('dir01', new Vector3(1, -0.75, 1), scene);
         shadowLight.position = new Vector3(-40, 30, -40);
@@ -78,35 +64,129 @@ export default class Home extends React.Component {
         shadowGenerator.forceBackFacesOnly = true;
         shadowGenerator.depthScale = 100;
 
-        var floor = MeshBuilder.CreateBox('ground', { width: 10, height: 0.1, depth: 10 }, scene);
+        var floor = MeshBuilder.CreateBox('ground', { width: 1, height: 0.1, depth: 10 }, scene);
 
-        /*BABYLON.SceneLoader.Append("./geometry/env/lab/", "output_walls.obj", scene, function (newScene) {
-            for (let i = 0; i < newScene.meshes.length; i++){
-                newScene.meshes[i].scaling.multiply(new BABYLON.Vector3(100, 100, 100));
-            }
-            //newScene.position.x  =  2;
-            //newScene.position.y  =  3;
-            //newScene.position.z  =  4;
-        });*/
 
-        BABYLON.SceneLoader.LoadAssetContainer("./geometry/env/lab/", "output_walls.obj", scene, function (container) {
-            //var meshes = container.meshes;
-            //var materials = container.materials;
-            //...
-            var axis = new BABYLON.Vector3(1, 0, 0);
-            var angle = -Math.PI / 2;
-            var quaternion = BABYLON.Quaternion.RotationAxis(axis, angle);
+        /*BABYLON.SceneLoader.LoadAssetContainer("./geometry/env/labv2/", "walls.obj", scene, function (container) {
+            //var axis = new BABYLON.Vector3(1, 0, 0);
+            //var angle = -Math.PI / 2;
+            //var quaternion = BABYLON.Quaternion.RotationAxis(axis, angle);
 
-            for (let i = 0; i < container.meshes.length; i++){
-                container.meshes[i].setPositionWithLocalVector(new BABYLON.Vector3(1, 0, 2));
-                container.meshes[i].scaling = (new BABYLON.Vector3(20, 20, 20));
-                container.meshes[i].rotationQuaternion = quaternion;
-            }
-            // Adds all elements to the scene
-            // @ts-ignore
-            //container.scene.clone();
+            //for (let i = 0; i < container.meshes.length; i++){
+            //    container.meshes[i].setPositionWithLocalVector(new BABYLON.Vector3(1, 0, 2));
+            //    container.meshes[i].scaling = (new BABYLON.Vector3(20, 20, 20));
+            //    container.meshes[i].rotationQuaternion = quaternion;
+            //}
             container.addAllToScene();
         });
+        */
+
+        var sphere = Mesh.CreateSphere('sphere', 10, 0.4, scene, false);
+        sphere.position.y = 5;
+
+
+        let assetsManager = new BABYLON.AssetsManager(scene);
+        let floorTask = assetsManager.addMeshTask("parte", null, "./geometry/env/labv2/", "floors.obj");
+        let wallTask = assetsManager.addMeshTask("parte", null, "./geometry/env/labv2/", "walls.obj");
+        let turtleTask = assetsManager.addMeshTask("parte", null, "./geometry/robots/turtlebot2/", "turtlebot.obj");
+
+        wallTask.onSuccess = function (task) {
+            task.loadedMeshes[0].position = BABYLON.Vector3.Zero();
+            let wallMeshes = task.loadedMeshes.map(function(i){ return i})
+            // @ts-ignore
+            let wallMesh = BABYLON.Mesh.MergeMeshes(wallMeshes);
+            if (wallMesh){
+                wallMesh.physicsImpostor = new PhysicsImpostor(
+                    wallMesh,
+                    PhysicsImpostor.MeshImpostor,
+                    {
+                        mass: 0,
+                        restitution: 0.9
+                    },
+                    scene
+                );
+            }
+        }
+
+        floorTask.onSuccess = function (task) {
+            task.loadedMeshes[0].position = BABYLON.Vector3.Zero();
+            let floorMeshes = task.loadedMeshes.map(function(i){ return i})
+            // @ts-ignore
+            let floorMesh = BABYLON.Mesh.MergeMeshes(floorMeshes);
+            console.log(floorMesh)
+
+            if (floorMesh==null){
+                throw new Error("Floor failed to load");
+            }
+            floorMesh.physicsImpostor = new PhysicsImpostor(
+                floorMesh,
+                PhysicsImpostor.MeshImpostor,
+                {
+                    mass: 0,
+                    restitution: 0.9
+                },
+                scene
+            );
+            let redMaterial = new StandardMaterial('Red', scene);
+            redMaterial.diffuseColor = Color3.FromInts(0, 255, 0);
+            floorMesh.material = redMaterial;
+            floorMesh.receiveShadows = true;
+        }
+
+
+        turtleTask.onSuccess = function (task) {
+            let scale = 1/1000;
+            task.loadedMeshes[0].position = BABYLON.Vector3.Zero();
+            let turtleMeshes = task.loadedMeshes.map(function(i){ return i})
+            // @ts-ignore
+            let turtleMesh = BABYLON.Mesh.MergeMeshes(turtleMeshes);
+            debugger
+            console.log(turtleMesh)
+
+            for (let i=0; i<task.loadedMeshes.length; i++){
+                task.loadedMeshes[i].scaling = new BABYLON.Vector3(scale, scale, scale);
+            }
+
+            if (turtleMesh==null){
+                throw new Error("Floor failed to load");
+            }
+            turtleMesh.scaling = new BABYLON.Vector3(scale,0.01,0.01);
+            /*
+            floorMesh.physicsImpostor = new PhysicsImpostor(
+                floorMesh,
+                PhysicsImpostor.MeshImpostor,
+                {
+                    mass: 0,
+                    restitution: 0.9
+                },
+                scene
+            );
+            let redMaterial = new StandardMaterial('Red', scene);
+            redMaterial.diffuseColor = Color3.FromInts(0, 255, 0);
+            floorMesh.material = redMaterial;
+            floorMesh.receiveShadows = true;
+            */
+        }
+
+
+        assetsManager.onFinish = function(tasks) {
+        }
+
+        assetsManager.load();
+        /*
+        BABYLON.SceneLoader.LoadAssetContainer("./geometry/env/labv2/", "floors.obj", scene, function (container) {
+            //var axis = new BABYLON.Vector3(1, 0, 0);
+            // var angle = -Math.PI / 2;
+            //var quaternion = BABYLON.Quaternion.RotationAxis(axis, angle);
+
+            //for (let i = 0; i < container.meshes.length; i++){
+            //    container.meshes[i].setPositionWithLocalVector(new BABYLON.Vector3(1, 0, 2));
+            //    container.meshes[i].scaling = (new BABYLON.Vector3(20, 20, 20));
+            //    container.meshes[i].rotationQuaternion = quaternion;
+            //}
+            container.addAllToScene();
+        });
+        */
 
         var darkMaterial = new StandardMaterial('Grey', scene);
         darkMaterial.diffuseColor = Color3.FromInts(255, 255, 255); // Color3.FromInts(200, 200, 200)
@@ -120,9 +200,6 @@ export default class Home extends React.Component {
             shadowLight.position.z = Math.sin(camera.alpha + radiansFromCameraForShadows) * 40;
             shadowLight.setDirectionToTarget(Vector3.Zero());
         });
-
-        var sphere = Mesh.CreateSphere('sphere', 10, 2, scene, false);
-        sphere.position.y = 5;
 
         shadowGenerator.getShadowMap()!.renderList!.push(sphere);
 
@@ -164,6 +241,18 @@ export default class Home extends React.Component {
             );
         });
         advancedTexture.addControl(button1);
+
+
+        // Create default pipeline and enable dof with Medium blur level
+        let pipeline = new DefaultRenderingPipeline("default", true, scene);
+        pipeline.depthOfFieldBlurLevel = DepthOfFieldEffectBlurLevel.Medium;
+        //pipeline.depthOfFieldEnabled = true;
+        //pipeline.depthOfField.focalLength = 1;
+        //pipeline.depthOfField.fStop = 10;
+        //pipeline.depthOfField.focusDistance = 22;
+        pipeline.samples = 4;
+        pipeline.fxaaEnabled = true;
+
 
         engine.runRenderLoop(() => {
             if (scene) {

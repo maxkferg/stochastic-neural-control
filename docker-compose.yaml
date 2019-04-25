@@ -1,9 +1,9 @@
 version: '2'
 services:
-  ui:
-    image: dbm-ui
-    ports:
-      - '80:80'
+  #ui:
+  #  image: dbm-ui
+  #  ports:
+  #    - '80:80'
   influxdb:
     image: influxdb:latest
     ports:

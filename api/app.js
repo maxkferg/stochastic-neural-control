@@ -8,6 +8,7 @@ const GraphQLHTTP = require('koa-graphql');
 const GraphQLSchema = require('./graphql/schema');
 const database = require('./database');
 const auth = require('./auth');
+const influxdb = require('./influxdb');
 
 const app = new Koa();
 const router = new Router();
@@ -15,6 +16,7 @@ const config = env.config().parsed;
 
 async function init() {
     //app.context.db = await database.start(__dirname + '/database/mongo', config.MONGO_URI);
+    app.context.influx = influxdb
 
     app.use(cors());
 

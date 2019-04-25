@@ -5,36 +5,16 @@ const {
     GraphQLFloat,
     GraphQLBoolean,
 } = require('graphql');
+const MeshPhysics = require('./MeshPhysics');
+const MeshGeometry = require('./MeshGeometry');
 
-
-const MeshGeometry = new GraphQLObjectType({
-    name: 'MeshGeometry',
-    description: 'A file describing the geometry of this object',
-    fields: () => ({
-        filetype: {type: GraphQLString},
-        path: {type: GraphQLString},
-    })
-});
-
-
-const MeshPhysics = new GraphQLObjectType({
-    name: 'MeshPhysics',
-    description: 'A description of the physics of this object',
-    fields: () => ({
-        stationary: {type: GraphQLBoolean},
-        collision: {type: GraphQLBoolean},
-    })
-});
 
 
 const Mesh = new GraphQLObjectType({
     name: 'Mesh',
     description: 'A 3D geometric object that exists a specific point in time',
     fields: () => ({
-        id: {
-            type: GraphQLString,
-            resolve: (mesh) => user._id
-        },
+        id: { type: GraphQLString},
         name: {type: GraphQLString},
         x: {type: GraphQLFloat},
         y: {type: GraphQLFloat},

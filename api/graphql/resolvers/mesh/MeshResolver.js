@@ -1,3 +1,4 @@
+const Path = require("path");
 const BaseResolver = require('../../BaseResolver');
 const {GraphQLNonNull, GraphQLString} = require('graphql');
 
@@ -30,7 +31,8 @@ class MeshResolver extends BaseResolver {
                 deleted: false,
                 geometry: {
                     filetype: "obj",
-                    path: "./file/assets/mesh.obj"
+                    filename: "walls.obj",
+                    directory: "./geometry/env/labv2/",
                 },
                 physics: {
                     stationary: true,

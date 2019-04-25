@@ -1,4 +1,6 @@
 const Influx = require('influx');
+
+
 const influx = new Influx.InfluxDB({
  host: 'localhost',
  database: 'geometry_db',
@@ -20,7 +22,8 @@ const influx = new Influx.InfluxDB({
           width: Influx.FieldType.FLOAT,
           depth: Influx.FieldType.FLOAT,
           geometry_filetype: Influx.FieldType.STRING,
-          geometry_path: Influx.FieldType.STRING,
+          geometry_filename: Influx.FieldType.STRING,
+          geometry_directory: Influx.FieldType.STRING,
           physics_stationary: Influx.FieldType.BOOLEAN,
           physics_collision: Influx.FieldType.BOOLEAN,
       }

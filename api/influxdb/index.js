@@ -1,4 +1,4 @@
-const influx = require('./influx');
+const influx = require('./schema');
 const setup = require('./setup');
 
 setup(influx);

@@ -5,6 +5,7 @@ const {
     GraphQLFloat,
     GraphQLBoolean,
 } = require('graphql');
+const { GraphQLDateTime } = require('graphql-iso-date');
 const MeshPhysics = require('./MeshPhysics');
 const MeshGeometry = require('./MeshGeometry');
 
@@ -16,6 +17,7 @@ const Mesh = new GraphQLObjectType({
     fields: () => ({
         id: { type: GraphQLString},
         name: {type: GraphQLString},
+        type: {type: GraphQLString},
         x: {type: GraphQLFloat},
         y: {type: GraphQLFloat},
         z: {type: GraphQLFloat},
@@ -25,6 +27,7 @@ const Mesh = new GraphQLObjectType({
         deleted: {type: GraphQLBoolean},
         geometry: {type: MeshGeometry},
         physics: {type: MeshPhysics},
+        timestamp: {type: GraphQLDateTime},
     })
 });
 

@@ -1,47 +1,50 @@
+const Influx = require('influx');
 const BaseResolver = require('../../BaseResolver');
 const {GraphQLString, GraphQLInt} = require('graphql');
 
 class MeshAllResolver extends BaseResolver {
 
-    get args() {
-        return {
-            type: {
-                type: GraphQLString,
-                description: 'The mesh type (wall, floor, robot, object)'
-            }
-        };
-    }
+  get args() {
+    return {
+      type: {
+          type: GraphQLString,
+          description: 'The mesh type (wall, floor, robot, object)'
+      },
+      limit: {
+          type: GraphQLInt,
+          description: 'The maximum number of results to return'
+      }
+    };
+  }
 
-    async resolve(parentValue, args, ctx) {
-        //calling super method to check authentication if applicable
-        super.resolve(parentValue, args, ctx);
+  async resolve(parentValue, args, ctx) {
+    //calling super method to check authentication if applicable
+    super.resolve(parentValue, args, ctx);
 
-        try {
-            return [{
-                    id: "wall1",
-                    name: "wall",
-                    type: "wall",
-                    x: 1,
-                    y: 2,
-                    z: 3,
-                    width: 2,
-                    height: 3,
-                    depth: 4,
-                    deleted: false,
-                    geometry: {
-                        filetype: "obj",
-                        filename: "walls.obj",
-                        directory: "./geometry/env/labv2/",
-                    },
-                    physics: {
-                        stationary: true,
-                        collision: true,
-                    },
-                }];
-        } catch (e) {
-            throw new Error(e);
+    let limit = args.limit || 1000;
+    let geometryType = args.type || "wall";
+
+    return ctx.influx.query(`
+      select * from mesh_position
+      where type = ${Influx.escape.stringLit(geometryType)}
+      order by time desc
+      limit ${Influx.escape.tag(limit)}`
+    ).then(rows => {
+      return rows.map(mesh => {
+        mesh.timestamp = mesh.time;
+        mesh.geometry = {
+          directory: mesh.geometry_directory,
+          filename: mesh.geometry_filename,
+          filetype: mesh.geometry_filetype,
         }
-    }
+        mesh.physics = {
+          collision: mesh.physics_collision,
+          stationary: mesh.physics_stationary,
+        }
+        return mesh;
+      });
+    });
+  }
 }
 
 module.exports = MeshAllResolver;

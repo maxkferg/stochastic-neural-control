@@ -26,7 +26,7 @@ export type SceneOptions = {
 
 const WALL_QUERY = gql`
     query GetMesh($type: String!) {
-        meshes(type: $type) {
+        meshesCurrent(type: $type) {
             id,
             name,
             width,
@@ -38,7 +38,7 @@ const WALL_QUERY = gql`
               directory
             }
             physics {
-                    collision
+              collision
               stationary
             }
         }
@@ -116,14 +116,15 @@ export default class Home extends React.Component {
             variables: {type: "wall"}
         }).then((assets) => {
             console.log(assets)
+            debugger
 
             let assetsManager = new BABYLON.AssetsManager(scene);
             let floorTask = assetsManager.addMeshTask("parte", null, "./geometry/env/labv2/", "floors.obj");
             //let wallTask = assetsManager.addMeshTask("parte", null, "./geometry/env/labv2/", "walls.obj");
             let turtleTask = assetsManager.addMeshTask("parte", null, "./geometry/robots/turtlebot2/", "turtlebot.obj");
 
-            for (let i=0; i<assets.data.meshes.length; i++){
-                let mesh = assets.data.meshes[i];
+            for (let i=0; i<assets.data.meshesCurrent.length; i++){
+                let mesh = assets.data.meshesCurrent[i];
                 let meshTask = assetsManager.addMeshTask(mesh.name, null, mesh.geometry.directory, mesh.geometry.filename);
                 meshTask.onSuccess = function (task) {
                     task.loadedMeshes[0].position = BABYLON.Vector3.Zero();

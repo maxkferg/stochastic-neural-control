@@ -1,48 +1,49 @@
 const Path = require("path");
+const Influx = require('influx');
 const BaseResolver = require('../../BaseResolver');
 const {GraphQLNonNull, GraphQLString} = require('graphql');
 
+/*
+ * Return the last visible instance of a particular
+ * ObjectId
+ */
 class MeshResolver extends BaseResolver {
 
-    get args() {
-        return {
-            id: {
-                type: new GraphQLNonNull(GraphQLString),
-                description: 'Id for the user.'
-            }
-        };
-    }
+  get args() {
+    return {
+      id: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: 'Id for the user.'
+      }
+    };
+  }
 
-    async resolve(parentValue, args, ctx) {
-        //calling super method to check authentication if applicable
-        super.resolve(parentValue, args, ctx);
+  async resolve(parentValue, args, ctx) {
+    super.resolve(parentValue, args, ctx);
 
-        try {
-            return {
-                id: "wall1",
-                name: "wall",
-                type: "wall",
-                x: 1,
-                y: 2,
-                z: 3,
-                width: 2,
-                height: 3,
-                depth: 4,
-                deleted: false,
-                geometry: {
-                    filetype: "obj",
-                    filename: "walls.obj",
-                    directory: "./geometry/env/labv2/",
-                },
-                physics: {
-                    stationary: true,
-                    collision: true
-                }
-            };
-        } catch (e) {
-            throw new Error(e);
-        }
-    }
+    return ctx.influx.query(`
+      select * from mesh_position
+      where id = ${Influx.escape.stringLit(args.id)}
+      order by time desc
+      limit 1`
+    ).then(rows => {
+      if (rows.length==0){
+        return;
+      }
+      let mesh = rows[0];
+      mesh.timestamp = mesh.time;
+      mesh.geometry = {
+        directory: mesh.geometry_directory,
+        filename: mesh.geometry_filename,
+        filetype: mesh.geometry_filetype,
+      }
+      mesh.physics = {
+        collision: mesh.physics_collision,
+        stationary: mesh.physics_stationary,
+      }
+      return mesh;
+    });
+  }
 }
 
 module.exports = MeshResolver;

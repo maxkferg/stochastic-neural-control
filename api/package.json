@@ -4,7 +4,8 @@
   "description": "A geometry API",
   "main": "app.js",
   "scripts": {
-    "test": "test"
+    "test": "test",
+    "dev": "nodemon server.js"
   },
   "keywords": [
     "koa",
@@ -18,6 +19,7 @@
     "async": "^2.6.2",
     "dotenv": "^5.0.1",
     "graphql": "^14.2.1",
+    "graphql-iso-date": "^3.6.1",
     "influx": "^5.0.7",
     "jsonwebtoken": "^8.2.0",
     "koa": "^2.5.0",

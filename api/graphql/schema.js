@@ -25,6 +25,7 @@ const Query = new GraphQLObjectType({
         },
         users: new resolvers.User.getAllUsers(new GraphQLList(User), "Get all users", true),
         user: new resolvers.User.getUser(User, "Get user by id", true),
+        meshesCurrent: new resolvers.Mesh.getCurrentMeshes(new GraphQLList(Mesh), "Get current meshes", false),
         meshes: new resolvers.Mesh.getAllMeshes(new GraphQLList(Mesh), "Get all meshes", false),
         mesh: new resolvers.Mesh.getMesh(Mesh, "Get mesh by id", false)
     })

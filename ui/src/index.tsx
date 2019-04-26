@@ -8,19 +8,22 @@ import store, { history } from './store';
 //import Layout from './containers/layout';
 import Home from './containers/home';
 import About from './containers/about';
-
+import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import './index.css';
-import 'bootstrap/dist/css/bootstrap.css';
+
+const theme = createMuiTheme();
 
 ReactDOM.render(
-  <Provider store={store}>
-      <ConnectedRouter history={history} >
-        <Switch>
-          <Route exact path="/" render={() => (<Home />)} />
-          <Route render={() => (<About />)} />
-        </Switch>
-       </ConnectedRouter>
-  </Provider>,
+  <MuiThemeProvider theme={theme}>
+	  <Provider store={store}>
+	      <ConnectedRouter history={history} >
+	        <Switch>
+	          <Route exact path="/" render={() => (<Home />)} />
+	          <Route render={() => (<About />)} />
+	        </Switch>
+	       </ConnectedRouter>
+	  </Provider>
+  </MuiThemeProvider>,
   document.getElementById('root') as HTMLElement
 );
 

@@ -4,6 +4,8 @@
   "homepage": "https://brianzinn.github.io/create-react-app-typescript-babylonjs",
   "private": true,
   "dependencies": {
+    "@material-ui/core": "^3.9.3",
+    "@material-ui/icons": "^3.0.2",
     "apollo-boost": "^0.3.1",
     "babylonjs": "3.3.0",
     "babylonjs-gui": "3.3.0",

@@ -1,9 +1,16 @@
 import * as React from 'react';
 import { Container, Row, Col } from 'reactstrap';
+import PropTypes from 'prop-types';
+import { withStyles, WithStyles, Theme } from '@material-ui/core/styles';
 import { Vector3, HemisphericLight, DirectionalLight, CannonJSPlugin, ArcRotateCamera, DepthOfFieldEffectBlurLevel,
     MeshBuilder, DefaultRenderingPipeline, ShadowGenerator, StandardMaterial, PhysicsImpostor, Mesh, Color3 } from 'babylonjs';
 import { AdvancedDynamicTexture, Button } from 'babylonjs-gui';
 import { Scene, Engine } from 'react-babylonjs';
+import Fab from '@material-ui/core/Fab';
+import PrimaryAppBar from '../AppBar/AppBar';
+import CssBaseline from '@material-ui/core/CssBaseline';
+import GeometryDrawer from '../GeometryDrawer/GeometryDrawer';
+import AddIcon from '@material-ui/icons/Add';
 import ApolloClient from "apollo-boost";
 import { gql } from "apollo-boost";
 
@@ -46,7 +53,55 @@ const WALL_QUERY = gql`
 `;
 
 
-export default class Home extends React.Component {
+const styles = (theme: Theme) => ({
+  fab: {
+    margin: theme.spacing.unit,
+    position: "absolute",
+    bottom: 30 + "px",
+    right: 30 + "px",
+  },
+});
+
+//@ts-ignore
+export interface Props extends WithStyles<typeof styles>{}
+
+interface State {
+  width: number
+  height: number
+  creatingGeometry: boolean
+}
+
+
+class Home extends React.Component<Props, State> {
+    classes: any
+
+    constructor(props: any) {
+      super(props);
+      this.state = {
+          width: 0,
+          height: 0,
+          creatingGeometry: false
+      };
+      this.classes = props.classes;
+      this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
+    }
+
+    componentDidMount() {
+      this.updateWindowDimensions();
+      window.addEventListener('resize', this.updateWindowDimensions);
+    }
+
+    componentWillUnmount() {
+      window.removeEventListener('resize', this.updateWindowDimensions);
+    }
+
+    updateWindowDimensions() {
+      this.setState({ width: window.innerWidth, height: window.innerHeight });
+    }
+
+    createGeometry = () => {
+      this.setState({ creatingGeometry: true });
+    }
 
     onSceneMount = (e: SceneEventArgs) => {
         const { canvas, scene } = e;
@@ -115,16 +170,19 @@ export default class Home extends React.Component {
             query: WALL_QUERY,
             variables: {type: "wall"}
         }).then((assets) => {
-            console.log(assets)
-            debugger
-
             let assetsManager = new BABYLON.AssetsManager(scene);
             let floorTask = assetsManager.addMeshTask("parte", null, "./geometry/env/labv2/", "floors.obj");
             //let wallTask = assetsManager.addMeshTask("parte", null, "./geometry/env/labv2/", "walls.obj");
             let turtleTask = assetsManager.addMeshTask("parte", null, "./geometry/robots/turtlebot2/", "turtlebot.obj");
+            let meshes = assets.data.meshesCurrent
 
-            for (let i=0; i<assets.data.meshesCurrent.length; i++){
-                let mesh = assets.data.meshesCurrent[i];
+            for (let i=0; i<meshes.length; i++){
+                let mesh = meshes[i];
+                if (!mesh.geometry || mesh.geometry.directory==null || mesh.geometry.filename==null){
+                    console.log("Invalid geometry. Ignoring ", mesh.name)
+                    continue;
+                }
+
                 let meshTask = assetsManager.addMeshTask(mesh.name, null, mesh.geometry.directory, mesh.geometry.filename);
                 meshTask.onSuccess = function (task) {
                     task.loadedMeshes[0].position = BABYLON.Vector3.Zero();
@@ -290,7 +348,7 @@ export default class Home extends React.Component {
         //pipeline.depthOfField.focalLength = 1;
         //pipeline.depthOfField.fStop = 10;
         //pipeline.depthOfField.focusDistance = 22;
-        pipeline.samples = 4;
+        pipeline.samples = 2;
         pipeline.fxaaEnabled = true;
 
 
@@ -308,26 +366,36 @@ export default class Home extends React.Component {
 
     public render() {
         return (
-            <Container>
-                <Row>
-                    <Col xs="12">
-                        <div>bouncy <strong>BabylonJS</strong> sphere...</div>
-                        <p><strong>click</strong> label to bounce sphere - all ES6, yay!</p>
-                    </Col>
-                </Row>
-                <Row>
-                    <Col xs="12">
-                        {/*
-                        // @ts-ignore */}
-                        <Engine engineOptions={{ preserveDrawingBuffer: true}} width={1000} height={800}>
-                            <Scene
-                                sceneOptions={{useGeometryIdsMap: true}}
-                                onSceneMount={this.onSceneMount}
-                            />
-                        </Engine>
-                    </Col>
-                </Row>
-            </Container>
+            <div>
+                <CssBaseline />
+                <PrimaryAppBar />
+                <GeometryDrawer open={this.state.creatingGeometry} />
+                <Container className="wide">
+                    <Row>
+                        <Col xs="12">
+                            {/*
+                            // @ts-ignore */}
+                            <Engine engineOptions={{ preserveDrawingBuffer: true}} width={this.state.width} height={this.state.height-64}>
+                                <Scene
+                                    sceneOptions={{useGeometryIdsMap: true}}
+                                    onSceneMount={this.onSceneMount}
+                                />
+                            </Engine>
+                        </Col>
+                    </Row>
+                    <Fab color="primary" aria-label="Add" className={this.classes.fab} onClick={this.createGeometry}>
+                        <AddIcon />
+                    </Fab>
+                </Container>
+            </div>
         );
     }
 }
+
+//@ts-ignore
+Home.propTypes = {
+  classes: PropTypes.object.isRequired,
+};
+
+//@ts-ignore
+export default withStyles(styles)(Home);

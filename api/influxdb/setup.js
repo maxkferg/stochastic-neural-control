@@ -32,6 +32,7 @@ function setup(influx){
               y: 0,
               z: 0,
               theta: 0,
+              scale: 1,
               height: 3,
               width: 10,
               depth: 10,

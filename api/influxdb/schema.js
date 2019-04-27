@@ -18,6 +18,7 @@ const influx = new Influx.InfluxDB({
           y: Influx.FieldType.FLOAT,
           z: Influx.FieldType.FLOAT,
           theta: Influx.FieldType.FLOAT,
+          scale: Influx.FieldType.FLOAT,
           height: Influx.FieldType.FLOAT,
           width: Influx.FieldType.FLOAT,
           depth: Influx.FieldType.FLOAT,

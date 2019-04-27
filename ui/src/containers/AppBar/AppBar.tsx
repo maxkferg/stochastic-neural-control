@@ -13,9 +13,13 @@ import { createStyles, Theme, withStyles, WithStyles } from '@material-ui/core/s
 import MenuIcon from '@material-ui/icons/Menu';
 import SearchIcon from '@material-ui/icons/Search';
 import AccountCircle from '@material-ui/icons/AccountCircle';
-import MailIcon from '@material-ui/icons/Mail';
+import DeleteIcon from '@material-ui/icons/Delete';
+import InfoIcon from '@material-ui/icons/Info';
 import NotificationsIcon from '@material-ui/icons/Notifications';
 import MoreIcon from '@material-ui/icons/MoreVert';
+import apollo from '../../apollo';
+import { gql } from 'apollo-boost';
+
 
 const styles = (theme: Theme) =>
   createStyles({
@@ -91,18 +95,67 @@ const styles = (theme: Theme) =>
     },
   });
 
-export interface Props extends WithStyles<typeof styles> {}
+
+export interface Props extends WithStyles<typeof styles> {
+  onSelectedObject: Function
+}
+
+
+const MESH_QUERY = gql`
+    query GetMesh {
+        meshesCurrent(deleted: false) {
+            id,
+            name,
+            width,
+            height,
+            depth,
+            scale,
+            geometry {
+              filetype
+              filename
+              directory
+            }
+            physics {
+              collision
+              stationary
+            }
+        }
+    }
+`;
+
+
+const DELETE_QUERY = gql`
+  mutation DeleteMesh($id: String!) {
+    mesh(id: $id, deleted: true) {
+      id
+      name
+      deleted
+    }
+  }
+`;
+
 
 interface State {
+  meshes: any[];
   anchorEl: null | HTMLElement;
   mobileMoreAnchorEl: null | HTMLElement;
 }
 
 class PrimaryAppBar extends React.Component<Props, State> {
   state: State = {
+    meshes: [],
     anchorEl: null,
     mobileMoreAnchorEl: null,
   };
+
+  async componentDidMount(){
+    try {
+      let meshes = await apollo.query({query: MESH_QUERY});
+      this.setState({meshes: meshes.data.meshesCurrent});
+    } catch (err) {
+      console.log("Object query failed", err);
+    }
+  }
 
   handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     this.setState({ anchorEl: event.currentTarget });
@@ -113,6 +166,11 @@ class PrimaryAppBar extends React.Component<Props, State> {
     this.handleMobileMenuClose();
   };
 
+  handleMenuClick = (objectId: string) => {
+    this.props.onSelectedObject(objectId);
+    this.handleMenuClose();
+  };
+
   handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     this.setState({ mobileMoreAnchorEl: event.currentTarget });
   };
@@ -120,6 +178,22 @@ class PrimaryAppBar extends React.Component<Props, State> {
   handleMobileMenuClose = () => {
     this.setState({ mobileMoreAnchorEl: null });
   };
+
+  handleMobileMenuClick = (objectId: string) => {
+    this.props.onSelectedObject(objectId);
+    this.handleMobileMenuClose();
+  };
+
+  handleDelete = async (objectId: string) => {
+    try {
+      let vars = {id: objectId};
+      await apollo.mutate({mutation: DELETE_QUERY, variables:vars});
+      this.handleMenuClose();
+    } catch(e) {
+      console.log("Failed to delete object",e);
+      this.handleMenuClose();
+    }
+  }
 
   render() {
     const { anchorEl, mobileMoreAnchorEl } = this.state;
@@ -135,8 +209,18 @@ class PrimaryAppBar extends React.Component<Props, State> {
         open={isMenuOpen}
         onClose={this.handleMenuClose}
       >
-        <MenuItem onClick={this.handleMenuClose}>Profile</MenuItem>
-        <MenuItem onClick={this.handleMenuClose}>My account</MenuItem>
+        <MenuItem onClick={this.handleMenuClose}>Geometry</MenuItem>
+        { this.state.meshes.map((mesh,i) => {
+            return (
+              <MenuItem key={i} onClick={ ()=>this.handleMenuClick(mesh.id) }>
+                <p>{mesh.name}</p>
+                <IconButton color="inherit">
+                  <DeleteIcon onClick={ ()=>this.handleDelete(mesh.id) }/>
+                </IconButton>
+              </MenuItem>
+            )
+          })
+        }
       </Menu>
     );
 
@@ -148,13 +232,26 @@ class PrimaryAppBar extends React.Component<Props, State> {
         open={isMobileMenuOpen}
         onClose={this.handleMenuClose}
       >
+        { this.state.meshes.map((mesh,i) => {
+            return (
+              <MenuItem key={i} onClick={ ()=>this.handleMenuClick(mesh.id) }>
+                <IconButton color="inherit">
+                  <Badge badgeContent={4} color="secondary">
+                    <InfoIcon />
+                  </Badge>
+                </IconButton>
+                <p>{mesh.name}</p>
+              </MenuItem>
+            )
+          })
+        }
         <MenuItem onClick={this.handleMobileMenuClose}>
           <IconButton color="inherit">
             <Badge badgeContent={4} color="secondary">
-              <MailIcon />
+              <InfoIcon />
             </Badge>
           </IconButton>
-          <p>Messages</p>
+          <p>Model Objects</p>
         </MenuItem>
         <MenuItem onClick={this.handleMobileMenuClose}>
           <IconButton color="inherit">
@@ -197,22 +294,17 @@ class PrimaryAppBar extends React.Component<Props, State> {
             </div>
             <div className={classes.grow} />
             <div className={classes.sectionDesktop}>
-              <IconButton color="inherit">
-                <Badge badgeContent={4} color="secondary">
-                  <MailIcon />
-                </Badge>
-              </IconButton>
-              <IconButton color="inherit">
-                <Badge badgeContent={17} color="secondary">
-                  <NotificationsIcon />
-                </Badge>
-              </IconButton>
               <IconButton
                 aria-owns={isMenuOpen ? 'material-appbar' : undefined}
                 aria-haspopup="true"
                 onClick={this.handleProfileMenuOpen}
                 color="inherit"
               >
+                <Badge badgeContent={this.state.meshes.length} color="secondary">
+                  <InfoIcon />
+                </Badge>
+              </IconButton>
+              <IconButton>
                 <AccountCircle />
               </IconButton>
             </div>
@@ -231,6 +323,7 @@ class PrimaryAppBar extends React.Component<Props, State> {
 }
 
 (PrimaryAppBar as React.ComponentClass<Props>).propTypes = {
+  onSelectedObject: PropTypes.func.isRequired,
   classes: PropTypes.object.isRequired,
 } as any;
 

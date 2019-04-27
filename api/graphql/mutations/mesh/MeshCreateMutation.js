@@ -10,7 +10,8 @@ const MeshGeometryInput = new GraphQLInputObjectType({
     name: 'MeshGeometryInput',
     fields: () => ({
         filetype: {type: GraphQLNonNull(GraphQLString)},
-        path: {type: GraphQLNonNull(GraphQLString)},
+        filename: {type: GraphQLNonNull(GraphQLString)},
+        directory: {type: GraphQLNonNull(GraphQLString)},
     })
 });
 
@@ -53,6 +54,10 @@ class MeshCreateMutation extends BaseResolver {
                 type: new GraphQLNonNull(GraphQLFloat),
                 description: 'Rotation of this object.'
             },
+            scale: {
+                type: new GraphQLNonNull(GraphQLFloat),
+                description: 'Scale of this object.'
+            },
             height: {
                 type: new GraphQLNonNull(GraphQLFloat),
                 description: 'Height of this object (y direction).'
@@ -92,18 +97,20 @@ class MeshCreateMutation extends BaseResolver {
                 id: id,
                 name: args.name,
                 type: args.type,
-                deleted: args.deleted
+                deleted: args.deleted || false,
             },
             fields: {
                 x: args.x,
                 y: args.y,
                 z: args.z,
                 theta: args.theta || 0,
+                scale: args.scale || 1,
                 height: args.height,
                 width: args.width,
                 depth: args.depth,
                 geometry_filetype: args.geometry.filetype,
-                geometry_path: args.geometry.path,
+                geometry_filename: args.geometry.filename,
+                geometry_directory: args.geometry.directory,
                 physics_stationary: args.physics.stationary || true,
                 physics_collision: args.physics.collision  || false,
             },
@@ -123,14 +130,18 @@ class MeshCreateMutation extends BaseResolver {
             x: data.x,
             y: data.y,
             z: data.z,
+            type: data.type,
             name: data.name,
             theta: data.theta,
             height: data.height,
             width: data.width,
             depth: data.depth,
+            scale: data.scale,
+            deleted: data.deleted == "true",
             geometry: {
                 filetype: data.geometry_filetype,
-                path: data.geometry_path,
+                filename: data.geometry_filename,
+                directory: data.geometry_directory,
             },
             physics: {
                 stationary: data.physics_stationary,

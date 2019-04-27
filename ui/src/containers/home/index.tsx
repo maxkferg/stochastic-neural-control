@@ -11,13 +11,16 @@ import PrimaryAppBar from '../AppBar/AppBar';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import GeometryDrawer from '../GeometryDrawer/GeometryDrawer';
 import AddIcon from '@material-ui/icons/Add';
-import ApolloClient from "apollo-boost";
+import apollo from '../../apollo';
 import { gql } from "apollo-boost";
 
 import 'babylonjs-loaders';
 import * as BABYLON from 'babylonjs';
 import * as CANNON from 'cannon';
+
 window.CANNON = CANNON;
+// @ts-ignore
+BABYLON.OBJFileLoader.MATERIAL_LOADING_FAILS_SILENTLY = false;
 
 export type SceneEventArgs = {
   scene: BABYLON.Scene,
@@ -31,14 +34,19 @@ export type SceneOptions = {
 };
 
 
-const WALL_QUERY = gql`
-    query GetMesh($type: String!) {
-        meshesCurrent(type: $type) {
+const MESH_QUERY = gql`
+    query GetMesh {
+        meshesCurrent(deleted: false) {
             id,
             name,
+            type,
             width,
             height,
             depth,
+            scale,
+            x
+            y
+            z
             geometry {
               filetype
               filename
@@ -51,6 +59,7 @@ const WALL_QUERY = gql`
         }
     }
 `;
+
 
 
 const styles = (theme: Theme) => ({
@@ -68,8 +77,62 @@ export interface Props extends WithStyles<typeof styles>{}
 interface State {
   width: number
   height: number
+  selectedObjectId: null | string
   creatingGeometry: boolean
 }
+
+
+/*
+function createMirrorMaterial(glass: any, sphere: any, scene: any){
+    //Ensure working with new values for glass by computing and obtaining its worldMatrix
+    glass.computeWorldMatrix(true);
+    var glass_worldMatrix = glass.getWorldMatrix();
+
+    //Obtain normals for plane and assign one of them as the normal
+    var glass_vertexData = glass.getVerticesData("normal");
+    var glassNormal = new BABYLON.Vector3(glass_vertexData[0], glass_vertexData[1], glass_vertexData[2])
+    //Use worldMatrix to transform normal into its current value
+    // @ts-ignore
+    glassNormal = new BABYLON.Vector3.TransformNormal(glassNormal, glass_worldMatrix)
+
+    //Create reflecting surface for mirror surface
+    // @ts-ignore
+    var reflector = new BABYLON.Plane.FromPositionAndNormal(glass.position, glassNormal.scale(-1));
+
+    //Create the mirror material
+    var mirrorMaterial = new BABYLON.StandardMaterial("mirror", scene);
+    mirrorMaterial.reflectionTexture = new BABYLON.MirrorTexture("mirror", 1024, scene, true);
+    // @ts-ignore
+    mirrorMaterial.reflectionTexture.mirrorPlane = reflector;
+    // @ts-ignore
+    mirrorMaterial.reflectionTexture.renderList = [sphere];
+    mirrorMaterial.reflectionTexture.level = 1;
+    return mirrorMaterial
+}
+*/
+
+
+function setupFloors(floorMeshes: any, scene: any){
+    let floorMesh = BABYLON.Mesh.MergeMeshes(floorMeshes);
+    if (floorMesh==null){
+        throw new Error("Floor failed to load");
+    }
+    floorMesh.physicsImpostor = new PhysicsImpostor(
+        floorMesh,
+        PhysicsImpostor.MeshImpostor,
+        {
+            mass: 0,
+            restitution: 0.9
+        },
+        scene
+    );
+    let redMaterial = new StandardMaterial('Red', scene);
+    redMaterial.diffuseColor = Color3.FromInts(0, 255, 0);
+    floorMesh.material = redMaterial;
+    floorMesh.receiveShadows = true;
+    return floorMesh
+}
+
 
 
 class Home extends React.Component<Props, State> {
@@ -80,7 +143,8 @@ class Home extends React.Component<Props, State> {
       this.state = {
           width: 0,
           height: 0,
-          creatingGeometry: false
+          creatingGeometry: false,
+          selectedObjectId: null
       };
       this.classes = props.classes;
       this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
@@ -103,6 +167,10 @@ class Home extends React.Component<Props, State> {
       this.setState({ creatingGeometry: true });
     }
 
+    onSelectedObject = (objectId: string) => {
+      this.setState({ selectedObjectId: objectId });
+    }
+
     onSceneMount = (e: SceneEventArgs) => {
         const { canvas, scene } = e;
         let engine = scene.getEngine();
@@ -114,7 +182,7 @@ class Home extends React.Component<Props, State> {
         scene.enablePhysics(gravityVector, new CannonJSPlugin());
 
         let light = new HemisphericLight('hemi', new Vector3(0, -1, 0), scene);
-        light.intensity = 0.9;
+        light.intensity = 0.7;
 
         var lightbulb = new BABYLON.PointLight("pointLight", new BABYLON.Vector3(1, 10, 1), scene);
         lightbulb.intensity = 0.8
@@ -129,8 +197,8 @@ class Home extends React.Component<Props, State> {
         var camera = new ArcRotateCamera('Camera', Math.PI / -2, Math.PI / 4, 16, Vector3.Zero(), scene);
         // camera.lowerAlphaLimit = -0.0001;
         // camera.upperAlphaLimit = 0.0001;
-        camera.lowerRadiusLimit = 8; // zoom right into logo
-        camera.upperRadiusLimit = 20;
+        camera.lowerRadiusLimit = 3; // zoom right into logo
+        camera.upperRadiusLimit = 16;
         camera.upperBetaLimit = Math.PI / 2;
         camera.attachControl(canvas);
 
@@ -157,23 +225,15 @@ class Home extends React.Component<Props, State> {
         });
         */
 
-
+        let assetsManager = new BABYLON.AssetsManager(scene);
         var sphere = Mesh.CreateSphere('sphere', 10, 0.4, scene, false);
         sphere.position.y = 5;
 
-
-        const client = new ApolloClient({
-          uri: "http://localhost:8888/graphql"
-        });
-
-        client.query({
-            query: WALL_QUERY,
-            variables: {type: "wall"}
+        /* Load all the walls */
+        apollo.query({
+            query: MESH_QUERY,
+            variables: {}
         }).then((assets) => {
-            let assetsManager = new BABYLON.AssetsManager(scene);
-            let floorTask = assetsManager.addMeshTask("parte", null, "./geometry/env/labv2/", "floors.obj");
-            //let wallTask = assetsManager.addMeshTask("parte", null, "./geometry/env/labv2/", "walls.obj");
-            let turtleTask = assetsManager.addMeshTask("parte", null, "./geometry/robots/turtlebot2/", "turtlebot.obj");
             let meshes = assets.data.meshesCurrent
 
             for (let i=0; i<meshes.length; i++){
@@ -184,91 +244,45 @@ class Home extends React.Component<Props, State> {
                 }
 
                 let meshTask = assetsManager.addMeshTask(mesh.name, null, mesh.geometry.directory, mesh.geometry.filename);
-                meshTask.onSuccess = function (task) {
-                    task.loadedMeshes[0].position = BABYLON.Vector3.Zero();
-                    let wallMeshes = task.loadedMeshes.map(function(i){ return i})
-                    // @ts-ignore
-                    let wallMesh = BABYLON.Mesh.MergeMeshes(wallMeshes);
-                    if (wallMesh){
-                        wallMesh.physicsImpostor = new PhysicsImpostor(
-                            wallMesh,
-                            PhysicsImpostor.MeshImpostor,
-                            {
-                                mass: 0,
-                                restitution: 0.9
-                            },
-                            scene
-                        );
+                let meshParent = BABYLON.MeshBuilder.CreateBox("Box", {}, scene);
+                meshParent.isVisible = false;
+                meshParent.scaling = new BABYLON.Vector3(mesh.scale, mesh.scale, mesh.scale);
+                meshParent.position = new BABYLON.Vector3(mesh.x, mesh.y, mesh.z);
+
+                if (mesh.type=="floor"){
+                    meshTask.onSuccess = function(task){
+                        setupFloors(task.loadedMeshes, scene);
+                    }
+                } else {
+                    meshTask.onSuccess = function (task) {
+                        task.loadedMeshes.forEach(function(m){
+                            m.parent = meshParent;
+                        });
+
+                        let wallMeshes = task.loadedMeshes.map(function(i){ return i})
+                        // @ts-ignore
+                        let wallMesh = BABYLON.Mesh.MergeMeshes(wallMeshes);
+                        if (wallMesh){
+                            wallMesh.physicsImpostor = new PhysicsImpostor(
+                                wallMesh,
+                                PhysicsImpostor.MeshImpostor,
+                                {
+                                    mass: 0,
+                                    restitution: 0.9
+                                },
+                                scene
+                            );
+                        }
                     }
                 }
             }
-
-
-            floorTask.onSuccess = function (task) {
-                task.loadedMeshes[0].position = BABYLON.Vector3.Zero();
-                let floorMeshes = task.loadedMeshes.map(function(i){ return i})
-                // @ts-ignore
-                let floorMesh = BABYLON.Mesh.MergeMeshes(floorMeshes);
-
-                if (floorMesh==null){
-                    throw new Error("Floor failed to load");
-                }
-                floorMesh.physicsImpostor = new PhysicsImpostor(
-                    floorMesh,
-                    PhysicsImpostor.MeshImpostor,
-                    {
-                        mass: 0,
-                        restitution: 0.9
-                    },
-                    scene
-                );
-                let redMaterial = new StandardMaterial('Red', scene);
-                redMaterial.diffuseColor = Color3.FromInts(0, 255, 0);
-                floorMesh.material = redMaterial;
-                floorMesh.receiveShadows = true;
-            }
-
-            turtleTask.onSuccess = function (task) {
-                let scale = 1/1000;
-                task.loadedMeshes[0].position = BABYLON.Vector3.Zero();
-                let turtleMeshes = task.loadedMeshes.map(function(i){ return i})
-                // @ts-ignore
-                let turtleMesh = BABYLON.Mesh.MergeMeshes(turtleMeshes);
-                console.log(turtleMesh)
-
-                for (let i=0; i<task.loadedMeshes.length; i++){
-                    task.loadedMeshes[i].scaling = new BABYLON.Vector3(scale, scale, scale);
-                }
-
-                if (turtleMesh==null){
-                    throw new Error("Floor failed to load");
-                }
-                turtleMesh.scaling = new BABYLON.Vector3(scale,0.01,0.01);
-                /*
-                floorMesh.physicsImpostor = new PhysicsImpostor(
-                    floorMesh,
-                    PhysicsImpostor.MeshImpostor,
-                    {
-                        mass: 0,
-                        restitution: 0.9
-                    },
-                    scene
-                );
-                let redMaterial = new StandardMaterial('Red', scene);
-                redMaterial.diffuseColor = Color3.FromInts(0, 255, 0);
-                floorMesh.material = redMaterial;
-                floorMesh.receiveShadows = true;
-                */
-            }
-
-
+        /* Done */
+        }).then(function(){
             assetsManager.onFinish = function(tasks) {
             }
 
             //@ts-ignore
             assetsManager.load();
-
-
         });
         /*
         BABYLON.SceneLoader.LoadAssetContainer("./geometry/env/labv2/", "floors.obj", scene, function (container) {
@@ -285,11 +299,11 @@ class Home extends React.Component<Props, State> {
         });
         */
 
-        var floor = MeshBuilder.CreateBox('ground', { width: 1, height: 0.1, depth: 10 }, scene);
+        //var floor = MeshBuilder.CreateBox('ground', { width: 1, height: 0.1, depth: 10 }, scene);
         var darkMaterial = new StandardMaterial('Grey', scene);
         darkMaterial.diffuseColor = Color3.FromInts(255, 255, 255); // Color3.FromInts(200, 200, 200)
-        floor.material = darkMaterial;
-        floor.receiveShadows = true;
+        //floor.material = darkMaterial;
+        //floor.receiveShadows = true;
 
         const radiansFromCameraForShadows = -3 * (Math.PI / 4);
 
@@ -310,7 +324,7 @@ class Home extends React.Component<Props, State> {
             },
             scene
         );
-        floor.physicsImpostor = new PhysicsImpostor(
+        /*floor.physicsImpostor = new PhysicsImpostor(
             floor,
             PhysicsImpostor.BoxImpostor,
             {
@@ -319,6 +333,7 @@ class Home extends React.Component<Props, State> {
             },
             scene
         );
+        */
 
         // GUI
         var plane = MeshBuilder.CreatePlane('plane', {size: 2}, scene);
@@ -357,18 +372,13 @@ class Home extends React.Component<Props, State> {
                 scene.render();
             }
         });
-
-        // After the fact
-        window.setTimeout(() => {
-            MeshBuilder.CreateBox('ground2', { width: 4, height: 0.1, depth: 10 }, scene);
-        }, 4000)
     }
 
     public render() {
         return (
             <div>
                 <CssBaseline />
-                <PrimaryAppBar />
+                <PrimaryAppBar onSelectedObject={this.onSelectedObject} />
                 <GeometryDrawer open={this.state.creatingGeometry} />
                 <Container className="wide">
                     <Row>

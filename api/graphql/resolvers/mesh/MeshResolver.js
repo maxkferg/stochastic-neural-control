@@ -32,6 +32,7 @@ class MeshResolver extends BaseResolver {
       }
       let mesh = rows[0];
       mesh.timestamp = mesh.time;
+      mesh.scale = mesh.scale || 1.0;
       mesh.geometry = {
         directory: mesh.geometry_directory,
         filename: mesh.geometry_filename,

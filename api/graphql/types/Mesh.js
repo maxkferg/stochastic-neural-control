@@ -21,6 +21,8 @@ const Mesh = new GraphQLObjectType({
         x: {type: GraphQLFloat},
         y: {type: GraphQLFloat},
         z: {type: GraphQLFloat},
+        theta: {type: GraphQLFloat},
+        scale: {type: GraphQLFloat},
         width: {type: GraphQLFloat},
         height: {type: GraphQLFloat},
         depth: {type: GraphQLFloat},

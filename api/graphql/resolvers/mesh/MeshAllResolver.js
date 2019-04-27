@@ -32,6 +32,8 @@ class MeshAllResolver extends BaseResolver {
     ).then(rows => {
       return rows.map(mesh => {
         mesh.timestamp = mesh.time;
+        mesh.scale = mesh.scale || 1.0;
+        mesh.deleted = mesh.deleted == "true";
         mesh.geometry = {
           directory: mesh.geometry_directory,
           filename: mesh.geometry_filename,

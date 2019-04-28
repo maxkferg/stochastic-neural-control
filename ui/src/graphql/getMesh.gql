@@ -1,0 +1,19 @@
+query GetMesh {
+    meshesCurrent(deleted: false) {
+        id,
+        name,
+        width,
+        height,
+        depth,
+        scale,
+        geometry {
+          filetype
+          filename
+          directory
+        }
+        physics {
+          collision
+          stationary
+        }
+    }
+}

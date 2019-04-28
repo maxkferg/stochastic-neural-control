@@ -6,9 +6,11 @@ import { ConnectedRouter } from 'connected-react-router';
 import registerServiceWorker from './registerServiceWorker';
 import store, { history } from './store';
 //import Layout from './containers/layout';
-import Home from './containers/home';
+import App from './containers/App/App';
 import About from './containers/about';
+import { ApolloProvider } from 'react-apollo';
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
+import client from './apollo';
 import './index.css';
 
 const theme = createMuiTheme();
@@ -16,12 +18,14 @@ const theme = createMuiTheme();
 ReactDOM.render(
   <MuiThemeProvider theme={theme}>
 	  <Provider store={store}>
+	  	<ApolloProvider client={client}>
 	      <ConnectedRouter history={history} >
 	        <Switch>
-	          <Route exact path="/" render={() => (<Home />)} />
+	          <Route exact path="/" render={() => (<App />)} />
 	          <Route render={() => (<About />)} />
 	        </Switch>
 	       </ConnectedRouter>
+	    </ApolloProvider>,
 	  </Provider>
   </MuiThemeProvider>,
   document.getElementById('root') as HTMLElement

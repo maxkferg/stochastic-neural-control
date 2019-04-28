@@ -18,16 +18,15 @@ import InfoIcon from '@material-ui/icons/Info';
 import NotificationsIcon from '@material-ui/icons/Notifications';
 import MoreIcon from '@material-ui/icons/MoreVert';
 import apollo from '../../apollo';
-import { gql } from 'apollo-boost';
+import { loader } from 'graphql.macro';
 
+const MESH_QUERY = loader('../../graphql/getMesh.gql');
+const DELETE_QUERY = loader('../../graphql/deleteMesh.gql');
 
 const styles = (theme: Theme) =>
   createStyles({
     root: {
       width: '100%',
-    },
-    appBar: {
-      zIndex: theme.zIndex.drawer + 1,
     },
     grow: {
       flexGrow: 1,
@@ -97,64 +96,41 @@ const styles = (theme: Theme) =>
 
 
 export interface Props extends WithStyles<typeof styles> {
-  onSelectedObject: Function
+  className: string
+  position: "fixed" | "absolute" | "relative" | "static" | "sticky" | undefined
+  //onSelectedObject: Function
 }
-
-
-const MESH_QUERY = gql`
-    query GetMesh {
-        meshesCurrent(deleted: false) {
-            id,
-            name,
-            width,
-            height,
-            depth,
-            scale,
-            geometry {
-              filetype
-              filename
-              directory
-            }
-            physics {
-              collision
-              stationary
-            }
-        }
-    }
-`;
-
-
-const DELETE_QUERY = gql`
-  mutation DeleteMesh($id: String!) {
-    mesh(id: $id, deleted: true) {
-      id
-      name
-      deleted
-    }
-  }
-`;
 
 
 interface State {
   meshes: any[];
+  loading: boolean;
   anchorEl: null | HTMLElement;
   mobileMoreAnchorEl: null | HTMLElement;
 }
 
 class PrimaryAppBar extends React.Component<Props, State> {
+  querySubscription: any
   state: State = {
     meshes: [],
+    loading: true,
     anchorEl: null,
     mobileMoreAnchorEl: null,
   };
 
-  async componentDidMount(){
-    try {
-      let meshes = await apollo.query({query: MESH_QUERY});
-      this.setState({meshes: meshes.data.meshesCurrent});
-    } catch (err) {
-      console.log("Object query failed", err);
-    }
+  componentDidMount(){
+    this.querySubscription = apollo.watchQuery<any>({
+      query: MESH_QUERY
+    }).subscribe(({ data, loading }) => {
+      this.setState({
+        meshes: data.meshesCurrent || [],
+        loading: loading,
+      });
+    });
+  }
+
+  componentWillUnmount() {
+    this.querySubscription.unsubscribe();
   }
 
   handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -167,7 +143,7 @@ class PrimaryAppBar extends React.Component<Props, State> {
   };
 
   handleMenuClick = (objectId: string) => {
-    this.props.onSelectedObject(objectId);
+    //this.props.onSelectedObject(objectId);
     this.handleMenuClose();
   };
 
@@ -180,7 +156,7 @@ class PrimaryAppBar extends React.Component<Props, State> {
   };
 
   handleMobileMenuClick = (objectId: string) => {
-    this.props.onSelectedObject(objectId);
+    //this.props.onSelectedObject(objectId);
     this.handleMobileMenuClose();
   };
 
@@ -214,8 +190,8 @@ class PrimaryAppBar extends React.Component<Props, State> {
             return (
               <MenuItem key={i} onClick={ ()=>this.handleMenuClick(mesh.id) }>
                 <p>{mesh.name}</p>
-                <IconButton color="inherit">
-                  <DeleteIcon onClick={ ()=>this.handleDelete(mesh.id) }/>
+                <IconButton color="inherit" onClick={ ()=>this.handleDelete(mesh.id) }>
+                  <DeleteIcon />
                 </IconButton>
               </MenuItem>
             )
@@ -272,7 +248,7 @@ class PrimaryAppBar extends React.Component<Props, State> {
 
     return (
       <div className={classes.root}>
-        <AppBar position="static" className={classes.appBar}>
+        <AppBar position={this.props.position} className={this.props.className}>
           <Toolbar>
             <IconButton className={classes.menuButton} color="inherit" aria-label="Open drawer">
               <MenuIcon />
@@ -323,8 +299,9 @@ class PrimaryAppBar extends React.Component<Props, State> {
 }
 
 (PrimaryAppBar as React.ComponentClass<Props>).propTypes = {
-  onSelectedObject: PropTypes.func.isRequired,
-  classes: PropTypes.object.isRequired,
+  //onSelectedObject: PropTypes.func.isRequired,
+  className: PropTypes.string.isRequired,
+  position: PropTypes.string.isRequired,
 } as any;
 
 export default withStyles(styles)(PrimaryAppBar);

@@ -19,13 +19,15 @@ const styles = (theme: any) => ({
     display: 'flex',
   },
   formTitle: {
-    marginLeft: theme.spacing.unit,
-    marginRight: theme.spacing.unit,
+    marginLeft: 2*theme.spacing.unit,
+    marginRight: 2*theme.spacing.unit,
     marginTop: "20px",
     marginBottom: "20px",
   },
   button: {
     margin: theme.spacing.unit,
+    marginLeft: 2*theme.spacing.unit,
+    marginRight: 2*theme.spacing.unit,
     marginTop: "20px",
     minWidth: "70px",
   },
@@ -34,10 +36,12 @@ const styles = (theme: any) => ({
   },
   textField: {
     margin: theme.spacing.unit,
+    marginLeft: 2*theme.spacing.unit,
+    marginRight: 2*theme.spacing.unit,
     width: "300px",
   },
   checkbox: {
-    margin: theme.spacing.unit,
+    margin: 2*theme.spacing.unit,
   },
   toolbar: theme.mixins.toolbar,
   hide: {
@@ -126,7 +130,7 @@ let geometry = {
     filetype: "obj",
     filename: "gas-can.obj",
     directory: "./geometry/objects/gas-can/",
-    scale: 0.001,
+    scale: 0.1,
   },
   "gloves": {
     id: "gloves-",
@@ -309,7 +313,8 @@ class CreateGeometryForm extends React.Component<Props, State> {
     }
     apollo.mutate({mutation: CREATE_MESH_QUERY, variables:vars}).then((result) => {
       this.props.onSuccess();
-      console.log("Mutation succeeded")
+      this.setState({currentStep: 0});
+      console.log("Mutation succeeded");
     }).catch(() => {
       console.log("Mutation failed")
     })

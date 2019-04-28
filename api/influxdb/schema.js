@@ -1,6 +1,6 @@
 const Influx = require('influx');
 
-
+console.log("Creating new influx client")
 const influx = new Influx.InfluxDB({
  host: 'localhost',
  database: 'geometry_db',

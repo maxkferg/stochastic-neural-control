@@ -15,6 +15,9 @@ import Grid from '@material-ui/core/Grid';
 
 
 const MESH_BY_ID_QUERY = loader('../../graphql/getMeshById.gql');
+const MOVE_ROBOT = loader('../../graphql/moveRobot.gql');
+const ROBOT_LINEAR_SPEED = 0.3;
+const ROBOT_ANGULAR_SPEED = 0.6;
 
 const styles = (theme: any) => ({
   root: {
@@ -102,6 +105,16 @@ class EditObjectForm extends React.Component<Props, State> {
     });
   }
 
+  async moveRobot(linear, angular){
+    apollo.mutate({
+      mutation: MOVE_ROBOT,
+      variables: {
+        linear: linear,
+        angular: angular
+      }
+    })
+  }
+
   componentWillUnmount() {
     this.querySubscription.unsubscribe();
   }
@@ -165,26 +178,34 @@ class EditObjectForm extends React.Component<Props, State> {
         <div>
           <Grid container direction="row" justify="center" alignItems="center">
             <Grid item>
-              <Button size="small" color="primary" variant="contained" name="up" className={this.classes.button}>
+              <Button size="small" color="primary" variant="contained" name="up" className={this.classes.button}
+                onClick={() => this.moveRobot(ROBOT_LINEAR_SPEED, 0)}
+              >
                 <ArrowUpward className={this.classes.extendedIcon} />
               </Button>
             </Grid>
           </Grid>
           <Grid container direction="row" justify="space-around" alignItems="center">
             <Grid item>
-              <Button size="small" variant="contained" name="left" className={this.classes.button}>
+              <Button size="small" variant="contained" name="left" className={this.classes.button}
+                onClick={() => this.moveRobot(0, ROBOT_ANGULAR_SPEED)}
+              >
                  <RotateLeft className={this.classes.extendedIcon} />
               </Button>
             </Grid>
             <Grid item>
-              <Button size="small" variant="contained" name="right" className={this.classes.button}>
+              <Button size="small" variant="contained" name="right" className={this.classes.button}
+                onClick={() => this.moveRobot(0, -ROBOT_ANGULAR_SPEED)}
+              >
                 <RotateRight className={this.classes.extendedIcon} />
               </Button>
             </Grid>
           </Grid>
           <Grid container direction="row" justify="center" alignItems="center">
             <Grid item>
-              <Button size="small" color="primary" variant="contained" name="up" className={this.classes.button}>
+              <Button size="small" color="primary" variant="contained" name="up" className={this.classes.button}
+                onClick={() => this.moveRobot(-ROBOT_LINEAR_SPEED, 0)}
+              >
                 <ArrowDownward className={this.classes.extendedIcon} />
               </Button>
             </Grid>

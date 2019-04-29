@@ -10,6 +10,7 @@ const mutations = require('./mutations');
 const auth = require('../auth');
 const User = require('./types/User');
 const Mesh = require('./types/Mesh');
+const VelocityHistory = require('./types/VelocityHistory');
 
 
 const Query = new GraphQLObjectType({
@@ -38,7 +39,8 @@ const Mutation = new GraphQLObjectType({
         createUser: new mutations.UserMutations.userSignup(User, "Creates a new user", false),
         user: new mutations.UserMutations.user(User, "Updates current user", true),
         createMesh: new mutations.MeshMutations.meshCreate(Mesh, "Creates a mesh object", false),
-        mesh: new mutations.MeshMutations.mesh(Mesh, "Updates current mesh object", true)
+        mesh: new mutations.MeshMutations.mesh(Mesh, "Updates current mesh object", true),
+        moveRobot: new mutations.RobotMutations.moveRobot(VelocityHistory, "Send a sequence of smooth controls to the robot", true)
     })
 });
 

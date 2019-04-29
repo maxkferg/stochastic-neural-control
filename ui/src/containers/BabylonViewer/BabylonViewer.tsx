@@ -22,7 +22,8 @@ import * as CANNON from 'cannon';
 window.CANNON = CANNON;
 // @ts-ignore
 BABYLON.OBJFileLoader.MATERIAL_LOADING_FAILS_SILENTLY = false;
-
+BABYLON.OBJFileLoader.OPTIMIZE_WITH_UV = true;
+//BABYLON.OBJFileLoader.INVERT_X = true;
 
 export type SceneEventArgs = {
   scene: BABYLON.Scene,
@@ -52,7 +53,7 @@ const styles = (theme: Theme) => ({
  * setupFloors
  * Called once floor geometry has been loaded
  */
-function setupFloor(floorMeshes: any, scene: BABYLON.Scene){
+function setupFloor(objectData: any, parentMesh: any,  floorMeshes: any, scene: BABYLON.Scene){
     let floorMesh = BABYLON.Mesh.MergeMeshes(floorMeshes);
     if (floorMesh==null){
         throw new Error("Floor failed to load");
@@ -78,9 +79,9 @@ function setupFloor(floorMeshes: any, scene: BABYLON.Scene){
  * setupWall
  * Called once wall geometry has been loaded
  */
-function setupWall(meshes: any, scene: any){
-    console.log(meshes,scene);
-    return null;
+function setupWall(objectData: any, parentMesh: any,  scene: BABYLON.Scene){
+    console.log(objectData,parentMesh,scene);
+    parentMesh.scale.x = -objectData.scale.x;
 }
 
 
@@ -90,6 +91,9 @@ function setupWall(meshes: any, scene: any){
  */
 function setupRobot(objectData: any, parentMesh: any,  scene: BABYLON.Scene){
     console.log(objectData,parentMesh,scene);
+    // Flip mesh in the y direction
+    //        let axis = new BABYLON.Vector3(0, 1, 0);
+    //    parent.rotation = new BABYLON.Quaternion.RotationAxis(axis, newObject.theta);
     return null;
 }
 
@@ -258,8 +262,8 @@ class BabylonViewer extends React.Component<Props, State> {
                 } else if (!isObjectValid(prevObject)){
                     console.log("Ignoring invalid prev object", prevObject);
                 } else if (isObjectChanged(newObject, prevObject)){
-                    console.log("Updated",newObject, prevObject, "--->");
                     this.updateObject(prevObject, newObject, this.state.scene)
+                    console.log("Updated mesh:",newObject, prevObject);
                 }
             }
             if (objectsToBeCreated.length){
@@ -296,14 +300,18 @@ class BabylonViewer extends React.Component<Props, State> {
         parent.scaling = new BABYLON.Vector3(newObject.scale, newObject.scale, newObject.scale);
         parent.position = new BABYLON.Vector3(newObject.x, newObject.y, newObject.z);
         parent.isVisible = false;
+        if (newObject.type=="wall" || newObject.type=="floor"){
+            parent.scaling = new BABYLON.Vector3(newObject.scale, newObject.scale, -newObject.scale);
+        }
+
         task.onSuccess = function(t: any){
             t.loadedMeshes.forEach((mesh) => {
                 mesh.parent = parent;
             });
             if (newObject.type=="floor"){
-                setupFloor(t.loadedMeshes, scene);
+                setupFloor(newObject, parent, t.loadedMeshes, scene);
             } else if (newObject.type=="wall"){
-                setupWall(t.loadedMeshes, scene);
+                setupWall(newObject, parent, scene);
             } else if (newObject.type=="robot"){
                 setupRobot(newObject, parent, scene);
                 setupObjectButton(newObject, parent, scene, self.onSelectedObject);
@@ -342,19 +350,20 @@ class BabylonViewer extends React.Component<Props, State> {
      * If the object has just moved: simply translate the mesh
      * Otherwise: delete the mesh and recreate it
      */
-    updateObject = (newObject: any, prevObject, scene: BABYLON.Scene) => {
+    updateObject = (prevObject: any, newObject: any, scene: BABYLON.Scene) => {
         if (!isMeshChanged(newObject, prevObject)){
             //Update existing mesh
             let axis = new BABYLON.Vector3(0, 1, 0);
             let prevMesh = this.state.renderedMeshes[newObject.id];
             //@ts-ignore
             prevMesh.rotationQuaternion = new BABYLON.Quaternion.RotationAxis(axis, newObject.theta);
-            prevMesh.position = new BABYLON.Vector3(newObject.scale, newObject.scale, newObject.scale);
+            prevMesh.position = new BABYLON.Vector3(newObject.x, newObject.y, newObject.z);
             prevMesh.scaling = new BABYLON.Vector3(newObject.scale, newObject.scale, newObject.scale);
+            debugger
         } else {
             // Delete and recreate mesh
-            this.deleteObject(newObject.id);
-            this.createObject(newObject, scene);
+            //this.deleteObject(newObject.id);
+            //this.createObject(newObject, scene);
         }
     }
 

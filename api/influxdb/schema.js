@@ -28,6 +28,20 @@ const influx = new Influx.InfluxDB({
           physics_stationary: Influx.FieldType.BOOLEAN,
           physics_collision: Influx.FieldType.BOOLEAN,
       }
+   }, {
+      measurement: 'robot_imu',
+      tags: [
+          'id',
+          'name',
+      ],
+      fields: {
+          linear_acceleration_x: Influx.FieldType.FLOAT,
+          linear_acceleration_y: Influx.FieldType.FLOAT,
+          linear_acceleration_z: Influx.FieldType.FLOAT,
+          angular_velocity_x: Influx.FieldType.FLOAT,
+          angular_velocity_y: Influx.FieldType.FLOAT,
+          angular_velocity_z: Influx.FieldType.FLOAT,
+      }
    }
  ]
 })

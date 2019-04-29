@@ -2,35 +2,33 @@ const kafka = require('kafka-node');
 const qte = require('quaternion-to-euler');
 const Influx = require('Influx');
 const influx = require('../influxdb');
+const UpdatePolicy = require('./updatePolicy');
 const ROBOT_ID = '5cc52a162693090000000002';
+
 
 const Consumer = kafka.Consumer;
 const client = new kafka.KafkaClient({kafkaHost: process.env.KAFKA_HOST});
-let consumer = new Consumer(
+const MIN_UPDATE_INTERVAL = 1*1000 // Never update faster than 1 Hz
+const MAX_UPDATE_INTERVAL = 10*1000 // Always update every 10s
+
+const consumer = new Consumer(
     client,
     [{ topic: 'robot.events.odom', partition: 0 }],
     { autoCommit: false }
 );
 
-
 /**
- * consumer
+ * setupConsumer
  * Setup a consumer that copies data from Kafka to Influx
  */
-function consume(){
+function setupConsumer(updatePolicy){
 	let x = 0;
 	let y = 0;
 	let z = 0;
 	let euler;
-	let shouldWrite = true;
-	// Wait 500 ms before writing another message
-	setInterval(function(){
-		shouldWrite=true;
-	}, 500);
 
 	consumer.on('message', function(message){
-		if (!shouldWrite) return;
-		shouldWrite = false;
+		if (!updatePolicy.mightUpdate()) return;
 		message = JSON.parse(JSON.parse(message.value));
 		if (!message.frame_id == "odom") return;
 		if (!message.child_frame_id == "base_footprint") return;
@@ -43,10 +41,20 @@ function consume(){
 			message.pose.pose.orientation.z,
 			message.pose.pose.orientation.w,
 		]);
-		theta = euler[0];
-		updateRobotPosition(x,y,z,theta);
+		theta = euler[0]+Math.PI/2; // Mesh is wrong
+		let data = {
+			x: x,
+			y: y,
+			z: z,
+			theta: theta
+		}
+		if (updatePolicy.shouldUpdate(data)){
+			updatePolicy.willUpdate(data);
+			updateRobotPosition(x,y,z,theta);
+		}
 	});
 };
+
 
 
 /**
@@ -100,5 +108,6 @@ function updateRobotPosition(x,y,z,theta){
 }
 
 
-
-consume();
+// Run the consumer
+const updatePolicy = new UpdatePolicy(MIN_UPDATE_INTERVAL, MAX_UPDATE_INTERVAL);
+setupConsumer(updatePolicy);

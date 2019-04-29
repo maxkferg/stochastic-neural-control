@@ -11,7 +11,8 @@ import Divider from '@material-ui/core/Divider';
 import AddIcon from '@material-ui/icons/Add';
 import Fab from '@material-ui/core/Fab';
 import AppBar from '../AppBar/AppBar';
-import CreateGeometryForm from '../CreateGeometryForm/CreateGeometryForm'
+import EditObjectForm from '../EditObjectForm/EditObjectForm';
+import CreateGeometryForm from '../CreateGeometryForm/CreateGeometryForm';
 import BuildingViewer from '../BuildingViewer/BuildingViewer';
 
 const drawerWidth = 340;
@@ -85,6 +86,8 @@ class PersistentDrawerRight extends React.Component {
   state = {
     open: false,
     creatingGeometry: true,
+    editingObject: false,
+    selectedObjectId: "",
   };
 
   handleDrawerOpen = () => {
@@ -96,9 +99,33 @@ class PersistentDrawerRight extends React.Component {
   };
 
   createGeometry = () => {
-    this.setState({ open: true });
-    this.setState({ creatingGeometry: true });
+    this.setState({
+      open: true,
+      editingObject: false,
+      creatingGeometry: true
+    });
   }
+
+  onSelectedObject = (objectId: string) => {
+    this.setState({
+      open: true,
+      editingObject: true,
+      creatingGeometry: false,
+      selectedObjectId: objectId,
+    });
+  }
+
+  renderRightForm(){
+    if (this.state.creatingGeometry){
+      return <CreateGeometryForm onSuccess={this.handleDrawerClose} onCancel={this.handleDrawerClose} />
+    } else if (this.state.editingObject){
+      return <EditObjectForm objectId={this.state.selectedObjectId} onSuccess={this.handleDrawerClose} onCancel={this.handleDrawerClose} />
+    } else {
+      console.error("Should always be creating or editing an object");
+      return <p>Edit or create an object</p>
+    }
+  }
+
 
   render() {
     // @ts-ignore
@@ -129,7 +156,7 @@ class PersistentDrawerRight extends React.Component {
           })}
         >
           <div className={classes.drawerHeader} />
-          <BuildingViewer />
+          <BuildingViewer onSelectedObject={this.onSelectedObject} />
           <Fab color="primary" aria-label="Add" className={classes.fab} onClick={this.createGeometry}>
             <AddIcon />
           </Fab>
@@ -149,7 +176,7 @@ class PersistentDrawerRight extends React.Component {
             </IconButton>
           </div>
           <Divider />
-          <CreateGeometryForm onSuccess={this.handleDrawerClose} onCancel={this.handleDrawerClose} />
+          { this.renderRightForm() }
         </Drawer>
       </div>
     );

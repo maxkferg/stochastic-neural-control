@@ -48,7 +48,9 @@ const styles = (theme: Theme) => ({
 });
 
 //@ts-ignore
-export interface Props extends WithStyles<typeof styles>{}
+export interface Props extends WithStyles<typeof styles>{
+  onSelectedObject: Function
+}
 
 interface State {
 }
@@ -65,22 +67,23 @@ class BuildingViewer extends React.Component<Props, State> {
     }
 
     public render() {
-        return (
-			<Query query={GET_OBJECTS} pollInterval={500}>
-			    {({ loading, error, data }) => {
-			      if (loading) return 'Loading...';
-			      if (error) return `Error! ${error.message}`;
-			      return (
-			      	<BabylonViewer geometry={data.meshesCurrent} />
-			      );
-			    }}
-			</Query>
-        );
+      return (
+        <Query query={GET_OBJECTS} pollInterval={500}>
+            {({ loading, error, data }) => {
+              if (loading) return 'Loading...';
+              if (error) return `Error! ${error.message}`;
+              return (
+                <BabylonViewer geometry={data.meshesCurrent} onSelectedObject={this.props.onSelectedObject} />
+              );
+            }}
+        </Query>
+      );
     }
 }
 
 //@ts-ignore
 BuildingViewer.propTypes = {
+  onSelectedObject: PropTypes.func.isRequired,
   classes: PropTypes.object.isRequired,
 };
 

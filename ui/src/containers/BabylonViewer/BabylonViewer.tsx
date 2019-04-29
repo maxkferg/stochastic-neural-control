@@ -47,25 +47,12 @@ const styles = (theme: Theme) => ({
   },
 });
 
-//@ts-ignore
-export interface Props extends WithStyles<typeof styles>{
-    geometry: any[]
-}
-
-interface State {
-  width: number
-  height: number
-  scene: null | BABYLON.Scene
-  renderedObjects: any[]
-  renderedMeshes: object
-}
-
 
 /**
  * setupFloors
  * Called once floor geometry has been loaded
  */
-function setupFloor(floorMeshes: any, scene: any){
+function setupFloor(floorMeshes: any, scene: BABYLON.Scene){
     let floorMesh = BABYLON.Mesh.MergeMeshes(floorMeshes);
     if (floorMesh==null){
         throw new Error("Floor failed to load");
@@ -101,8 +88,8 @@ function setupWall(meshes: any, scene: any){
  * setupRobot
  * Called once robot geometry has been loaded
  */
-function setupRobot(meshes: any, scene: any){
-    console.log(meshes,scene);
+function setupRobot(objectData: any, parentMesh: any,  scene: BABYLON.Scene){
+    console.log(objectData,parentMesh,scene);
     return null;
 }
 
@@ -112,8 +99,8 @@ function setupRobot(meshes: any, scene: any){
  * setupObject
  * Called once object geometry has been loaded
  */
-function setupObject(meshes: any, scene: any){
-    console.log(meshes, scene);
+function setupObject(objectData: any, parentMesh: any,  scene: BABYLON.Scene){
+    console.log(objectData,parentMesh,scene);
     return null;
 }
 
@@ -129,6 +116,37 @@ function setupLights(scene: any){
     var lightbulb = new BABYLON.PointLight("pointLight", new BABYLON.Vector3(1, 10, 1), scene);
     lightbulb.intensity = 0.8
 }
+
+
+
+/**
+ * setupObjectButton
+ * Create an interactive button above an object
+ */
+function setupObjectButton(objectData: any, parentMesh: any, scene: BABYLON.Scene, onClick: Function){
+    let planeName = objectData.name + '-plane';
+    let buttonName = objectData.name+'-button';
+    let plane = MeshBuilder.CreatePlane(planeName, {size: 1.4}, scene);
+    plane.parent = parentMesh;
+    plane.scaling.x = 1/parentMesh.scaling.x;
+    plane.scaling.y = 1/parentMesh.scaling.y;
+    plane.scaling.z = 1/parentMesh.scaling.z;
+    plane.position.y = 1/parentMesh.scaling.y;
+
+    let advancedTexture = AdvancedDynamicTexture.CreateForMesh(plane);
+    let button1 = Button.CreateSimpleButton(buttonName, objectData.name);
+
+    button1.width = 0.7;
+    button1.height = 0.2;
+    button1.color = 'white';
+    button1.fontSize = 100;
+    button1.background = 'green';
+    button1.onPointerUpObservable.add(function() {
+        onClick(objectData.id);
+    });
+    advancedTexture.addControl(button1);
+}
+
 
 
 /**
@@ -182,6 +200,21 @@ function isMeshChanged(ob1: any, ob2: any){
 
 
 
+//@ts-ignore
+export interface Props extends WithStyles<typeof styles>{
+    geometry: any[]
+    onSelectedObject: Function
+}
+
+interface State {
+  width: number
+  height: number
+  scene: null | BABYLON.Scene
+  renderedObjects: any[]
+  renderedMeshes: object
+}
+
+
 
 
 class BabylonViewer extends React.Component<Props, State> {
@@ -213,13 +246,15 @@ class BabylonViewer extends React.Component<Props, State> {
         // TODO: Detect whether we have extra geometry as well
         // We can not render geometry until the scene is ready
         if (this.state.scene !== null){
+            let objectsToBeCreated: any[] = [];
+            //let objectsToBeDeleted = [];
             for (let newObjectKey in this.props.geometry){
                 let newObject = this.props.geometry[newObjectKey];
                 let prevObject = find(this.state.renderedObjects, {id: newObject.id});
                 if (!isObjectValid(newObject)){
                     console.log("Ignoring invalid new object", newObject);
                 } else if (!prevObject){
-                    this.createObject(newObject, this.state.scene);
+                    objectsToBeCreated.push(newObject)
                 } else if (!isObjectValid(prevObject)){
                     console.log("Ignoring invalid prev object", prevObject);
                 } else if (isObjectChanged(newObject, prevObject)){
@@ -227,8 +262,18 @@ class BabylonViewer extends React.Component<Props, State> {
                     this.updateObject(prevObject, newObject, this.state.scene)
                 }
             }
+            if (objectsToBeCreated.length){
+                let assetManager = new BABYLON.AssetsManager(this.state.scene);
+                for (let newObject of objectsToBeCreated) {
+                    if (this.state.scene){
+                        this.createObject(newObject, this.state.scene, assetManager);
+                    }
+                };
+                assetManager.load();
+            }
         }
     }
+
 
     updateWindowDimensions() {
       this.setState({ width: window.innerWidth, height: window.innerHeight });
@@ -240,8 +285,9 @@ class BabylonViewer extends React.Component<Props, State> {
      * Adds the object (metadata) to state.renderedObjects
      * Stores the parent mesh  as state.renderedMeshes[id]
      */
-    createObject = (newObject: any, scene: BABYLON.Scene) => {
-        let manager = new BABYLON.AssetsManager(scene);
+    createObject = (newObject: any, scene: BABYLON.Scene, assetManager?: BABYLON.AssetsManager) => {
+        let self = this;
+        let manager = assetManager || new BABYLON.AssetsManager(scene);
         let task = manager.addMeshTask(newObject.name, null, newObject.geometry.directory, newObject.geometry.filename);
         let parent = BABYLON.MeshBuilder.CreateBox("Box", {}, scene);
         let axis = new BABYLON.Vector3(0, 1, 0);
@@ -258,10 +304,12 @@ class BabylonViewer extends React.Component<Props, State> {
                 setupFloor(t.loadedMeshes, scene);
             } else if (newObject.type=="wall"){
                 setupWall(t.loadedMeshes, scene);
-            } else if (newObject.type=="floor"){
-                setupRobot(t.loadedMeshes, scene);
-            } else if (newObject.type=="floor"){
-                setupObject(t.loadedMeshes, scene);
+            } else if (newObject.type=="robot"){
+                setupRobot(newObject, parent, scene);
+                setupObjectButton(newObject, parent, scene, self.onSelectedObject);
+            } else if (newObject.type=="object"){
+                setupObject(newObject, parent, scene, );
+                setupObjectButton(newObject, parent, scene, self.onSelectedObject);
             }
         };
         this.state.renderedMeshes[newObject.id] = parent;
@@ -271,7 +319,7 @@ class BabylonViewer extends React.Component<Props, State> {
             renderedMeshes: this.state.renderedMeshes
         });
         // Start loading the mesh
-        manager.load();
+        //manager.load();
     }
 
 
@@ -310,9 +358,13 @@ class BabylonViewer extends React.Component<Props, State> {
         }
     }
 
-    //onSelectedObject = (objectId: string) => {
-    //  this.setState({ selectedObjectId: objectId });
-    //}
+    /**
+     * onSelectedObject
+     * Called when an object in the scene is selected
+     */
+    onSelectedObject = (objectId: string) => {
+      this.props.onSelectedObject(objectId);
+    }
 
     onSceneMount = (e: SceneEventArgs) => {
         const { canvas, scene } = e;
@@ -378,7 +430,7 @@ class BabylonViewer extends React.Component<Props, State> {
         plane.position.y = 2;
 
         var advancedTexture = AdvancedDynamicTexture.CreateForMesh(plane);
-        var button1 = Button.CreateSimpleButton('but1', 'Click Me');
+        var button1 = Button.CreateSimpleButton('but1', 'Sphere-0');
 
         button1.width = 1;
         button1.height = 0.4;
@@ -434,6 +486,7 @@ class BabylonViewer extends React.Component<Props, State> {
 BabylonViewer.propTypes = {
     geometry: PropTypes.array.isRequired,
     classes: PropTypes.object.isRequired,
+    onSelectedObject: PropTypes.func.isRequired,
 };
 
 //@ts-ignore

@@ -93,7 +93,7 @@ function updateRobotPosition(x,y,z,theta){
         	}
         }]);
     }).then(() => {
-    	console.log("Wrote new robot position", x,y,z,theta);
+    	console.log("Wrote new robot position", x.toFixed(3), y.toFixed(3), z.toFixed(3) ,theta.toFixed(3));
     }).catch(e => {
     	console.log("ERROR: Robot position failed", e.message);
     });

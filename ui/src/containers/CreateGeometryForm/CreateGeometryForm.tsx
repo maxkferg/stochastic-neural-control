@@ -133,13 +133,13 @@ let geometry = {
     scale: 0.1,
   },
   "gloves": {
-    id: "gloves-",
-    name: "gloves-",
+    id: "glove-",
+    name: "glove-",
     type: "object",
     filetype: "obj",
-    filename: "gloves.obj",
+    filename: "glove.obj",
     directory: "./geometry/objects/gloves/",
-    scale: 0.001,
+    scale: 0.01,
   },
   "hard hat": {
     id: "hard-hat-",

@@ -28,5 +28,5 @@ ingress:
     - /
     - /*
 
-   hosts:
-     - dashboard.digitalpoints.io
+  hosts:
+    - dashboard.digitalpoints.io

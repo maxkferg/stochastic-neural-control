@@ -9,4 +9,4 @@ spec:
       - path: /*
         backend:
           serviceName: api-service
-          servicePort: 8888
+          servicePort: 80

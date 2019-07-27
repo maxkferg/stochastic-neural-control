@@ -7,7 +7,7 @@ enableInsecureLogin: true
 
 service:
   type: NodePort
-  nodePort: 80
+  externalPort: 80
 
 ingress:
   ## If true, Kubernetes Dashboard Ingress will be created.

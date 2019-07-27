@@ -5,7 +5,7 @@ metadata:
 spec:
   type: NodePort
   selector:
-    app: api
+    app: digitalpoints-api
   ports:
   - protocol: TCP
     port: 80

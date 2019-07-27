@@ -3,16 +3,16 @@ kind: Deployment
 metadata:
   name: api-deployment
   labels:
-    app: api
+    app: digitalpoints-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: nginx
+      app: digitalpoints-api
   template:
     metadata:
       labels:
-        app: nginx
+        app: digitalpoints-api
     spec:
       containers:
       - name: api

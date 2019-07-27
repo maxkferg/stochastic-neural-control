@@ -3,7 +3,7 @@ const BaseResolver = require('../../BaseResolver');
 const { GraphQLNonNull, GraphQLString, GraphQLInt, GraphQLBoolean, GraphQLFloat, GraphQLInputObjectType} = require('graphql');
 const MeshGeometry = require('../../types/MeshGeometry');
 const MeshPhysics = require('../../types/MeshPhysics');
-const ObjectId = require('objectId');
+const ObjectId = require('objectid');
 
 
 const client = new kafka.KafkaClient({kafkaHost: process.env.KAFKA_HOST});

@@ -9,7 +9,6 @@ const GraphQLSchema = require('./graphql/schema');
 const database = require('./database');
 const auth = require('./auth');
 const influxdb = require('./influxdb');
-const koaPlayground = require('graphql-playground-middleware-koa');
 
 const app = new Koa();
 const router = new Router();
@@ -41,7 +40,7 @@ async function init() {
     }));
 
     // Graphql Playground
-    router.all('/playground', koaPlayground.default({ endpoint: '/graphql' }))
+    //router.all('/playground', koaPlayground.default({ endpoint: '/graphql' }))
 
     //other protected url
     router.get('/protected', (ctx, next) => {

@@ -1,5 +1,5 @@
 # Stage 1 - the build process
-FROM node:7.10 as build-deps
+FROM node:11 as build-deps
 WORKDIR /usr/src/app
 COPY package.json ./
 RUN npm install --quiet

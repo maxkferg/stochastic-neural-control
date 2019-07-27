@@ -1,5 +1,6 @@
-const Influx = require('influx');
-
+/* 
+ *
+ */
 
 function setup(influx){
   influx.getDatabaseNames()

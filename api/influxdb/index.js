@@ -1,5 +1,5 @@
-const influx = require('./schema');
+const schema = require('./schema');
 const setup = require('./setup');
 
-setup(influx);
-module.exports = influx;
+setup(schema);
+module.exports = schema;

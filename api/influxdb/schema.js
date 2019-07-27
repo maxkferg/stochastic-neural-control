@@ -1,7 +1,7 @@
 const Influx = require('influx');
 
 console.log("Creating new influx client")
-const influx = new Influx.InfluxDB({
+const db = new Influx.InfluxDB({
  host: 'localhost',
  database: 'geometry_db',
  schema: [
@@ -46,4 +46,4 @@ const influx = new Influx.InfluxDB({
  ]
 })
 
-module.exports = influx;
+module.exports = db;

@@ -1,6 +1,6 @@
 const kafka = require('kafka-node');
 const qte = require('quaternion-to-euler');
-const Influx = require('Influx');
+const Influx = require('influx');
 const influx = require('../influxdb');
 const UpdatePolicy = require('./updatePolicy');
 const ROBOT_ID = '5cc52a162693090000000002';

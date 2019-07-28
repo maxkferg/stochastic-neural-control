@@ -1,13 +1,15 @@
+const config = require('config');
 const kafka = require('kafka-node');
 const qte = require('quaternion-to-euler');
 const Influx = require('influx');
 const influx = require('../influxdb');
 const UpdatePolicy = require('./updatePolicy');
-const ROBOT_ID = '5cc52a162693090000000002';
-const ROBOT_NAME = 'robot-399';
+
 
 const Consumer = kafka.Consumer;
-const client = new kafka.KafkaClient({kafkaHost: process.env.KAFKA_HOST});
+const kafkaHost = config.get("Kafka.host");
+console.info("Creating Kafka Consumer (robot IMU): ", kafkaHost);
+const client = new kafka.KafkaClient({kafkaHost: kafkaHost});
 const MIN_UPDATE_INTERVAL = 1*1000 // Never update faster than 1 Hz
 const MAX_UPDATE_INTERVAL = 10*1000 // Always update every 10s
 
@@ -58,11 +60,13 @@ function setupConsumer(updatePolicy){
  * Copies the last available tags to the new object
  */
 function updateRobotImu(imuData){
-    let query = influx.writePoints([{
+	const robotId = config.get('Robot.name');
+	const robotName = config.get('Robot.name');
+	let query = influx.writePoints([{
     	measurement: 'robot_imu',
     	tags: {
-            id: ROBOT_ID,
-            name: ROBOT_NAME,
+            id: robotId,
+            name: robotName,
         },
 		fields: {
         	linear_acceleration_x: imuData.linear_acceleration.x,

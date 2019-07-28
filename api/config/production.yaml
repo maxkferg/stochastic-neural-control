@@ -1,0 +1,21 @@
+# Api webserver
+Webserver:
+  port: 8888 
+
+# InfluxDB config
+Influx:  
+  host: 'influxdb.default:8086'
+  dbName: geometry_db
+
+# Kafka config
+Kafka:  
+  host: 'kafka:9092'
+
+# Controllable Robot ID
+Robot:
+  id: '5d3cf2211accd50100000002'
+  name: 'robot-809'
+
+# JST Login secret
+JWT:
+  secret: 'NotSoSecretAfterAll'

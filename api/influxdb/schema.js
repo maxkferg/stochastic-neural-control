@@ -1,9 +1,12 @@
 const Influx = require('influx');
+const config = require('config');
 
-console.log("Creating new influx client")
+const influxHost = config.get('Influx.host');
+console.log("Creating new influx client "+influxHost);
+
 const db = new Influx.InfluxDB({
- host: 'localhost',
- database: 'geometry_db',
+ host: influxHost,
+ database: config.get('Influx.dbName'),
  schema: [
    {
       measurement: 'mesh_position',

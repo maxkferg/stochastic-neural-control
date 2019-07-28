@@ -1,18 +1,16 @@
-const env = require('dotenv');
 const Koa = require('koa');
 const Router = require('koa-router');
 const cors = require('@koa/cors');
 const jwt = require('koa-jwt');
 const GraphQLHTTP = require('koa-graphql');
-
 const GraphQLSchema = require('./graphql/schema');
 const database = require('./database');
 const auth = require('./auth');
 const influxdb = require('./influxdb');
-
+const config = require('config');
 const app = new Koa();
 const router = new Router();
-const config = env.config().parsed;
+const PORT = config.get('Webserver.port');
 
 async function init() {
     //app.context.db = await database.start(__dirname + '/database/mongo', config.MONGO_URI);
@@ -28,7 +26,7 @@ async function init() {
     //adding jwt to retrieve token if present and decode it,
     //allowing passthrough to enable login/signup requests to go through to graphql
     //cookie option has been passed to make auth work with graphiql
-    router.use(jwt({secret: config.JWT_SECRET, passthrough: true, cookie: "token"}));
+    router.use(jwt({secret: config.get('JWT.secret'), passthrough: true, cookie: "token"}));
 
     //custom method to use parsed token data to validate and populate user
     router.use(auth.validate);
@@ -59,8 +57,8 @@ async function init() {
         console.log(err);
     });
 
-    app.listen(config.PORT, function () {
-        console.log("Server started on port =>", config.PORT);
+    app.listen(PORT, function () {
+        console.log("Server started on port =>", PORT);
     });
 }
 

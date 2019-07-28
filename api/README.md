@@ -7,10 +7,23 @@ Public API for modifying Digital Points Geometry
 
 ## Docker Support
 
+Building the docker image
 ```
-docker build -t digitalpoints/api .
-docker push digitalpoints/api
+export TAG=2
+docker build -t digitalpoints/api:production-$TAG .
 ```
+
+Running the docker image
+```
+docker run -p 8888:8888 -it digitalpoints/api:production-$TAG
+```
+
+Deploying
+```
+docker push digitalpoints/api:production-$TAG
+kubectl set image deployment/api-deployment api=digitalpoints/api:production-$TAG
+```
+
 
 
 ### Modules used

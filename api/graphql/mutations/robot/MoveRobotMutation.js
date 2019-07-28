@@ -1,3 +1,4 @@
+const config = require('config');
 const kafka = require('kafka-node');
 const BaseResolver = require('../../BaseResolver');
 const { GraphQLNonNull, GraphQLString, GraphQLInt, GraphQLBoolean, GraphQLFloat, GraphQLInputObjectType} = require('graphql');
@@ -6,7 +7,9 @@ const MeshPhysics = require('../../types/MeshPhysics');
 const ObjectId = require('objectid');
 
 
-const client = new kafka.KafkaClient({kafkaHost: process.env.KAFKA_HOST});
+const kafkaHost = config.get("Kafka.host");
+console.info("Creating Kafka producer (robot control): "+kafkaHost);
+const client = new kafka.KafkaClient({kafkaHost: kafkaHost});
 const producer = new kafka.HighLevelProducer(client);
 
 

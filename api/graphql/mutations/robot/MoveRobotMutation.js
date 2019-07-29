@@ -19,8 +19,8 @@ const producer = new kafka.HighLevelProducer(client);
  * There should only every be one of these created at the same time.
  */
 class RobotVelocityProducer {
-  constructor() {
-    this.id = 'id_1';
+  constructor(robotId) {
+    this.robotId = robotId;
     this.rotation = 0;
     this.linear = 0;
     this.growInterval = null;
@@ -86,16 +86,21 @@ class RobotVelocityProducer {
   _send(linear, rotation){
     let self = this;
     let message = {
-      linear: {
-        x: linear,
-        y: 0,
-        z: 0,
+      robot: {
+        id: self.robotId,
       },
-      angular: {
-        x: 0,
-        y: 0,
-        z: rotation,
-      },
+      velocity: {
+        linear: {
+          x: linear,
+          y: 0,
+          z: 0,
+        },
+        angular: {
+          x: 0,
+          y: 0,
+          z: rotation,
+        },
+      }
     }
     let payload = [{
       topic: 'robot.commands.velocity',
@@ -114,9 +119,6 @@ class RobotVelocityProducer {
     });
   }
 }
-
-
-let VelocityProducer = new RobotVelocityProducer();
 
 
 /**
@@ -148,8 +150,23 @@ class MoveRobotMutation extends BaseResolver {
   }
 
   async resolve(parentValue, args, ctx) {
-    let duration = args.duration || 1000;
+    
+    if (!args.robotId){
+      throw new Error("Invalid robot id");
+    }
+    
+    const duration = args.duration || 1000;
+    const robotId = args.robotId;
+
+    // Maintain a separate velocity producer for each robot
+    this.velocityProducers = this.velocityProducers || {};
+    if (!this.velocityProducers[robotId]){
+      this.velocityProducers[robotId] = new RobotVelocityProducer(robotId)
+    }
+
+    let VelocityProducer = this.velocityProducers[robotId];
     let query = VelocityProducer.send(args.linear, args.rotation, duration);
+
     return query.then((history) => {
       return {
         timestamp: new Date,

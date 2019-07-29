@@ -9,7 +9,7 @@ Influx:
 
 # Kafka config
 Kafka:  
-  host: 'localhost:9092'
+  host: 'kafka-0.digitalpoints.io:19092'
 
 # Controllable Robot ID
 Robot:

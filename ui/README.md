@@ -6,13 +6,21 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 
 ## Docker Support
-```
-docker build -t digitalpoints/ui .
-docker push digitalpoints/ui
-```
 
 ```
-docker run -p 80:80 digitalpoints/ui
+export TAG=1
+docker build -t digitalpoints/ui:production-$TAG .
+```
+
+Testing the image
+```
+docker run -p 80:80 digitalpoints/ui:production-$TAG
+```
+
+Deploying the image
+```
+docker push digitalpoints/ui:production-$TAG
+kubectl set image deployment/ui-deployment ui=digitalpoints/ui:production-$TAG
 ```
 
 # License

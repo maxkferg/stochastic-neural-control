@@ -1,3 +1,5 @@
+*.pyc
+.DS_Store
 volumes
 zk-single-kafka-single
-.DS_Store
+services/simulator/tmp/

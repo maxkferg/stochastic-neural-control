@@ -106,9 +106,14 @@ class EditObjectForm extends React.Component<Props, State> {
   }
 
   async moveRobot(linear, angular){
+    if (!this.state.mesh){
+      console.log("Can not move robot until robot_id is known");
+      return;
+    }
     apollo.mutate({
       mutation: MOVE_ROBOT,
       variables: {
+        robotId: this.state.mesh.id,
         linear: linear,
         angular: angular
       }

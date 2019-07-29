@@ -4,11 +4,12 @@ const qte = require('quaternion-to-euler');
 const Influx = require('influx');
 const influx = require('../influxdb');
 const UpdatePolicy = require('./updatePolicy');
+const logger = require('../logger');
 
 
 const Consumer = kafka.Consumer;
 const kafkaHost = config.get("Kafka.host");
-console.info("Creating Kafka Consumer (robot position): "+kafkaHost);
+logger.info("Creating Kafka Consumer (robot position): "+kafkaHost);
 const client = new kafka.KafkaClient({kafkaHost: kafkaHost});
 const MIN_UPDATE_INTERVAL = 1*1000 // Never update faster than 1 Hz
 const MAX_UPDATE_INTERVAL = 10*1000 // Always update every 10s
@@ -16,7 +17,7 @@ const MAX_UPDATE_INTERVAL = 10*1000 // Always update every 10s
 const consumer = new Consumer(
     client,
     [{ topic: 'robot.events.odom', partition: 0 }],
-    { autoCommit: false }
+    { autoCommit: true }
 );
 
 /**
@@ -30,8 +31,11 @@ function setupConsumer(updatePolicy){
 	let euler;
 
 	consumer.on('message', function(message){
+		//console.log("GOT message",message)
+		message = JSON.parse(message.value)
+		logger.info("Wrote new robot pos data");
+		// TODO: Update policy should depend on robotId
 		if (!updatePolicy.mightUpdate()) return;
-		message = JSON.parse(JSON.parse(message.value));
 		if (!message.frame_id == "odom") return;
 		if (!message.child_frame_id == "base_footprint") return;
 		x = message.pose.pose.position.x
@@ -52,7 +56,7 @@ function setupConsumer(updatePolicy){
 		}
 		if (updatePolicy.shouldUpdate(data)){
 			updatePolicy.willUpdate(data);
-			updateRobotPosition(x,y,z,theta);
+			updateRobotPosition(message.robot.id, x, y, z, theta);
 		}
 	});
 };
@@ -64,8 +68,7 @@ function setupConsumer(updatePolicy){
  * Update the robot position in influx
  * Copies the last available tags to the new object
  */
-function updateRobotPosition(x,y,z,theta){
-	const robotId = config.get('Robot.id');
+function updateRobotPosition(robotId, x, y, z, theta){
     let query = influx.query(`
         select * from mesh_position
         where id = ${Influx.escape.stringLit(robotId)}
@@ -104,9 +107,9 @@ function updateRobotPosition(x,y,z,theta){
         	}
         }]);
     }).then(() => {
-    	console.log("Wrote new robot position", x.toFixed(3), y.toFixed(3), z.toFixed(3) ,theta.toFixed(3));
+    	logger.info("Wrote new robot position", x.toFixed(3), y.toFixed(3), z.toFixed(3) ,theta.toFixed(3));
     }).catch(e => {
-    	console.log("ERROR: Robot position failed", e.message);
+    	logger.error("Robot position failed:", e.message);
     });
 }
 

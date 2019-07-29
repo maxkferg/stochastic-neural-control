@@ -4,11 +4,12 @@ const qte = require('quaternion-to-euler');
 const Influx = require('influx');
 const influx = require('../influxdb');
 const UpdatePolicy = require('./updatePolicy');
+const Logger = require('../logger');
 
 
 const Consumer = kafka.Consumer;
 const kafkaHost = config.get("Kafka.host");
-console.info("Creating Kafka Consumer (robot IMU): ", kafkaHost);
+Logger.info("Creating Kafka Consumer (robot IMU): ", kafkaHost);
 const client = new kafka.KafkaClient({kafkaHost: kafkaHost});
 const MIN_UPDATE_INTERVAL = 1*1000 // Never update faster than 1 Hz
 const MAX_UPDATE_INTERVAL = 10*1000 // Always update every 10s
@@ -16,7 +17,7 @@ const MAX_UPDATE_INTERVAL = 10*1000 // Always update every 10s
 const consumer = new Consumer(
     client,
     [{ topic: 'robot.sensors.imu', partition: 0 }],
-    { autoCommit: false }
+    { autoCommit: true }
 );
 
 /**
@@ -77,9 +78,9 @@ function updateRobotImu(imuData){
         	angular_velocity_z: imuData.angular_velocity.z,
 		}
     }]).then(() => {
-    	console.log("Wrote new robot imu data");
+    	Logger.log("Wrote new robot imu data");
     }).catch(e => {
-    	console.log("ERROR: Robot position failed", e.message);
+    	Logger.error("Robot position failed:", e.message);
     });
     return query;
 }

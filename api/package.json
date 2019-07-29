@@ -31,6 +31,8 @@
     "koa-router": "^7.4.0",
     "mongoose": "^5.6.7",
     "objectid": "^3.2.1",
+    "pino": "^5.13.1",
+    "pino-pretty": "^3.2.0",
     "quaternion-to-euler": "^0.5.0"
   }
 }

@@ -4,6 +4,7 @@ const cors = require('@koa/cors');
 const jwt = require('koa-jwt');
 const GraphQLHTTP = require('koa-graphql');
 const GraphQLSchema = require('./graphql/schema');
+const Logger = require('./logger');
 const database = require('./database');
 const auth = require('./auth');
 const influxdb = require('./influxdb');
@@ -11,6 +12,7 @@ const config = require('config');
 const app = new Koa();
 const router = new Router();
 const PORT = config.get('Webserver.port');
+
 
 async function init() {
     //app.context.db = await database.start(__dirname + '/database/mongo', config.MONGO_URI);
@@ -54,11 +56,11 @@ async function init() {
 
     //global error logging
     app.on("error", (err, ctx) => {
-        console.log(err);
+        Logger.error(err);
     });
 
     app.listen(PORT, function () {
-        console.log("Server started on port =>", PORT);
+        Logger.info("Server started on port =>", PORT);
     });
 }
 

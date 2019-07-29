@@ -1,8 +1,9 @@
 const Influx = require('influx');
 const config = require('config');
+const Logger = require('../logger');
 
 const influxHost = config.get('Influx.host');
-console.log("Creating new influx client "+influxHost);
+Logger.info("Creating new influx client "+influxHost);
 
 const db = new Influx.InfluxDB({
  host: influxHost,

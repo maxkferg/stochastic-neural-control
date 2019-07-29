@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: physics-deployment
+  labels:
+    app: physics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: physics
+  template:
+    metadata:
+      labels:
+        app: physics
+    spec:
+      containers:
+      - name: physics
+        image: digitalpoints/physics:latest

@@ -1,0 +1,11 @@
+# Api webserver
+API:
+  host: 'http://api.digitalpoints.io/graphql'
+
+# Geometry endpoint
+Geometry:
+  host: 'http://www.digitalpoints.io/'
+
+# Kafka config
+Kafka:  
+  host: 'kafka-0.digitalpoints.io:19092'

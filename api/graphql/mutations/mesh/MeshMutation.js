@@ -21,6 +21,7 @@ const MeshPhysicsInput = new GraphQLInputObjectType({
     fields: () => ({
         stationary: {type: GraphQLBoolean},
         collision: {type: GraphQLBoolean},
+        simulated: {type: GraphQLBoolean},
     })
 });
 
@@ -154,6 +155,7 @@ class MeshMutation extends BaseResolver {
             if (mesh.physics){
                 newMeshFields.physics_stationary = chooseValid(args.physics.stationary, mesh.physics_stationary);
                 newMeshFields.physics_collision = chooseValid(args.physics.collision, mesh.physics_collision);
+                newMeshFields.physics_simulated = chooseValid(args.physics.simulated, mesh.physics_simulated);
             }
 
             console.log(newMeshTags)
@@ -199,6 +201,7 @@ class MeshMutation extends BaseResolver {
             physics: {
                 stationary: data.physics_stationary,
                 collision: data.physics_collision,
+                simulated: data.physics_simulated,
             },
             time: data.time,
           }

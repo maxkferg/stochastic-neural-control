@@ -1,14 +1,14 @@
 # Api webserver
 Webserver:
-  port: 8888 
+  port: 8888
 
 # InfluxDB config
-Influx:  
+Influx:
   host: 'influxdb.default:8086'
   dbName: geometry_db
 
 # Kafka config
-Kafka:  
+Kafka:
   host: 'kafka:9092'
 
 # Controllable Robot ID

@@ -42,6 +42,7 @@ class MeshAllResolver extends BaseResolver {
         mesh.physics = {
           collision: mesh.physics_collision,
           stationary: mesh.physics_stationary,
+          simulated: mesh.physics_simulated,
         }
         return mesh;
       });

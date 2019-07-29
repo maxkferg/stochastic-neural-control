@@ -21,6 +21,7 @@ const MeshPhysicsInput = new GraphQLInputObjectType({
     fields: () => ({
         stationary: {type: GraphQLNonNull(GraphQLBoolean)},
         collision: {type: GraphQLNonNull(GraphQLBoolean)},
+        simulated: {type: GraphQLNonNull(GraphQLBoolean)},
     })
 });
 
@@ -113,6 +114,7 @@ class MeshCreateMutation extends BaseResolver {
                 geometry_directory: args.geometry.directory,
                 physics_stationary: args.physics.stationary || true,
                 physics_collision: args.physics.collision  || false,
+                physics_simulated: args.physics.simulated  || true,
             },
           }
         ]).then(() => {
@@ -146,6 +148,7 @@ class MeshCreateMutation extends BaseResolver {
             physics: {
                 stationary: data.physics_stationary,
                 collision: data.physics_collision,
+                simulated: data.physics.simulated,
             },
             time: data.time,
           }

@@ -10,6 +10,7 @@ const MeshPhysics = new GraphQLObjectType({
     fields: () => ({
         stationary: {type: GraphQLBoolean},
         collision: {type: GraphQLBoolean},
+        simulated: {type: GraphQLBoolean},
     })
 });
 

@@ -1,9 +1,20 @@
 version: '2.1'
 services:
   #ui:
-  #  image: dbm-ui
+  #  image: digitalpoints/ui:latest
   #  ports:
   #    - '80:80'
+
+  api:
+    image: digitalpoints/api:latest
+    ports:
+      - '8888:8888'
+    links:
+      - influxdb
+    environment:
+      - INFLUX_HOST=influxdb:8086
+      - KAFKA_HOST=kafka-0.digitalpoints.io:19092
+
   influxdb:
     image: influxdb:latest
     ports:
@@ -29,35 +40,5 @@ services:
       # sudo mkdir -p /srv/docker/grafana/data; chown 472:472 /srv/docker/grafana/data
       - ./volumes/grafana/data:/var/lib/grafana
 
-  zoo:
-    image: zookeeper:3.4.9
-    hostname: zoo
-    ports:
-      - "2181:2181"
-    environment:
-        ZOO_MY_ID: 1
-        ZOO_PORT: 2181
-        ZOO_SERVERS: server.1=zoo:2888:3888
-    volumes:
-      - ./volumes/zoo/data:/data
-      - ./volumes/zoo/datalog:/datalog
-
-  kafka:
-    image: confluentinc/cp-kafka:5.2.1
-    hostname: kafka
-    ports:
-      - "9092:9092"
-    environment:
-      KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka:19092,LISTENER_DOCKER_EXTERNAL://10.34.181.103:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
-      KAFKA_ZOOKEEPER_CONNECT: "zoo:2181"
-      KAFKA_BROKER_ID: 1
-      KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    volumes:
-      - ./volumes/kafka/data:/var/lib/kafka/data
-    depends_on:
-      - zoo
 volumes:
   influxdb-storage:

@@ -1,0 +1,7 @@
+# Influx optional override
+Influx:
+  host: INFLUX_HOST
+
+# Kafka optional override
+Kafka:
+  host: KAFKA_HOST

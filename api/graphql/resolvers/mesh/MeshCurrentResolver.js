@@ -12,7 +12,11 @@ class MeshCurrentResolver extends BaseResolver {
       },
       deleted: {
           type: GraphQLBoolean,
-          description: 'Optionally filter by objects with this deleted=$deleted'
+          description: 'Optionally filter by objects with deleted=$deleted'
+      },
+      simulated: {
+          type: GraphQLBoolean,
+          description: 'Optionally filter by objects with physics.simulated=$simulated'
       },
       limit: {
           type: GraphQLInt,
@@ -47,8 +51,12 @@ class MeshCurrentResolver extends BaseResolver {
         limit 1`
       ).then(rows => {
         if (rows.length==0) return;
+        // Filtering rows
         if (args.deleted===true && rows[0].deleted!=="true") return;
         if (args.deleted===false && rows[0].deleted!=="false") return;
+        if (args.simulated===true && rows[0].physics_simulated!=="true") return;
+        if (args.simulated===false && rows[0].physics_simulated!=="false") return;
+
         let mesh = rows[0];
         mesh.timestamp = mesh.time;
         mesh.scale = mesh.scale || 1.0;
@@ -61,6 +69,7 @@ class MeshCurrentResolver extends BaseResolver {
         mesh.physics = {
           collision: mesh.physics_collision,
           stationary: mesh.physics_stationary,
+          simulated: mesh.physics_simulated,
         }
         return mesh;
       });

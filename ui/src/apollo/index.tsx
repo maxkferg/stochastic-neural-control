@@ -1,10 +1,16 @@
 import ApolloClient from "apollo-boost";
 
-//let host = document.location.protocol+"//"+document.location.hostname
-//let port = "8888";
+let uri;
+let local_host = "localhost";
+
+
+if (document.location.host==local_host){
+	uri = "http://localhost:8888/grapql"
+} else {
+	uri = "http://api.digitalpoints.io/graphql"
+}
+
 
 export default new ApolloClient({
-	//uri: "http://localhost:8888/graphql"
-	//uri: host + ":" + port + "/graphql"
-	uri: "http://api.digitalpoints.io/graphql"
+	uri: uri
 });

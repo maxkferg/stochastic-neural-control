@@ -135,7 +135,7 @@ class PersistentDrawerRight extends React.Component {
     return (
       <div className={classes.root}>
         <CssBaseline />
-        <AppBar position="fixed" className={classNames(classes.appBar, {[classes.appBarShift]: open,})}>
+        <AppBar position="fixed" onSelectedObject={this.onSelectedObject} className={classNames(classes.appBar, {[classes.appBarShift]: open,})}>
           {/*<Toolbar disableGutters={!open}>
             <IconButton
               color="inherit"

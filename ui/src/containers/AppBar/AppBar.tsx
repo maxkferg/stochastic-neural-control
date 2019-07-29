@@ -98,7 +98,7 @@ const styles = (theme: Theme) =>
 export interface Props extends WithStyles<typeof styles> {
   className: string
   position: "fixed" | "absolute" | "relative" | "static" | "sticky" | undefined
-  //onSelectedObject: Function
+  onSelectedObject: Function
 }
 
 
@@ -143,7 +143,7 @@ class PrimaryAppBar extends React.Component<Props, State> {
   };
 
   handleMenuClick = (objectId: string) => {
-    //this.props.onSelectedObject(objectId);
+    this.props.onSelectedObject(objectId);
     this.handleMenuClose();
   };
 
@@ -156,7 +156,7 @@ class PrimaryAppBar extends React.Component<Props, State> {
   };
 
   handleMobileMenuClick = (objectId: string) => {
-    //this.props.onSelectedObject(objectId);
+    this.props.onSelectedObject(objectId);
     this.handleMobileMenuClose();
   };
 
@@ -299,7 +299,7 @@ class PrimaryAppBar extends React.Component<Props, State> {
 }
 
 (PrimaryAppBar as React.ComponentClass<Props>).propTypes = {
-  //onSelectedObject: PropTypes.func.isRequired,
+  onSelectedObject: PropTypes.func.isRequired,
   className: PropTypes.string.isRequired,
   position: PropTypes.string.isRequired,
 } as any;

@@ -7,6 +7,7 @@ import TextField from '@material-ui/core/TextField';
 import Checkbox from '@material-ui/core/Checkbox';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormHelperText from '@material-ui/core/FormHelperText';
 import MenuItem from '@material-ui/core/MenuItem';
 import classNames from 'classnames';
 import apollo from '../../apollo';
@@ -39,6 +40,12 @@ const styles = (theme: any) => ({
     marginLeft: 2*theme.spacing.unit,
     marginRight: 2*theme.spacing.unit,
     width: "300px",
+  },
+  formHelperText: {
+    marginTop: "-8px",
+    marginBottom: "8px",
+    marginLeft: "16px",
+    marginRight: "16px",
   },
   checkbox: {
     margin: 2*theme.spacing.unit,
@@ -247,6 +254,7 @@ interface State {
   depth: number
   physicsCollision: boolean
   physicsStationary: boolean
+  physicsSimulated: boolean
 }
 
 class CreateGeometryForm extends React.Component<Props, State> {
@@ -271,6 +279,7 @@ class CreateGeometryForm extends React.Component<Props, State> {
     scale: 1,
     physicsCollision: false,
     physicsStationary: true,
+    physicsSimulated: true,
   };
 
   constructor(props: any){
@@ -310,6 +319,7 @@ class CreateGeometryForm extends React.Component<Props, State> {
       theta: this.state.theta,
       physicsCollision: this.state.physicsCollision,
       physicsStationary: this.state.physicsStationary,
+      physicsSimulated: this.state.physicsSimulated,
     }
     apollo.mutate({mutation: CREATE_MESH_QUERY, variables:vars}).then((result) => {
       this.props.onSuccess();
@@ -322,7 +332,7 @@ class CreateGeometryForm extends React.Component<Props, State> {
   }
 
   handleChange = (event: any) => {
-    if (typeof(event.checked) !== "undefined"){
+    if (event.target.type === "checkbox"){
       //@ts-ignore
       this.setState({ [event.target.value]: event.target.checked });
     } else if (event.target.type && event.target.type=="number"){
@@ -540,6 +550,10 @@ class CreateGeometryForm extends React.Component<Props, State> {
             }
             label="Enable Collision"
           />
+          <FormHelperText className={this.classes.formHelperText} >
+            If set to true, this item will be treated as solid and will
+            can collide with other objects.
+          </FormHelperText>
         </FormGroup>
         <FormGroup row>
           <FormControlLabel
@@ -555,6 +569,28 @@ class CreateGeometryForm extends React.Component<Props, State> {
             label="Fix Position"
           />
         </FormGroup>
+          <FormHelperText className={this.classes.formHelperText} >
+            If set to true, this object will always remain in the same place.
+            It will be assigned a mass of zero.
+          </FormHelperText>
+        <FormGroup row>
+          <FormControlLabel
+            control={
+              <Checkbox
+                color="primary"
+                className={this.classes.checkbox}
+                checked={this.state.physicsSimulated}
+                onChange={this.handleChange}
+                value="physicsSimulated"
+              />
+            }
+            label="Simulate Physics"
+          />
+          <FormHelperText className={this.classes.formHelperText} >
+            If set to true, this object will be added to the physics simulator.
+            The position of this object will be governed by the simulation.
+            Do not set this to true for real robots.</FormHelperText>
+          </FormGroup>
         <Button size="large" variant="outlined" onClick={this.handlePrev} className={this.classes.button}>
           Back
         </Button>

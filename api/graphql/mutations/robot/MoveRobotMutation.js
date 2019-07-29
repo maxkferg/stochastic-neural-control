@@ -150,11 +150,11 @@ class MoveRobotMutation extends BaseResolver {
   }
 
   async resolve(parentValue, args, ctx) {
-    
+
     if (!args.robotId){
       throw new Error("Invalid robot id");
     }
-    
+
     const duration = args.duration || 1000;
     const robotId = args.robotId;
 

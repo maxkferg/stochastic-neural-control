@@ -359,7 +359,6 @@ class BabylonViewer extends React.Component<Props, State> {
             prevMesh.rotationQuaternion = new BABYLON.Quaternion.RotationAxis(axis, newObject.theta);
             prevMesh.position = new BABYLON.Vector3(newObject.x, newObject.y, newObject.z);
             prevMesh.scaling = new BABYLON.Vector3(newObject.scale, newObject.scale, newObject.scale);
-            debugger
         } else {
             // Delete and recreate mesh
             //this.deleteObject(newObject.id);

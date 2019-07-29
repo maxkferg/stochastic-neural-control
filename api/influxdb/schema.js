@@ -1,9 +1,9 @@
 const Influx = require('influx');
 const config = require('config');
-const Logger = require('../logger');
+const logger = require('../logger');
 
 const influxHost = config.get('Influx.host');
-Logger.info("Creating new influx client "+influxHost);
+logger.info("Creating new influx client "+influxHost);
 
 const db = new Influx.InfluxDB({
  host: influxHost,
@@ -31,6 +31,7 @@ const db = new Influx.InfluxDB({
           geometry_directory: Influx.FieldType.STRING,
           physics_stationary: Influx.FieldType.BOOLEAN,
           physics_collision: Influx.FieldType.BOOLEAN,
+          physics_simulated: Influx.FieldType.BOOLEAN,
       }
    }, {
       measurement: 'robot_imu',

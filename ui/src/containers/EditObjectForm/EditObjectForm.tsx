@@ -94,9 +94,20 @@ class EditObjectForm extends React.Component<Props, State> {
   }
 
   componentDidMount(){
+    this.subscribeToObjectData(this.props.objectId);
+  }
+
+  componentDidUpdate(prevProps){
+    if (prevProps.objectId!==this.props.objectId){
+      this.querySubscription.unsubscribe();
+      this.subscribeToObjectData(this.props.objectId);
+    }
+  }
+
+  subscribeToObjectData(objectId){
     this.querySubscription = apollo.watchQuery<any>({
       query: MESH_BY_ID_QUERY,
-      variables: {id: this.props.objectId}
+      variables: {id: objectId}
     }).subscribe(({ data, loading }) => {
       this.setState({
         loading: loading,

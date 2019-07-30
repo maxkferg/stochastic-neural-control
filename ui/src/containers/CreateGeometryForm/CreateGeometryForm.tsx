@@ -11,7 +11,9 @@ import FormHelperText from '@material-ui/core/FormHelperText';
 import MenuItem from '@material-ui/core/MenuItem';
 import classNames from 'classnames';
 import apollo from '../../apollo';
-import { gql } from 'apollo-boost';
+import { loader } from 'graphql.macro';
+
+const CREATE_MESH_QUERY = loader('../../graphql/createMesh.gql');
 
 
 
@@ -168,65 +170,6 @@ let geometry = {
   }
 }
 
-const CREATE_MESH_QUERY = gql`
-  mutation CreateMesh(
-    $name: String!
-    $type: String!
-    $x: Float!
-    $y: Float!
-    $z: Float!
-    $theta: Float!
-    $width: Float!
-    $height: Float!
-    $depth: Float!
-    $scale: Float!
-    $filetype: String!
-    $filename: String!
-    $directory: String!
-    $physicsCollision: Boolean!
-    $physicsStationary: Boolean!
-  ) {
-      createMesh(
-        name: $name
-        type: $type
-        x: $x
-        y: $y
-        z: $z
-        theta: $theta
-        width: $width
-        height: $height
-        depth: $depth
-        scale: $scale
-        geometry: {
-          filetype: $filetype
-          filename: $filename
-          directory: $directory
-        }
-        physics: {
-          collision: $physicsCollision
-          stationary: $physicsStationary
-        }
-      ) {
-          id,
-          name,
-          type,
-          width,
-          height,
-          depth,
-          scale
-          geometry {
-            filetype
-            filename
-            directory
-          }
-          physics {
-            collision
-            stationary
-          }
-      }
-  }
-`;
-
 
 export interface Props extends WithStyles<typeof styles> {
   objectId: null | string
@@ -325,8 +268,8 @@ class CreateGeometryForm extends React.Component<Props, State> {
       this.props.onSuccess();
       this.setState({currentStep: 0});
       console.log("Mutation succeeded");
-    }).catch(() => {
-      console.log("Mutation failed")
+    }).catch((e) => {
+      console.log("Mutation failed", e);
     })
 
   }

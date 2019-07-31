@@ -13,6 +13,15 @@ const Mesh = require('./types/Mesh');
 const VelocityHistory = require('./types/VelocityHistory');
 
 
+const Subscription = new GraphQLObjectType({
+    name: 'RootSubscription',
+    description: 'Root Subscription',
+    fields: () => ({
+        meshesCurrent: new resolvers.Mesh.subscribeCurrentMeshes(new GraphQLList(Mesh), "Get current meshes", false),
+    })
+});
+
+
 const Query = new GraphQLObjectType({
     name: 'RootQuery',
     description: 'Root Query',
@@ -32,6 +41,7 @@ const Query = new GraphQLObjectType({
     })
 });
 
+
 const Mutation = new GraphQLObjectType({
     name: 'RootMutation',
     description: 'Root Mutation',
@@ -47,7 +57,8 @@ const Mutation = new GraphQLObjectType({
 
 const Schema = new GraphQLSchema({
     query: Query,
-    mutation: Mutation
+    mutation: Mutation,
+    subscription: Subscription
 });
 
 module.exports = Schema;

@@ -1,4 +1,4 @@
-const Path = require("path");
+const Path = require('path');
 const Influx = require('influx');
 const BaseResolver = require('../../BaseResolver');
 const {GraphQLNonNull, GraphQLString} = require('graphql');

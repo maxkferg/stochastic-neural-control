@@ -4,6 +4,8 @@ const cors = require('@koa/cors');
 const jwt = require('koa-jwt');
 const GraphQLHTTP = require('koa-graphql');
 const GraphQLSchema = require('./graphql/schema');
+const { ApolloServer, gql } = require('apollo-server-koa');
+const pubSub = require('./connectors/pubSub');
 const Logger = require('./logger');
 const database = require('./database');
 const auth = require('./auth');
@@ -15,8 +17,16 @@ const PORT = config.get('Webserver.port');
 
 
 async function init() {
-    //app.context.db = await database.start(__dirname + '/database/mongo', config.MONGO_URI);
-    app.context.influx = influxdb
+    
+    const server = new ApolloServer({ 
+        schema: GraphQLSchema,
+        introspection: true,
+        playground: true,
+        context: {
+            influx: influxdb,
+            pubSub: pubSub,
+        }
+    });
 
     app.use(cors());
 
@@ -34,13 +44,16 @@ async function init() {
     router.use(auth.validate);
 
     //initializing graphql
-    router.all('/graphql', GraphQLHTTP({
+    /*router.all('/graphql', GraphQLHTTP({
         schema: GraphQLSchema,
         graphiql: true
     }));
+    */
 
     // Graphql Playground
     //router.all('/playground', koaPlayground.default({ endpoint: '/graphql' }))
+
+
 
     //other protected url
     router.get('/protected', (ctx, next) => {
@@ -59,9 +72,14 @@ async function init() {
         Logger.error(err);
     });
 
-    app.listen(PORT, function () {
-        Logger.info("Server started on port =>", PORT);
+    httpServer = app.listen(PORT, function () {
+        Logger.info(`Server started on port => ${PORT}`);
+        Logger.info(`GraphQL ready at http://localhost:${PORT}${server.graphqlPath}`);
+        Logger.info(`Subscriptions ready at ws://localhost:${PORT}${server.subscriptionsPath}`)
     });
+
+    server.applyMiddleware({ app });
+    server.installSubscriptionHandlers(httpServer);
 }
 
 

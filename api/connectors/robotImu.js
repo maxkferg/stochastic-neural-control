@@ -78,7 +78,7 @@ function updateRobotImu(imuData){
         	angular_velocity_z: imuData.angular_velocity.z,
 		}
     }]).then(() => {
-    	Logger.log("Wrote new robot imu data");
+    	Logger.debug("Wrote new robot imu data");
     }).catch(e => {
     	Logger.error("Robot position failed:", e.message);
     });

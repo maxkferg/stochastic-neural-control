@@ -7,6 +7,7 @@
     "@material-ui/core": "^3.9.3",
     "@material-ui/icons": "^3.0.2",
     "apollo-boost": "^0.3.1",
+    "apollo-link-ws": "^1.0.18",
     "babylonjs": "3.3.0",
     "babylonjs-gui": "3.3.0",
     "babylonjs-loaders": "^3.3.0",
@@ -29,6 +30,7 @@
     "reactstrap": "^8.0.0",
     "redux": "^4.0.1",
     "redux-saga": "^1.0.2",
+    "subscriptions-transport-ws": "^0.9.16",
     "todomvc-app-css": "^2.1.0",
     "typescript": "^3.4.4"
   },

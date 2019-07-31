@@ -17,6 +17,7 @@
   "dependencies": {
     "@koa/cors": "^3.0.0",
     "@types/node": "^12.6.8",
+    "apollo-server-koa": "^2.8.0",
     "async": "^2.6.2",
     "config": "^3.2.2",
     "dotenv": "^5.0.1",

@@ -5,6 +5,7 @@ const Influx = require('influx');
 const influx = require('../influxdb');
 const UpdatePolicy = require('./updatePolicy');
 const logger = require('../logger');
+const pubSub = require('./pubSub');
 
 
 const Consumer = kafka.Consumer;
@@ -13,12 +14,15 @@ logger.info("Creating Kafka Consumer (robot position): "+kafkaHost);
 const client = new kafka.KafkaClient({kafkaHost: kafkaHost});
 const MIN_UPDATE_INTERVAL = 1*1000 // Never update faster than 1 Hz
 const MAX_UPDATE_INTERVAL = 10*1000 // Always update every 10s
+const MESH_POSITION_TOPIC = "mesh_position";
 
 const consumer = new Consumer(
     client,
     [{ topic: 'robot.events.odom', partition: 0 }],
     { autoCommit: true }
 );
+
+
 
 /**
  * setupConsumer
@@ -33,9 +37,6 @@ function setupConsumer(updatePolicy){
 	consumer.on('message', function(message){
 		//console.log("GOT message",message)
 		message = JSON.parse(message.value)
-		logger.info("Wrote new robot pos data");
-		// TODO: Update policy should depend on robotId
-		if (!updatePolicy.mightUpdate()) return;
 		if (!message.frame_id == "odom") return;
 		if (!message.child_frame_id == "base_footprint") return;
 		x = message.pose.pose.position.x
@@ -46,17 +47,39 @@ function setupConsumer(updatePolicy){
 			message.pose.pose.orientation.y,
 			message.pose.pose.orientation.z,
 			message.pose.pose.orientation.w,
-		]);
+		]);		
 		theta = euler[0]+Math.PI/2; // Mesh is wrong
+
+		// Publish to any Graphql subscribers
+		pubSub.publish(MESH_POSITION_TOPIC, {
+			id: message.robot.id, 
+			position: {
+				x: x,
+				y: y,
+				z: z,
+				theta
+			}
+		});
+
 		let data = {
 			x: x,
 			y: y,
 			z: z,
 			theta: theta
 		}
+
+		// Update the robot position at every step (pubSub)
+		pubSub.publish(MESH_POSITION_TOPIC, data);
+
+		// TODO: Update policy should depend on robotId
+		if (!updatePolicy.mightUpdate()) return;
+		
+
+		// Update influxdb
 		if (updatePolicy.shouldUpdate(data)){
 			updatePolicy.willUpdate(data);
 			updateRobotPosition(message.robot.id, x, y, z, theta);
+			logger.debug("Wrote new robot pos data");
 		}
 	});
 };

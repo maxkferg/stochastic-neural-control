@@ -10,6 +10,7 @@ const mutations = require('./mutations');
 const auth = require('../auth');
 const User = require('./types/User');
 const Mesh = require('./types/Mesh');
+const MeshPosition = require('./types/MeshPosition');
 const VelocityHistory = require('./types/VelocityHistory');
 
 
@@ -17,7 +18,7 @@ const Subscription = new GraphQLObjectType({
     name: 'RootSubscription',
     description: 'Root Subscription',
     fields: () => ({
-        meshesCurrent: new resolvers.Mesh.subscribeCurrentMeshes(new GraphQLList(Mesh), "Get current meshes", false),
+        meshPosition: new resolvers.Mesh.subscribeMeshPosition(MeshPosition, "Get notified when any mesh moves", false),
     })
 });
 

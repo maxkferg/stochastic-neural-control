@@ -1,4 +1,4 @@
-# DBM Server
+# Digital Points
 A real-time geometry server for applications in robotics and building management.
 
 # Quick start

@@ -1,19 +1,19 @@
 version: '2.1'
 services:
-  #ui:
-  #  image: digitalpoints/ui:latest
-  #  ports:
-  #    - '80:80'
+  ui:
+    image: digitalpoints/ui:latest
+    ports:
+      - '80:80'
 
-  #api:
-  #  image: digitalpoints/api:latest
-  #  ports:
-  #    - '8888:8888'
-  #  links:
-  #    - influxdb
-  #  environment:
-  #    - INFLUX_HOST=influxdb:8086
-  #    - KAFKA_HOST=kafka-0.digitalpoints.io:19092
+  api:
+    image: digitalpoints/api:latest
+    ports:
+      - '8888:8888'
+    links:
+      - influxdb
+    environment:
+      - INFLUX_HOST=influxdb:8086
+      - KAFKA_HOST=kafka-0.digitalpoints.io:19092
 
   influxdb:
     image: influxdb:latest

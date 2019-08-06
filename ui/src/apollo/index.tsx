@@ -5,7 +5,7 @@ let local_host = "localhost";
 
 
 if (document.location.host==local_host){
-	uri = "http://localhost:8888/grapql"
+	uri = "http://localhost:8888/graphql"
 } else {
 	uri = "http://api.digitalpoints.io/graphql"
 }

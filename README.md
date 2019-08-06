@@ -1,9 +1,32 @@
 # Digital Points
 A real-time geometry server for applications in robotics and building management.
 
-# Quick start
-docker build -t maxkferg/dbm-ui ui
+![Digital Points UI](docs/screenshot.png)
+
+## Quick start
+```sh
+docker build -t digitalpoints/api:latest api
+docker build -t digitalpoints/ui:latest ui
 docker-compose up
+```
+
+## Deploying
+
+Push to dockerhub and patch GKE cluster
+
+```sh
+export TAG=12
+# UI
+docker build -t digitalpoints/ui:production-$TAG ui
+docker push digitalpoints/ui:production-$TAG
+kubectl set image deployment/ui-deployment ui=digitalpoints/ui:production-$TAG
+
+# API
+docker build -t digitalpoints/api:production-$TAG api
+docker push digitalpoints/api:production-$TAG
+kubectl set image deployment/api-deployment api=digitalpoints/api:production-$TAG
+```
+
 
 ## About
 The design principles of the DBM-server:

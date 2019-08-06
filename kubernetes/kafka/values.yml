@@ -4,13 +4,17 @@ external:
    distinct: true
    servicePort: 19092
    firstListenerPort: 31090
-   domain: example.com
+   domain: digitalpoints.io
    loadBalancerIP: []
    init:
      image: "lwolf/kubectl_deployer"
 
+persistence:
+    size: 40Gi
+
 configurationOverrides:
+   "offsets.retention.hours": 48
    "advertised.listeners": |-
-     EXTERNAL://kafka-$((${KAFKA_BROKER_ID})).example.com:19092
+     EXTERNAL://kafka-$((${KAFKA_BROKER_ID})).digitalpoints.io:19092
    "listener.security.protocol.map": |-
      PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT

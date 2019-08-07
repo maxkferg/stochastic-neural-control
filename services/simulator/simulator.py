@@ -61,9 +61,12 @@ class Simulator():
             relative_url = relative_url.strip('./')
             position = [mesh['x'], mesh['y'], mesh['z']]
             is_stationary = mesh['physics']['stationary']
+            is_simulated = mesh['physics']['simulated']
             mesh_id = mesh['id']
-            if mesh['type']=='robot':
+            if mesh['type']=='robot' and is_simulated:
                 self.robots[mesh_id] = self._setup_turtlebot(position)
+            elif mesh['type']=='robot':
+                logging.info('Ignoring real robot with name'+mesh['name'])
             else:
                 url = os.path.join(self.geometry_endpoint, relative_url)
                 fp = os.path.join('tmp/', relative_url)
@@ -80,8 +83,8 @@ class Simulator():
             "target_pos": [0,0,0],
             "resolution": 0.05,
             "power": 1.0,
-            "linear_power": float(os.environ.get('LINEAR_SPEED', 50)), 
-            "angular_power": float(os.environ.get('ANGULAR_SPEED', 10)), 
+            "linear_power": float(os.environ.get('LINEAR_SPEED', 50)),
+            "angular_power": float(os.environ.get('ANGULAR_SPEED', 10)),
         }
         logging.info("Creating Turtlebot at: {}".format(position))
         turtlebot = Turtlebot(physics, config)
@@ -115,7 +118,7 @@ class Simulator():
         angular_velocity = 0
         start = time.time()
         steps = 0
-        
+
         while True:
             result = self.kafka_consumer.poll()
             for partition, messages in result.items():

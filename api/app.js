@@ -17,11 +17,12 @@ const PORT = config.get('Webserver.port');
 
 
 async function init() {
-    
-    const server = new ApolloServer({ 
+
+    const server = new ApolloServer({
         schema: GraphQLSchema,
         introspection: true,
         playground: true,
+        cors: true,
         context: {
             influx: influxdb,
             pubSub: pubSub,
@@ -42,18 +43,6 @@ async function init() {
 
     //custom method to use parsed token data to validate and populate user
     router.use(auth.validate);
-
-    //initializing graphql
-    /*router.all('/graphql', GraphQLHTTP({
-        schema: GraphQLSchema,
-        graphiql: true
-    }));
-    */
-
-    // Graphql Playground
-    //router.all('/playground', koaPlayground.default({ endpoint: '/graphql' }))
-
-
 
     //other protected url
     router.get('/protected', (ctx, next) => {

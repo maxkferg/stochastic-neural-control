@@ -112,9 +112,9 @@ class MeshCreateMutation extends BaseResolver {
                 geometry_filetype: args.geometry.filetype,
                 geometry_filename: args.geometry.filename,
                 geometry_directory: args.geometry.directory,
-                physics_stationary: args.physics.stationary || true,
-                physics_collision: args.physics.collision  || false,
-                physics_simulated: args.physics.simulated  || true,
+                physics_stationary: args.physics.stationary,
+                physics_collision: args.physics.collision,
+                physics_simulated: args.physics.simulated,
             },
           }
         ]).then(() => {

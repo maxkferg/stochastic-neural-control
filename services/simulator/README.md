@@ -12,7 +12,7 @@ conda activate sim
 
 Building the docker image
 ```
-export TAG=2
+export TAG=15
 docker build -t digitalpoints/physics:production-$TAG .
 ```
 
@@ -31,5 +31,5 @@ docker run -it \
 Deploying
 ```
 docker push digitalpoints/physics:production-$TAG
-kubectl set image deployment/api-deployment api=digitalpoints/physics:production-$TAG
+kubectl set image deployment/physics-deployment physics=digitalpoints/physics:production-$TAG
 ```

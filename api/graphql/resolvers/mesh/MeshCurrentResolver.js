@@ -41,7 +41,7 @@ class MeshCurrentResolver extends BaseResolver {
         SHOW TAG VALUES from mesh_position
         WITH key = id`
     }
-    
+
     console.log(parentValue, args, ctx)
 
     const objectIds = await ctx.influx.query(query);

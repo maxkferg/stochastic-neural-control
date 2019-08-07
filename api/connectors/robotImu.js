@@ -32,7 +32,7 @@ function setupConsumer(updatePolicy){
 
 	consumer.on('message', function(message){
 		if (!updatePolicy.mightUpdate()) return;
-		message = JSON.parse(JSON.parse(message.value));
+		message = JSON.parse(message.value);
 		if (!message.frame_id == "gyro_link") return;
 		let imuData = {
 			linear_acceleration: {

@@ -6,7 +6,7 @@ const influx = require('../influxdb');
 const UpdatePolicy = require('./updatePolicy');
 const logger = require('../logger');
 const pubSub = require('./pubSub');
-
+const validator = require('./validator');
 
 const Consumer = kafka.Consumer;
 const kafkaHost = config.get("Kafka.host");
@@ -23,6 +23,10 @@ const consumer = new Consumer(
 );
 
 
+function isString(message){
+	return (typeof message === 'string' || message instanceof String);
+}
+
 
 /**
  * setupConsumer
@@ -35,10 +39,16 @@ function setupConsumer(updatePolicy){
 	let euler;
 
 	consumer.on('message', function(message){
-		//console.log("GOT message",message)
-		message = JSON.parse(message.value)
+		message = JSON.parse(message.value);
+		v = validator.validatePose(message)
+
+		if (v.errors.length){
+			logger.error("Message validation failed: " + v.errors[0].stack);
+			return;
+		}
 		if (!message.frame_id == "odom") return;
 		if (!message.child_frame_id == "base_footprint") return;
+
 		x = message.pose.pose.position.x
 		y = message.pose.pose.position.z
 		z = message.pose.pose.position.y
@@ -47,12 +57,12 @@ function setupConsumer(updatePolicy){
 			message.pose.pose.orientation.y,
 			message.pose.pose.orientation.z,
 			message.pose.pose.orientation.w,
-		]);		
+		]);
 		theta = euler[0]+Math.PI/2; // Mesh is wrong
 
 		// Publish to any Graphql subscribers
 		pubSub.publish(MESH_POSITION_TOPIC, {
-			id: message.robot.id, 
+			id: message.robot.id,
 			position: {
 				x: x,
 				y: y,
@@ -73,7 +83,6 @@ function setupConsumer(updatePolicy){
 
 		// TODO: Update policy should depend on robotId
 		if (!updatePolicy.mightUpdate()) return;
-		
 
 		// Update influxdb
 		if (updatePolicy.shouldUpdate(data)){
@@ -126,7 +135,8 @@ function updateRobotPosition(robotId, x, y, z, theta){
 	            geometry_filename: robot.geometry_filename,
 	            geometry_directory: robot.geometry_directory,
 	            physics_stationary: robot.physics_stationary,
-	            physics_collision: robot.physics_collision
+	            physics_collision: robot.physics_collision,
+	            physics_simulated: robot.physics_simulated,
         	}
         }]);
     }).then(() => {

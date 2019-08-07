@@ -6,31 +6,8 @@ import PropTypes from 'prop-types';
 import BabylonViewer from '../BabylonViewer/BabylonViewer';
 import { withStyles, WithStyles, Theme } from '@material-ui/core/styles';
 import { gql } from "apollo-boost";
-//import { Query } from "react-apollo";
-//import { WebSocketLink } from 'apollo-link-ws';
-//import ApolloClient from 'apollo-client';
 import GraphqlClient from '../../apollo';
-
-
-import { WebSocketLink } from "apollo-link-ws";
-import { SubscriptionClient } from "subscriptions-transport-ws";
-
-const GRAPHQL_ENDPOINT = "ws://localhost:8888/graphql";
-
-const client = new SubscriptionClient(GRAPHQL_ENDPOINT, {
-  reconnect: true
-});
-
-const link = new WebSocketLink(client);
-
-import { ApolloClient } from 'apollo-client';
-import { InMemoryCache } from 'apollo-cache-inmemory';
-
-const WSClient = new ApolloClient({
-  link: link,
-  cache: new InMemoryCache()
-});
-
+import SubscriptionClient from '../../apollo/websocket';
 
 
 
@@ -62,7 +39,7 @@ const GET_OBJECTS = gql`
 `;
 
 
-const SUBSCRIBE_MESH_POSITION = gql`    
+const SUBSCRIBE_MESH_POSITION = gql`
   subscription SubscribeMesh($id: String) {
     meshPosition(id: $id) {
         id,
@@ -120,14 +97,14 @@ class BuildingViewer extends React.Component<Props, State> {
         let self = this;
         let meshesCurrent = data.data.meshesCurrent;
 
-        this.setState({ 
+        this.setState({
           loading: false,
           meshesCurrent: meshesCurrent,
         });
 
         for (let i=0; i<meshesCurrent.length; i++){
           //let mesh = meshesCurrent[i];
-          WSClient.subscribe({
+          SubscriptionClient.subscribe({
             query: SUBSCRIBE_MESH_POSITION,
           }).subscribe({
             next (data) {

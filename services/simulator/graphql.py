@@ -19,6 +19,7 @@ getCurrentGeometry = '''
       directory
     }
     physics {
+      simulated
       stationary
     }
   }

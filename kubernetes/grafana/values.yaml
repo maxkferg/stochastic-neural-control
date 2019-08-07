@@ -1,0 +1,14 @@
+ingress:
+  enabled: true
+  hosts: grafana.digitalpoints.io
+
+persistence:
+  enabled: true
+  storageClassName: "standard"
+  accessModes:
+    - ReadWriteMany
+  size: 10Gi
+  annotations: {}
+  subPath: ""
+adminUser: admin
+adminPassword: password

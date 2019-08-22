@@ -9,7 +9,7 @@ persistence:
   size: 10Gi
 
 service:
-  type: NodePort
+  type: LoadBalancer
   externalPort: 80
 
 adminUser: admin

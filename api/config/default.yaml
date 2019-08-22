@@ -19,3 +19,8 @@ Robot:
 # JST Login secret
 JWT:
   secret: 'NotSoSecretAfterAll'
+
+# Google
+GOOGLE:
+  PROJECT_ID: 'stanford-projects'
+  ROBOT_MAP_BUCKET: 'digital-points-maps'

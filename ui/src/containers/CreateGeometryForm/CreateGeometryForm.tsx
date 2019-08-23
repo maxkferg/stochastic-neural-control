@@ -22,15 +22,15 @@ const styles = (theme: any) => ({
     display: 'flex',
   },
   formTitle: {
-    marginLeft: 2*theme.spacing.unit,
-    marginRight: 2*theme.spacing.unit,
+    marginLeft: theme.spacing(2),
+    marginRight: theme.spacing(2),
     marginTop: "20px",
     marginBottom: "20px",
   },
   button: {
-    margin: theme.spacing.unit,
-    marginLeft: 2*theme.spacing.unit,
-    marginRight: 2*theme.spacing.unit,
+    margin: theme.spacing(),
+    marginLeft: theme.spacing(2),
+    marginRight: theme.spacing(2),
     marginTop: "20px",
     minWidth: "70px",
   },
@@ -38,9 +38,9 @@ const styles = (theme: any) => ({
     zIndex: theme.zIndex.drawer + 1,
   },
   textField: {
-    margin: theme.spacing.unit,
-    marginLeft: 2*theme.spacing.unit,
-    marginRight: 2*theme.spacing.unit,
+    margin: theme.spacing(),
+    marginLeft: theme.spacing(2),
+    marginRight: theme.spacing(2),
     width: "300px",
   },
   formHelperText: {
@@ -50,7 +50,7 @@ const styles = (theme: any) => ({
     marginRight: "16px",
   },
   checkbox: {
-    margin: 2*theme.spacing.unit,
+    margin: theme.spacing(2),
   },
   toolbar: theme.mixins.toolbar,
   hide: {

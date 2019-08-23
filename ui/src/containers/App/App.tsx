@@ -14,8 +14,10 @@ import AppBar from '../AppBar/AppBar';
 import EditObjectForm from '../EditObjectForm/EditObjectForm';
 import CreateGeometryForm from '../CreateGeometryForm/CreateGeometryForm';
 import BuildingViewer from '../BuildingViewer/BuildingViewer';
+import NavDrawer from '../NavDrawer';
 
 const drawerWidth = 340;
+const leftDrawWidth = 240;
 
 const styles = theme => ({
   root: {
@@ -35,6 +37,14 @@ const styles = theme => ({
     }),
     marginRight: drawerWidth,
   },
+  appBarShiftLeft: {
+      marginLeft: leftDrawWidth,
+      width: `calc(100% - ${leftDrawWidth}px)`,
+      transition: theme.transitions.create(['width', 'margin'], {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.enteringScreen,
+      }),
+  },
   menuButton: {
     marginLeft: 12,
     marginRight: 20,
@@ -43,7 +53,7 @@ const styles = theme => ({
     display: 'none',
   },
   fab: {
-    margin: theme.spacing.unit,
+    margin: theme.spacing(),
     position: 'absolute'  as 'absolute',
     bottom: 30 + "px",
     right: 30 + "px",
@@ -71,6 +81,11 @@ const styles = theme => ({
     }),
     marginRight: -drawerWidth,
   },
+  contentError: {
+    width: "1800px",
+    marginTop: "50px",
+    marginLeft: "50px",
+  },
   contentShift: {
     transition: theme.transitions.create('margin', {
       easing: theme.transitions.easing.easeOut,
@@ -85,9 +100,11 @@ const styles = theme => ({
 class PersistentDrawerRight extends React.Component {
   state = {
     open: false,
+    navMenuOpen: false,
     creatingGeometry: true,
     editingObject: false,
     selectedObjectId: "",
+    currentView: "Model",
   };
 
   handleDrawerOpen = () => {
@@ -97,6 +114,24 @@ class PersistentDrawerRight extends React.Component {
   handleDrawerClose = () => {
     this.setState({ open: false });
   };
+
+  /**  
+   * handleLeftDrawerClose
+   * Call this function whenever the left draw is closed
+   */
+  handleLeftDrawerClose = () => {
+    this.setState({ navMenuOpen: false });
+  };
+
+  /**
+   * setView
+   * Change the current view. 
+   * TODO: This should be replaced with proper routing
+   */
+  setView = (viewName: string) => {
+    console.log("Setting view to ", viewName)
+    this.setState({ currentView: viewName });
+  }
 
   createGeometry = () => {
     this.setState({
@@ -109,20 +144,60 @@ class PersistentDrawerRight extends React.Component {
   onSelectedObject = (objectId: string) => {
     this.setState({
       open: true,
+      navMenuOpen: false,
       editingObject: true,
       creatingGeometry: false,
       selectedObjectId: objectId,
     });
   }
 
+  /** 
+   * handleNavMenuClick
+   * Expand the navigation draw
+   * Called when the MiniNav button is clicked in the AppBar
+   */
+  handleNavMenuClick = () => {
+    this.setState({navMenuOpen: true})
+  }
+
   renderRightForm(){
     if (this.state.creatingGeometry){
-      return <CreateGeometryForm onSuccess={this.handleDrawerClose} onCancel={this.handleDrawerClose} />
+      return <CreateGeometryForm objectId={this.state.selectedObjectId} onSuccess={this.handleDrawerClose} onCancel={this.handleDrawerClose} />
     } else if (this.state.editingObject){
       return <EditObjectForm objectId={this.state.selectedObjectId} onSuccess={this.handleDrawerClose} onCancel={this.handleDrawerClose} />
     } else {
       console.error("Should always be creating or editing an object");
       return <p>Edit or create an object</p>
+    }
+  }
+
+  renderMainContent(){
+    // @ts-ignore
+    const { classes } = this.props;
+    if (this.state.currentView==="Model"){
+      return (
+        <div>
+            <div className={classes.drawerHeader} />
+            <BuildingViewer onSelectedObject={this.onSelectedObject} />
+            <Fab color="primary" aria-label="Add" className={classes.fab} onClick={this.createGeometry}>
+              <AddIcon />
+            </Fab>
+        </div>
+      )
+    } else if (this.state.currentView==="Map"){
+      return (
+        <div>
+            <div className={classes.drawerHeader} />
+            <p className={classes.contentError}>MAP</p>
+         </div>
+      )
+    } else {
+      return (
+        <div>
+            <div className={classes.drawerHeader} />
+            <p className={classes.contentError}>Unknown view: {this.state.currentView}</p>
+         </div>
+      )   
     }
   }
 
@@ -135,31 +210,29 @@ class PersistentDrawerRight extends React.Component {
     return (
       <div className={classes.root}>
         <CssBaseline />
-        <AppBar position="fixed" onSelectedObject={this.onSelectedObject} className={classNames(classes.appBar, {[classes.appBarShift]: open,})}>
-          {/*<Toolbar disableGutters={!open}>
-            <IconButton
-              color="inherit"
-              aria-label="Open drawer"
-              onClick={this.handleDrawerOpen}
-              className={classNames(classes.menuButton, open && classes.hide)}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Typography variant="h6" color="inherit" noWrap>
-              Persistent drawer
-            </Typography>
-          </Toolbar>*/}
+        <AppBar 
+          position="fixed"
+          leftOpen={this.state.navMenuOpen}
+          rightOpen={open}
+          onSelectedObject={this.onSelectedObject} 
+          onNavMenuClick={this.handleNavMenuClick}
+          className={classNames(classes.appBar, {
+              [classes.appBarShift]: open,
+              [classes.appBarShiftLeft]: this.state.navMenuOpen,
+            })
+          }>
         </AppBar>
+        <NavDrawer 
+          open={this.state.navMenuOpen} 
+          onClose={this.handleLeftDrawerClose} 
+          onClick={this.setView}
+        />
         <main
           className={classNames(classes.content, {
             [classes.contentShift]: open,
           })}
         >
-          <div className={classes.drawerHeader} />
-          <BuildingViewer onSelectedObject={this.onSelectedObject} />
-          <Fab color="primary" aria-label="Add" className={classes.fab} onClick={this.createGeometry}>
-            <AddIcon />
-          </Fab>
+          {this.renderMainContent()}
         </main>
         <Drawer
           className={classes.drawer}

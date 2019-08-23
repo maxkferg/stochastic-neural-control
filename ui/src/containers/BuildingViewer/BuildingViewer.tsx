@@ -5,60 +5,17 @@ import * as React from 'react';
 import PropTypes from 'prop-types';
 import BabylonViewer from '../BabylonViewer/BabylonViewer';
 import { withStyles, WithStyles, Theme } from '@material-ui/core/styles';
-import { gql } from "apollo-boost";
 import GraphqlClient from '../../apollo';
 import SubscriptionClient from '../../apollo/websocket';
+import { loader } from 'graphql.macro';
 
-
-
-const GET_OBJECTS = gql`
-    query GetMesh {
-        meshesCurrent(deleted: false) {
-            id
-            name
-            type
-            width
-            height
-            depth
-            scale
-            x
-            y
-            z
-            theta
-            geometry {
-              filetype
-              filename
-              directory
-            }
-            physics {
-              collision
-              stationary
-            }
-        }
-    }
-`;
-
-
-const SUBSCRIBE_MESH_POSITION = gql`
-  subscription SubscribeMesh($id: String) {
-    meshPosition(id: $id) {
-        id,
-        position {
-          x:x,
-          y:y,
-          z:z,
-          theta:theta
-        }
-    }
-}
-`;
-
-
+const GET_OBJECTS = loader('../../graphql/getMesh.gql');
+const SUBSCRIBE_MESH_POSITION = loader('../../graphql/subscribeMesh.gql');
 
 
 const styles = (theme: Theme) => ({
   fab: {
-    margin: theme.spacing.unit,
+    margin: theme.spacing(),
     position: "absolute",
     bottom: 30 + "px",
     right: 30 + "px",

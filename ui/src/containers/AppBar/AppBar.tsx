@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import React from 'react';
 import PropTypes from 'prop-types';
 import AppBar from '@material-ui/core/AppBar';
@@ -27,9 +28,13 @@ const styles = (theme: Theme) =>
   createStyles({
     root: {
       width: '100%',
+      zIndex: theme.zIndex.drawer + 1,
     },
     grow: {
       flexGrow: 1,
+    },
+    hide: {
+      display: 'none',
     },
     menuButton: {
       marginLeft: -12,
@@ -48,16 +53,16 @@ const styles = (theme: Theme) =>
       '&:hover': {
         backgroundColor: fade(theme.palette.common.white, 0.25),
       },
-      marginRight: theme.spacing.unit * 2,
+      marginRight: theme.spacing(2),
       marginLeft: 0,
       width: '100%',
       [theme.breakpoints.up('sm')]: {
-        marginLeft: theme.spacing.unit * 3,
+        marginLeft: theme.spacing(3),
         width: 'auto',
       },
     },
     searchIcon: {
-      width: theme.spacing.unit * 9,
+      width: theme.spacing(9),
       height: '100%',
       position: 'absolute',
       pointerEvents: 'none',
@@ -70,10 +75,10 @@ const styles = (theme: Theme) =>
       width: '100%',
     },
     inputInput: {
-      paddingTop: theme.spacing.unit,
-      paddingRight: theme.spacing.unit,
-      paddingBottom: theme.spacing.unit,
-      paddingLeft: theme.spacing.unit * 10,
+      paddingTop: theme.spacing(),
+      paddingRight: theme.spacing(),
+      paddingBottom: theme.spacing(),
+      paddingLeft: theme.spacing(10),
       transition: theme.transitions.create('width'),
       width: '100%',
       [theme.breakpoints.up('md')]: {
@@ -98,7 +103,10 @@ const styles = (theme: Theme) =>
 export interface Props extends WithStyles<typeof styles> {
   className: string
   position: "fixed" | "absolute" | "relative" | "static" | "sticky" | undefined
-  onSelectedObject: Function
+  onSelectedObject: Function,
+  onNavMenuClick: Function,
+  leftOpen: boolean,
+  rightOpen: boolean,
 }
 
 
@@ -159,6 +167,12 @@ class PrimaryAppBar extends React.Component<Props, State> {
     this.props.onSelectedObject(objectId);
     this.handleMobileMenuClose();
   };
+
+  handleNavMenuClick = () => {
+    if (this.props.onNavMenuClick){
+      this.props.onNavMenuClick();
+    }
+  }
 
   handleDelete = async (objectId: string) => {
     try {
@@ -250,7 +264,14 @@ class PrimaryAppBar extends React.Component<Props, State> {
       <div className={classes.root}>
         <AppBar position={this.props.position} className={this.props.className}>
           <Toolbar>
-            <IconButton className={classes.menuButton} color="inherit" aria-label="Open drawer">
+            <IconButton 
+              onClick={this.handleNavMenuClick} 
+              color="inherit" 
+              aria-label="Open drawer"
+              className={clsx(classes.menuButton, {
+                [classes.hide]: this.props.leftOpen,
+              })}
+            >
               <MenuIcon />
             </IconButton>
             <Typography className={classes.title} variant="h6" color="inherit" noWrap>
@@ -299,9 +320,12 @@ class PrimaryAppBar extends React.Component<Props, State> {
 }
 
 (PrimaryAppBar as React.ComponentClass<Props>).propTypes = {
+  onNavMenuClick: PropTypes.func,
   onSelectedObject: PropTypes.func.isRequired,
   className: PropTypes.string.isRequired,
   position: PropTypes.string.isRequired,
+  leftOpen: PropTypes.bool,
+  rightOpen: PropTypes.bool,
 } as any;
 
 export default withStyles(styles)(PrimaryAppBar);

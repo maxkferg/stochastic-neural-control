@@ -1,0 +1,11 @@
+subscription SubscribeMesh($id: String) {
+    meshPosition(id: $id) {
+        id,
+        position {
+          x:x,
+          y:y,
+          z:z,
+          theta:theta
+        }
+    }
+}

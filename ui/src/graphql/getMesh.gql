@@ -1,11 +1,16 @@
 query GetMesh {
     meshesCurrent(deleted: false) {
-        id,
-        name,
-        width,
-        height,
-        depth,
-        scale,
+        id
+        name
+        type
+        width
+        height
+        depth
+        scale
+        x
+        y
+        z
+        theta
         geometry {
           filetype
           filename

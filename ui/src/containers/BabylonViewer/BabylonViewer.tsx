@@ -41,7 +41,7 @@ export type SceneOptions = {
 
 const styles = (theme: Theme) => ({
   fab: {
-    margin: theme.spacing.unit,
+    margin: theme.spacing(),
     position: "absolute",
     bottom: 30 + "px",
     right: 30 + "px",

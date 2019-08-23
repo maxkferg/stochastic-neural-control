@@ -3,23 +3,26 @@ import math
 import time
 import yaml
 import json
+import trimesh
+import pymesh
 import urllib
 import shutil
+import kafka
 import logging
 import argparse
+import meshcut
+import numpy as np
+import transforms3d
+import plotly.graph_objs as go
 from graphqlclient import GraphQLClient
 from graphql import getCurrentGeometry
-from environment import Environment
-from kafka import KafkaProducer, KafkaConsumer
-from robots.robot_models import Turtlebot
-from robots.robot_messages import get_odom_message
+from kafka import KafkaProducer
 
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
 
-parser = argparse.ArgumentParser(description='Simulate robot movement.')
+parser = argparse.ArgumentParser(description='Convert 3D geometry to 2D geometry.')
 parser.add_argument('--headless', action='store_true', help='run without GUI components')
-
-
+parser.add_argument('--height', type=float, default=0.1, help='height to generate map')
 
 
 class MapBuilder():
@@ -28,18 +31,14 @@ class MapBuilder():
     Publishes updates to the 2D map as the 3D map changes
     """
 
-
-    def __init__(self, env, config):
-        self.env = env
-        self.robots = {}
+    def __init__(self, furniture_height, config):
+        self.furniture_height = furniture_height
         self.graphql_endpoint = config["API"]["host"]
         self.geometry_endpoint = config["Geometry"]["host"]
         self.graphql_client = GraphQLClient(self.graphql_endpoint)
         #self.kafka_consumer = self._setup_kafka_consumer(config["Kafka"]["host"])
         self.kafka_producer = self._setup_kafka_producer(config["Kafka"]["host"])
-        self._setup_geometry()
-        self.env.start()
-
+        self.canvas = go.Figure()
 
     #def _setup_kafka_consumer(self, bootstrap_servers):
     #    topic = "robot.commands.velocity"
@@ -53,52 +52,29 @@ class MapBuilder():
     def _get_initial_geometry(self):
         result = self.graphql_client.execute(getCurrentGeometry)
         result = json.loads(result)
-        robot_geometry = []
-        building_geometry = []
-
-        for mesh in result['data']['meshesCurrent']:
-            logging.info('Loading {}'.format(mesh['name']))
-            relative_url = os.path.join(mesh['geometry']['directory'], mesh['geometry']['filename'])
-            relative_url = relative_url.strip('./')
-            position = [mesh['x'], mesh['y'], mesh['z']]
-            is_stationary = mesh['physics']['stationary']
-            is_simulated = mesh['physics']['simulated']
-            mesh_id = mesh['id']
-            url = os.path.join(self.geometry_endpoint, relative_url)
-            fp = os.path.join('tmp/', relative_url)
-            self._download_geometry_resource(url, fp)
-            if mesh['type']=='robot' and is_simulated:
-                robot_geometry.append(fp)
-            else:
-                building_geometry.append(fp)
-        return building_geometry, robot_geometry
+        return result['data']['meshesCurrent']
 
 
-    def _convert_to_polygons(self, mesh, furniture_height):
+    def _convert_to_polygons(self, mesh, furniture_height, offset):
         """
         Convert a 3D object to a 2D polygon
         Slices the mesh at self.furniture_height and then returns all polygons on this plane
         """
-        v_min = np.min(mesh.vertices, axis=-1)
-        v_max = np.max(mesh.vertices, axis=-1)
-        box_min = np.array([2*v_min[0], 2*v_min[1], furniture_height])
-        box_max = np.array([2*v_max[0], 2*v_max[1], 2*v_max[2]])
-        box = pymesh.generate_box_mesh(box_min, box_max)
-        sliced = pymesh.boolean(box, mesh, "difference")
-        sliced.enable_connectivity()
-        seen = set()
-        polygons = []
-        for seed_index in range(mesh.num_vertices):
-            if seed_index in seen:
-                continue
-            seen.add(seed_index)
-            if mesh.vertices[seed_index,2] != furniture_height:
-                continue
-            # We can find a polygon connected to this index
-            polygon, indices = _trace_polygon(mesh, seed_index)
-            seen += indices
-            polygons.append(polygon)
-        return polygons
+        #print(mesh.vertices)
+        #print(mesh.aces)
+        plane_origin = np.array([0, furniture_height, 0])
+        plane_normal = np.array([0, 1, 0])
+        print("Water",mesh.is_watertight)
+
+        lines = mesh.section(plane_normal, plane_origin)
+        if lines is None:
+            return []
+        print(lines)
+        print(lines.paths)
+        print(lines.paths.tostring())
+        planar, _ = lines.to_planar()
+        polygons = planar.polygons_closed
+        return [list(p.exterior.coords) for p in polygons]
 
 
     def _trace_polygon(self, mesh, seed_index):
@@ -132,51 +108,106 @@ class MapBuilder():
 
 
     def _transform_mesh(self, mesh, offset, theta, scale):
-        offset = np.array(offset);
-        axis = np.array([0,0,1]);
+        axis = np.array([0,1,0]);
         angle = math.radians(theta);
-        rot = pymesh.Quaternion.fromAxisAngle(axis, angle);
-        rot = rot.to_matrix();
+        rot = transforms3d.axangles.axangle2aff(axis, angle)
+        mesh.apply_scale(scale)
+        mesh.apply_transform(rot)
+        mesh.apply_translation(offset)
+        return mesh
 
-        vertices = mesh.vertices;
-        bbox = mesh.bbox;
-        #centroid = 0.5 * (bbox[0] + bbox[1]);
-        vertices = np.dot(rot, (vertices).T).T + offset;
-        return pymesh.form_mesh(vertices, mesh.faces)
-
-
-
-    def _get_map(self, geometry_object):
-        for mesh in meshes:
-            mesh = pymesh.load_mesh("pymesh.ply")
-
-
-
-
-    def _download_geometry_resource(self, url, local_filepath):
+    def _download_geometry_resource(self, geometry_object):
         """
         Download the file from `url` and save it locally under `file_name`
+        Return a PyMesh mesh object
         """
-        logging.info("{} -> {}".format(url, local_filepath))
-        os.makedirs(os.path.dirname(local_filepath), exist_ok=True)
-        with urllib.request.urlopen(url) as response, open(local_filepath, 'wb') as out_file:
+        print("-->", geometry_object['geometry']['filename'])
+        relative_url = os.path.join(geometry_object['geometry']['directory'], geometry_object['geometry']['filename'])
+        relative_url = relative_url.strip('./')
+        url = os.path.join(self.geometry_endpoint, relative_url)
+        fp = os.path.join('tmp/', relative_url)
+        logging.info("{} -> {}".format(url, fp))
+        os.makedirs(os.path.dirname(fp), exist_ok=True)
+        with urllib.request.urlopen(url) as response, open(fp, 'wb') as out_file:
             shutil.copyfileobj(response, out_file)
+        mesh = trimesh.load(fp, process=True)
+        #trimesh.repair.fix_inversion(mesh, multibody=True)
+        #trimesh.repair.fill_holes(mesh)
+        return mesh
 
 
-    def _publish_map_state(self):
-        for robot_id, robot in self.robots.items():
-            state = robot.get_state()
-            position = state["position"]
-            orientation = state["orientation"]
-            message = get_odom_message(robot_id, position, orientation)
-            message = json.dumps(message).encode('utf-8')
-            future = self.kafka_producer.send('robot.events.odom', message)
-            logging.info("Sent robot.events.odom message for robot %s"%robot_id)
+    def _create_map_message(self, geometry_object, polygons):
+        message = {
+            "mesh_id": geometry_object["id"],
+            "polygons": polygons,
+        }
+        message = json.dumps(message).encode('utf-8')
+        return message
+
+
+    def draw(self, mesh):
+        """
+        Draw a MeshPy Mesh
+        """
+        x = mesh.vertices[:,0]
+        y = mesh.vertices[:,1]
+        z = mesh.vertices[:,2]
+        i = mesh.faces[:,0]
+        j = mesh.faces[:,1]
+        k = mesh.faces[:,2]
+        triangles = go.Mesh3d(x=x, y=y, z=z, i=i, j=j, k=k)
+        fig = go.Figure(data=[triangles])
+        fig.show()
+
+
+    def draw_floorplan(self, polygon, name):
+        x = [p[0] for p in polygon]
+        y = [p[1] for p in polygon]
+        p0 = polygon[0]
+        shapes = []
+        self.canvas.add_trace(
+            go.Scatter(
+                x=x, 
+                y=y, 
+                name=name,
+                line_shape='vhv')
+            )
+        self.canvas.update_layout(shapes)
 
 
     def run(self):
         logging.info("\n\n --- Starting map loop --- \n")
-        geometry = self._get_initial_geometry()
+        while True:
+            for ob in reversed(self._get_initial_geometry()):
+                name = ob["name"] 
+                if ob["type"]=="robot" or ob["type"]=="floor":
+                    continue
+                if ob['geometry']['filename'] is None:
+                    print("Could not get geometry for ", name)
+                    continue
+                logging.info('Processing {}'.format(ob['name']))
+                try:
+                    mesh = self._download_geometry_resource(ob)
+                except urllib.error.HTTPError:
+                    logging.error("Could not download: %s"%name)
+                    continue
+                except Exception as e:
+                    logging.error("Could not download: %s %s"%(e,name))
+                    continue
+                if type(mesh) is trimesh.scene.Scene:
+                    logging.error("Could not process scene for: %s"%name)
+                    continue
+                offset = np.array([ob['z'], ob['y'], ob['x']])
+                mesh = self._transform_mesh(mesh, offset, ob["theta"], ob["scale"])
+                polygons = self._convert_to_polygons(mesh, self.furniture_height)
+                [self.draw_floorplan(p, name) for p in polygons]
+                message = self._create_map_message(ob, polygons)
+                self.kafka_producer.send('map.events.geometry', message)   
+            self.canvas.show()
+            logging.info("\n\n --- Published map data --- \n")
+            time.sleep(20)
+
+
 
 
 
@@ -184,9 +215,8 @@ if __name__=="__main__":
     args = parser.parse_args()
     with open('config.yaml') as cfg:
         config = yaml.load(cfg, Loader=yaml.Loader)
-    env = Environment(headless=args.headless)
-    simulator = Simulator(env, config)
-    simulator.run()
+    builder = MapBuilder(args.height, config)
+    builder.run()
 
 
 

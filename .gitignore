@@ -3,3 +3,4 @@
 volumes
 zk-single-kafka-single
 services/simulator/tmp/
+services/maps/tmp/

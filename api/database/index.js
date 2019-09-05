@@ -43,7 +43,11 @@ async function processDatabaseModels(modelsDir, databaseURI) {
     let connection, db = {};
 
     try {
-        connection = await mongoose.connect(databaseURI);
+        const config = { 
+            useCreateIndex: true,
+            useNewUrlParser: true 
+        };
+        connection = await mongoose.connect(databaseURI, config);
         console.log("Database connected to instance at =>", databaseURI);
     } catch (e) {
         return Promise.reject(e);

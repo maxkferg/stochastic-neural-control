@@ -142,7 +142,7 @@ function updateRobotPosition(robotId, x, y, z, theta){
     }).then(() => {
     	logger.info("Wrote new robot position", x.toFixed(3), y.toFixed(3), z.toFixed(3) ,theta.toFixed(3));
     }).catch(e => {
-    	logger.error("Robot position failed:", e.message);
+    	logger.warn("Robot position failed:", e.message);
     });
 }
 

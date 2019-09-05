@@ -11,6 +11,10 @@ Influx:
 Kafka:
   host: 'kafka-0.digitalpoints.io:19092'
 
+# Mongo config
+Mongo:
+  host: 'mongodb://localhost:27017/digitalpoints'
+
 # Controllable Robot ID
 Robot:
   id: '5cc52a162693090000000002'

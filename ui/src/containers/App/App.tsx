@@ -2,6 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import { withStyles } from '@material-ui/core/styles';
+import { ApolloProvider } from 'react-apollo';
+import { ApolloProvider as ApolloHooksProvider } from 'react-apollo-hooks';
 import Drawer from '@material-ui/core/Drawer';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import IconButton from '@material-ui/core/IconButton';
@@ -14,7 +16,10 @@ import AppBar from '../AppBar/AppBar';
 import EditObjectForm from '../EditObjectForm/EditObjectForm';
 import CreateGeometryForm from '../CreateGeometryForm/CreateGeometryForm';
 import BuildingViewer from '../BuildingViewer/BuildingViewer';
+import MapViewer from '../MapViewer';
 import NavDrawer from '../NavDrawer';
+import apollo from '../../apollo';
+
 
 const drawerWidth = 340;
 const leftDrawWidth = 240;
@@ -184,12 +189,14 @@ class PersistentDrawerRight extends React.Component {
             </Fab>
         </div>
       )
-    } else if (this.state.currentView==="Map"){
+    } else if (this.state.currentView==="Building Map"){
       return (
-        <div>
+        <ApolloProvider client={apollo}>
+          <ApolloHooksProvider client={apollo}>
             <div className={classes.drawerHeader} />
-            <p className={classes.contentError}>MAP</p>
-         </div>
+            <MapViewer />
+          </ApolloHooksProvider>
+        </ApolloProvider>
       )
     } else {
       return (

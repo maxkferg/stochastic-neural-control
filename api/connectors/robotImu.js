@@ -80,7 +80,7 @@ function updateRobotImu(imuData){
     }]).then(() => {
     	Logger.debug("Wrote new robot imu data");
     }).catch(e => {
-    	Logger.error("Robot position failed:", e.message);
+    	Logger.warn("Writing Robot IMU failed:", e.message);
     });
     return query;
 }

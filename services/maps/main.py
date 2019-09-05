@@ -10,7 +10,6 @@ import shutil
 import kafka
 import logging
 import argparse
-import meshcut
 import numpy as np
 import transforms3d
 import plotly.graph_objs as go
@@ -55,7 +54,7 @@ class MapBuilder():
         return result['data']['meshesCurrent']
 
 
-    def _convert_to_polygons(self, mesh, furniture_height, offset):
+    def _convert_to_polygons(self, mesh, furniture_height):
         """
         Convert a 3D object to a 2D polygon
         Slices the mesh at self.furniture_height and then returns all polygons on this plane
@@ -64,16 +63,14 @@ class MapBuilder():
         #print(mesh.aces)
         plane_origin = np.array([0, furniture_height, 0])
         plane_normal = np.array([0, 1, 0])
-        print("Water",mesh.is_watertight)
 
         lines = mesh.section(plane_normal, plane_origin)
         if lines is None:
             return []
-        print(lines)
-        print(lines.paths)
-        print(lines.paths.tostring())
-        planar, _ = lines.to_planar()
+        transform = np.array([[1,0,0,0],[0,0,1,0],[0,1,0,0],[0,0,0,1]])
+        planar, _ = lines.to_planar(transform)
         polygons = planar.polygons_closed
+        print("*", [list(p.exterior.coords) for p in polygons])
         return [list(p.exterior.coords) for p in polygons]
 
 
@@ -116,12 +113,12 @@ class MapBuilder():
         mesh.apply_translation(offset)
         return mesh
 
+
     def _download_geometry_resource(self, geometry_object):
         """
         Download the file from `url` and save it locally under `file_name`
         Return a PyMesh mesh object
         """
-        print("-->", geometry_object['geometry']['filename'])
         relative_url = os.path.join(geometry_object['geometry']['directory'], geometry_object['geometry']['filename'])
         relative_url = relative_url.strip('./')
         url = os.path.join(self.geometry_endpoint, relative_url)
@@ -138,8 +135,13 @@ class MapBuilder():
 
     def _create_map_message(self, geometry_object, polygons):
         message = {
+            "name": geometry_object["name"],
             "mesh_id": geometry_object["id"],
-            "polygons": polygons,
+            "isTraversable": True,
+            "isDeleted": False,
+            "internalPolygons":[],
+            "visualPolygons":[],
+            "externalPolygons": polygons,
         }
         message = json.dumps(message).encode('utf-8')
         return message
@@ -180,6 +182,10 @@ class MapBuilder():
         while True:
             for ob in reversed(self._get_initial_geometry()):
                 name = ob["name"] 
+                print(80 * "-")
+                print(35 * " ", name)
+                print(80 * "-")
+                
                 if ob["type"]=="robot" or ob["type"]=="floor":
                     continue
                 if ob['geometry']['filename'] is None:
@@ -197,13 +203,13 @@ class MapBuilder():
                 if type(mesh) is trimesh.scene.Scene:
                     logging.error("Could not process scene for: %s"%name)
                     continue
-                offset = np.array([ob['z'], ob['y'], ob['x']])
+                offset = np.array([ob['x'], ob['y'], ob['z']])
                 mesh = self._transform_mesh(mesh, offset, ob["theta"], ob["scale"])
                 polygons = self._convert_to_polygons(mesh, self.furniture_height)
                 [self.draw_floorplan(p, name) for p in polygons]
                 message = self._create_map_message(ob, polygons)
-                self.kafka_producer.send('map.events.geometry', message)   
-            self.canvas.show()
+                self.kafka_producer.send('debug', message)   
+            #self.canvas.show()
             logging.info("\n\n --- Published map data --- \n")
             time.sleep(20)
 

@@ -5,6 +5,7 @@ const jwt = require('koa-jwt');
 const GraphQLHTTP = require('koa-graphql');
 const GraphQLSchema = require('./graphql/schema');
 const { ApolloServer, gql } = require('apollo-server-koa');
+const startConnectors = require('./connectors')
 const pubSub = require('./connectors/pubSub');
 const Logger = require('./logger');
 const database = require('./database');
@@ -16,7 +17,12 @@ const router = new Router();
 const PORT = config.get('Webserver.port');
 
 
+
 async function init() {
+    const database_schema = __dirname + '/database/mongo';
+    const database_uri = config.get("Mongo.host");
+    const db = await database.start(database_schema, database_uri);
+    await startConnectors(db)
 
     const server = new ApolloServer({
         schema: GraphQLSchema,
@@ -24,6 +30,7 @@ async function init() {
         playground: true,
         cors: true,
         context: {
+            db: db,
             influx: influxdb,
             pubSub: pubSub,
         }

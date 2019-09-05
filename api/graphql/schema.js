@@ -10,6 +10,7 @@ const mutations = require('./mutations');
 const auth = require('../auth');
 const User = require('./types/User');
 const Mesh = require('./types/Mesh');
+const MapGeometry = require('./types/MapGeometry');
 const MeshPosition = require('./types/MeshPosition');
 const VelocityHistory = require('./types/VelocityHistory');
 
@@ -38,7 +39,8 @@ const Query = new GraphQLObjectType({
         user: new resolvers.User.getUser(User, "Get user by id", true),
         meshesCurrent: new resolvers.Mesh.getCurrentMeshes(new GraphQLList(Mesh), "Get current meshes", false),
         meshes: new resolvers.Mesh.getAllMeshes(new GraphQLList(Mesh), "Get all meshes", false),
-        mesh: new resolvers.Mesh.getMesh(Mesh, "Get mesh by id", false)
+        mesh: new resolvers.Mesh.getMesh(Mesh, "Get mesh by id", false),
+        mapGeometry: new resolvers.MapGeometry.getMapGeometry(new GraphQLList(MapGeometry), "Get all Map Geometry", false)
     })
 });
 

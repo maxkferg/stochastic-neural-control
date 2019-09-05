@@ -51,6 +51,26 @@ var poseSchema = {
 }
 
 
+var mapSchema = {
+  "type": "object",
+  "properties": {
+    "mesh_id": {
+      "type": "string",
+      "required": true,
+    },
+    "internal_polygons": {
+      "type": "array"
+    },
+    "external_polygons": {
+      "type": "array"
+    },
+    "visual_polygons": {
+      "type": "array"
+    }
+  }
+}
+
+
 class KafkaValidator {
 
   /**
@@ -59,6 +79,14 @@ class KafkaValidator {
    */
   validatePose(msg) {
     return v.validate(msg, poseSchema)
+  }
+
+  /**
+   * validateGeometry
+   * Validate a map geometry message
+   */
+  validateMapGeometry(msg){
+    return v.validate(msg, mapSchema)
   }
 }
 

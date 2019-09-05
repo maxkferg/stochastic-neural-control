@@ -5,3 +5,7 @@ Influx:
 # Kafka optional override
 Kafka:
   host: KAFKA_HOST
+
+# Mongo optional override
+Mongo:
+  host: MONGO_HOST

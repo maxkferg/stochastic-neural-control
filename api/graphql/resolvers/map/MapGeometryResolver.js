@@ -39,7 +39,6 @@ class MapGeometryResolver extends BaseResolver {
       query.type = args.type
     }
     let results = await ctx.db.MapGeometry.find(query);
-    console.log(results)
     return results.map((ob) => ({
       id: ob._id,
       name: ob.name,

@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trajectory-builder-deployment
+  labels:
+    app: trajectory-builder
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trajectory-builder
+  template:
+    metadata:
+      labels:
+        app: trajectory-builder
+    spec:
+      containers:
+      - name: trajectory-builder
+        image: digitalpoints/trajectory-builder:latest

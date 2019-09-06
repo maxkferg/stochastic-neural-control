@@ -3,6 +3,7 @@ const {
     GraphQLObjectType,
     GraphQLSchema,
     GraphQLString,
+    GraphQLNonNull,
 } = require('graphql');
 
 const resolvers = require('./resolvers');
@@ -10,6 +11,7 @@ const mutations = require('./mutations');
 const auth = require('../auth');
 const User = require('./types/User');
 const Mesh = require('./types/Mesh');
+const Trajectory = require('./types/Trajectory');
 const MapGeometry = require('./types/MapGeometry');
 const MeshPosition = require('./types/MeshPosition');
 const VelocityHistory = require('./types/VelocityHistory');
@@ -40,7 +42,9 @@ const Query = new GraphQLObjectType({
         meshesCurrent: new resolvers.Mesh.getCurrentMeshes(new GraphQLList(Mesh), "Get current meshes", false),
         meshes: new resolvers.Mesh.getAllMeshes(new GraphQLList(Mesh), "Get all meshes", false),
         mesh: new resolvers.Mesh.getMesh(Mesh, "Get mesh by id", false),
-        mapGeometry: new resolvers.MapGeometry.getMapGeometry(new GraphQLList(MapGeometry), "Get all Map Geometry", false)
+        mapGeometry: new resolvers.MapGeometry.getMapGeometry(new GraphQLList(MapGeometry), "Get all Map Geometry", false),
+        trajectory: new resolvers.Trajectory.getTrajectory(Trajectory, "Get a single trajectory", false),
+        trajectories: new resolvers.Trajectory.getTrajectoryList(new GraphQLList(Trajectory), "Get a list of trajectories", false),
     })
 });
 
@@ -53,7 +57,11 @@ const Mutation = new GraphQLObjectType({
         user: new mutations.UserMutations.user(User, "Updates current user", true),
         createMesh: new mutations.MeshMutations.meshCreate(Mesh, "Creates a mesh object", false),
         mesh: new mutations.MeshMutations.mesh(Mesh, "Updates current mesh object", true),
-        moveRobot: new mutations.RobotMutations.moveRobot(VelocityHistory, "Send a sequence of smooth controls to the robot", true)
+        moveRobot: new mutations.RobotMutations.moveRobot(VelocityHistory, "Send a sequence of smooth controls to the robot", true),
+        createTrajectory: new mutations.TrajectoryMutations.createTrajectory(Trajectory, "Create a new trajectory for the robot", true),
+        updateTrajectory: new mutations.TrajectoryMutations.updateTrajectory(Trajectory, "Update a trajectory", true),
+        removeTrajectory: new mutations.TrajectoryMutations.removeTrajectory(Trajectory, "Remove a trajectory", true),
+        followTrajectory: new mutations.RobotMutations.followTrajectory(Trajectory, "Instruct a robot to follow a trajectory", true)
     })
 });
 

@@ -122,11 +122,11 @@ class RobotVelocityProducer {
 
 
 /**
- * MoveRobotMutation
+ * FollowTrajectoryMutation
  * Send control actions to the robot with velocity smoothing
  *
  */
-class MoveRobotMutation extends BaseResolver {
+class FollowTrajectoryMutation extends BaseResolver {
 
   get args() {
     return {
@@ -176,7 +176,7 @@ class MoveRobotMutation extends BaseResolver {
   }
 }
 
-module.exports = MoveRobotMutation;
+module.exports = FollowTrajectoryMutation;
 
 
 

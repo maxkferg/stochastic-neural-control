@@ -4,9 +4,9 @@ const ObjectId = mongoose.Schema.Types.ObjectId;
 
 /**
  * MapGeometry Schema
- * Defines the current 2D geometry of the building. 
+ * Defines the current 2D geometry of the building.
  * Each 2D geometry object must be associated with a 3D geometry object
- * 
+ *
  * Setting isDeleted flag is preferred over deleting the object
  * as the history of each object is tracked in influxdb
  *

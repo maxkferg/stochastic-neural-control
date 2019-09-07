@@ -4,7 +4,6 @@ import time
 import yaml
 import json
 import trimesh
-import pymesh
 import urllib
 import shutil
 import kafka
@@ -13,9 +12,10 @@ import argparse
 import numpy as np
 import transforms3d
 import numpy as np
-from rrt.rrt import RRT
-from search_space.search_space import SearchSpace
-from utilities.plotting import Plot
+from rrt.rrt.rrt import RRT
+from kafka import KafkaProducer, KafkaConsumer
+from rrt.search_space.search_space import SearchSpace
+#from utilities.plotting import Plot
 from graphqlclient import GraphQLClient
 from graphql import getMapGeometry, getTrajectory, updateTrajectory
 
@@ -33,7 +33,6 @@ class MapService():
     """
     def __init__(self, graphql_client):
         self.client = graphql_client
-        self.producer = kafka_producer
 
     def fetch(self):
         result = self.client.execute(getMapGeometry)
@@ -51,10 +50,11 @@ class TrajectoryService():
     """
     def __init__(self, graphql_client):
         self.client = graphql_client
-        self.producer = kafka_producer
 
-    def fetch(self):
-        result = self.graphql_client.execute(getTrajectory)
+    def fetch(self, trajectoryId):
+        params = {"id": trajectoryId}
+        result = self.client.execute(getTrajectory, params)
+        print(result)
         result = json.loads(result)
         return result['data']['trajectory']
 
@@ -71,15 +71,14 @@ class TrajectoryBuilder():
 
     def __init__(self, furniture_height, config):
         graphql_endpoint = config["API"]["host"]
-        graphql_client = GraphQLClient(self.graphql_endpoint)
+        graphql_client = GraphQLClient(graphql_endpoint)
         self.kafka_consumer = self._setup_kafka_consumer(config["Kafka"]["host"])
         self.map_service = MapService(graphql_client)
         self.trajectory_service = TrajectoryService(graphql_client)
-        self.canvas = go.Figure()
 
 
     def _setup_kafka_consumer(self, bootstrap_servers):
-        topic = "trajectory.commands.create"
+        topic = "trajectory.commands.build"
         return KafkaConsumer(topic, bootstrap_servers=bootstrap_servers)
 
 
@@ -87,7 +86,7 @@ class TrajectoryBuilder():
         obstacles = []
         search_space = [(None, None), (None, None)]
 
-        if len(building_map['external_polygons'])==0:
+        if len(building_map)==0:
             raise TrajectoryError("No obstacles in the building")
 
         for polygon in building_map['external_polygons']:
@@ -134,15 +133,12 @@ class TrajectoryBuilder():
     def run(self):
         logging.info("\n\n --- Starting trajectory builder --- \n")
         while True:
-            for message in kafka_consumer:
-                # message value and key are raw bytes -- decode if necessary!
-                # e.g., for unicode: `message.value.decode('utf-8')`
-                print ("%s:%d:%d: key=%s value=%s" % (message.topic, message.partition,
-                                                      message.offset, message.key,
-                                                      message.value))
+            for message in self.kafka_consumer:
                 data = json.loads(message.value)
-                trajectory = self.trajectory_service.fetch(data.id)
-                building_map = self.trajectory_service.fetch()
+                print ("Building trajectory: ", data)
+                trajectory = self.trajectory_service.fetch(data["trajectoryId"])
+                print(trajectory)
+                building_map = self.map_service.fetch()
                 trajectory_points = self._build_trajectory(building_map, trajectory)
                 try:
                     trajectory['points'] = trajectory_points

@@ -1,12 +1,12 @@
 
 
 getTrajectory = '''
-{
-  trajectory(trajectoryId: id) {
+query ($id: String!) {
+  trajectory(id: $id) {
     id
     isDeleted
     isSafe
-    isCompleted
+    isReady
     startPoint
     endPoint
     points
@@ -18,11 +18,11 @@ getTrajectory = '''
 
 updateTrajectory = '''
 {
-  trajectory(trajectoryId: id) {
+  trajectory(id: $id) {
     id
     isDeleted
     isSafe
-    isCompleted
+    isReady
     startPoint
     endPoint
     points
@@ -33,16 +33,24 @@ updateTrajectory = '''
 
 
 getMapGeometry = '''
-{
-  trajectory(trajectoryId: id) {
+query GetMapGeometry {
+  mapGeometry {
     id
-    isDeleted
-    isSafe
-    isCompleted
-    startPoint
-    endPoint
-    points
-    frame
+    name
+    mesh_id
+    is_deleted
+    is_traversable
+    internal_polygons {
+      points
+    }
+    external_polygons {
+      points
+    }
+    visual_polygons {
+      points
+    }
+    created_at
+    updated_at
   }
 }
 '''

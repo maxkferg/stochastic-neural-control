@@ -5,6 +5,7 @@ const { GraphQLNonNull, GraphQLList, GraphQLString, GraphQLBoolean, GraphQLFloat
 const { Point2dInputType } = require('../../types/Point');
 const MeshGeometry = require('../../types/MeshGeometry');
 const MeshPhysics = require('../../types/MeshPhysics');
+const logger = require('../../../logger');
 const ObjectId = require('objectid');
 
 
@@ -77,6 +78,8 @@ class TrajectoryCreateMutation extends BaseResolver {
     producer.send(payload, function(err,data){
       if (err) console.error("Error sending trajectory build command:",err);
     });
+
+    logger.info("Created new trajectory: ", trajectory._id);
 
     return {
       id: trajectory._id,

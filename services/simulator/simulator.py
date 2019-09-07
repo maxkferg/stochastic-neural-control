@@ -25,7 +25,7 @@ class Simulator():
     """
     Simulate physics using the model geometry.
     Pulls Model Geometry from GraphQL API, continuously run physics simulations
-    
+
     Listens to control commands for each object in Kafka
     Publishes updated object locations to Kafka
     """

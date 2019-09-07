@@ -1,0 +1,11 @@
+query GetTrajectories {
+  trajectories(returnDeleted: true) {
+    id
+    isDeleted
+    isSafe
+    isReady
+    points
+    startPoint
+    endPoint
+  }
+}

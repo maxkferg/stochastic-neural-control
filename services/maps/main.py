@@ -4,7 +4,6 @@ import time
 import yaml
 import json
 import trimesh
-import pymesh
 import urllib
 import shutil
 import kafka
@@ -169,8 +168,8 @@ class MapBuilder():
         shapes = []
         self.canvas.add_trace(
             go.Scatter(
-                x=x, 
-                y=y, 
+                x=x,
+                y=y,
                 name=name,
                 line_shape='vhv')
             )
@@ -181,12 +180,14 @@ class MapBuilder():
         logging.info("\n\n --- Starting map loop --- \n")
         while True:
             for ob in reversed(self._get_initial_geometry()):
-                name = ob["name"] 
+                name = ob["name"]
                 print(80 * "-")
                 print(35 * " ", name)
                 print(80 * "-")
-                
-                if ob["type"]=="robot" or ob["type"]=="floor":
+
+                if ob["type"]=="robot":
+                    pass
+                if ob["type"]=="floor":
                     continue
                 if ob['geometry']['filename'] is None:
                     print("Could not get geometry for ", name)
@@ -208,7 +209,7 @@ class MapBuilder():
                 polygons = self._convert_to_polygons(mesh, self.furniture_height)
                 [self.draw_floorplan(p, name) for p in polygons]
                 message = self._create_map_message(ob, polygons)
-                self.kafka_producer.send('debug', message)   
+                self.kafka_producer.send('debug', message)
             #self.canvas.show()
             logging.info("\n\n --- Published map data --- \n")
             time.sleep(20)

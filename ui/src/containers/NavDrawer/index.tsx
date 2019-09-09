@@ -82,7 +82,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-
+// @ts-ignore
 export default function NavDrawer(props) {
     const classes = useStyles();
     const theme = useTheme();
@@ -98,9 +98,8 @@ export default function NavDrawer(props) {
     }
 
     function handleIconClick(key){
-      if (props.onClick){
-        props.onClick(key);
-      }
+      const { history } = props;
+      history.push('/' + key);
     }
 
     return (
@@ -125,24 +124,24 @@ export default function NavDrawer(props) {
         </div>
         <Divider />
         <List>
-            <ListItem button onClick={() => handleIconClick("Model")} key="Model">
+            <ListItem button onClick={() => handleIconClick("model")} key="Model">
               <ListItemIcon><ModelIcon /></ListItemIcon>
               <ListItemText primary={"Model"} />
             </ListItem>
-            <ListItem button onClick={() => handleIconClick("Building Map")} key="Building Map">
+            <ListItem button onClick={() => handleIconClick("building-map")} key="Building Map">
               <ListItemIcon><MapIcon /></ListItemIcon>
               <ListItemText primary={"Map"} />
             </ListItem>
-            <ListItem button onClick={() => handleIconClick("SLAM")} key="SLAM">
+            <ListItem button onClick={() => handleIconClick("slam")} key="SLAM">
               <ListItemIcon><SlamIcon /></ListItemIcon>
               <ListItemText primary={"SLAM"} />
             </ListItem>
-            <ListItem button onClick={() => handleIconClick("PointCloud")} key="PointCloud">
+            <ListItem button onClick={() => handleIconClick("pointcloud")} key="PointCloud">
               <ListItemIcon><PointCloudIcon /></ListItemIcon>
               <ListItemText primary="PointCloud" />
             </ListItem>
             <Divider />
-            <ListItem button onClick={() => handleIconClick("Settings")} key="Settings">
+            <ListItem button onClick={() => handleIconClick("settings")} key="Settings">
               <ListItemIcon><SettingsIcon /></ListItemIcon>
               <ListItemText primary="Settings" />
             </ListItem>

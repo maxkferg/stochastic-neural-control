@@ -39,6 +39,7 @@ class BuildingViewer extends React.Component<Props, State> {
     classes: any
 
     constructor(props: any) {
+      console.log('koko');
       super(props);
       this.state = {
         error: false,
@@ -49,6 +50,7 @@ class BuildingViewer extends React.Component<Props, State> {
     }
 
     componentDidMount(){
+      console.log('alo')
       GraphqlClient.query({query: GET_OBJECTS}).then(data => {
         // @ts-ignore
         let self = this;
@@ -59,7 +61,7 @@ class BuildingViewer extends React.Component<Props, State> {
           meshesCurrent: meshesCurrent,
         });
 
-        for (let i=0; i<meshesCurrent.length; i++){
+        for (let i=0; i<meshesCurrent.length; i++) {
           //let mesh = meshesCurrent[i];
           SubscriptionClient.subscribe({
             query: SUBSCRIBE_MESH_POSITION,
@@ -84,7 +86,7 @@ class BuildingViewer extends React.Component<Props, State> {
         }
       })
      }
-
+    
     public render() {
       if (this.state.loading) return 'Loading...';
       if (this.state.error) return `Error! ${this.state.error}`;

@@ -2,24 +2,17 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import { withStyles } from '@material-ui/core/styles';
-import { ApolloProvider } from 'react-apollo';
-import { ApolloProvider as ApolloHooksProvider } from 'react-apollo-hooks';
 import Drawer from '@material-ui/core/Drawer';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import IconButton from '@material-ui/core/IconButton';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import Divider from '@material-ui/core/Divider';
-import AddIcon from '@material-ui/icons/Add';
-import Fab from '@material-ui/core/Fab';
 import AppBar from '../AppBar/AppBar';
 import EditObjectForm from '../EditObjectForm/EditObjectForm';
 import CreateGeometryForm from '../CreateGeometryForm/CreateGeometryForm';
-import BuildingViewer from '../BuildingViewer/BuildingViewer';
-import MapViewer from '../MapViewer';
 import NavDrawer from '../NavDrawer';
-import apollo from '../../apollo';
-
+import AppNavigation from '../../navigation/AppNavigation';
 
 const drawerWidth = 340;
 const leftDrawWidth = 240;
@@ -109,7 +102,6 @@ class PersistentDrawerRight extends React.Component {
     creatingGeometry: true,
     editingObject: false,
     selectedObjectId: "",
-    currentView: "Model",
   };
 
   handleDrawerOpen = () => {
@@ -127,16 +119,6 @@ class PersistentDrawerRight extends React.Component {
   handleLeftDrawerClose = () => {
     this.setState({ navMenuOpen: false });
   };
-
-  /**
-   * setView
-   * Change the current view. 
-   * TODO: This should be replaced with proper routing
-   */
-  setView = (viewName: string) => {
-    console.log("Setting view to ", viewName)
-    this.setState({ currentView: viewName });
-  }
 
   createGeometry = () => {
     this.setState({
@@ -176,44 +158,10 @@ class PersistentDrawerRight extends React.Component {
     }
   }
 
-  renderMainContent(){
-    // @ts-ignore
-    const { classes } = this.props;
-    if (this.state.currentView==="Model"){
-      return (
-        <div>
-            <div className={classes.drawerHeader} />
-            <BuildingViewer onSelectedObject={this.onSelectedObject} />
-            <Fab color="primary" aria-label="Add" className={classes.fab} onClick={this.createGeometry}>
-              <AddIcon />
-            </Fab>
-        </div>
-      )
-    } else if (this.state.currentView==="Building Map"){
-      return (
-        <ApolloProvider client={apollo}>
-          <ApolloHooksProvider client={apollo}>
-            <div className={classes.drawerHeader} />
-            <MapViewer />
-          </ApolloHooksProvider>
-        </ApolloProvider>
-      )
-    } else {
-      return (
-        <div>
-            <div className={classes.drawerHeader} />
-            <p className={classes.contentError}>Unknown view: {this.state.currentView}</p>
-         </div>
-      )   
-    }
-  }
-
-
   render() {
     // @ts-ignore
-    const { classes, theme } = this.props;
+    const { classes, theme, history } = this.props;
     const { open } = this.state;
-
     return (
       <div className={classes.root}>
         <CssBaseline />
@@ -230,16 +178,16 @@ class PersistentDrawerRight extends React.Component {
           }>
         </AppBar>
         <NavDrawer 
+          history={history}
           open={this.state.navMenuOpen} 
           onClose={this.handleLeftDrawerClose} 
-          onClick={this.setView}
         />
         <main
           className={classNames(classes.content, {
             [classes.contentShift]: open,
           })}
         >
-          {this.renderMainContent()}
+          <AppNavigation classes={classes}/>
         </main>
         <Drawer
           className={classes.drawer}
@@ -267,6 +215,7 @@ class PersistentDrawerRight extends React.Component {
 PersistentDrawerRight.propTypes = {
   classes: PropTypes.object.isRequired,
   theme: PropTypes.object.isRequired,
+  history: PropTypes.object.isRequired,
 };
 
 export default withStyles(styles, { withTheme: true })(PersistentDrawerRight);

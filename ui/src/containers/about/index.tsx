@@ -1,10 +1,3 @@
-import * as React from 'react';
-
-const About = () => (
-  <div>
-    <h1>About Page</h1>
-    <p>Nothing to see here...</p>
-  </div>
-);
+import About from './About';
 
 export default About;

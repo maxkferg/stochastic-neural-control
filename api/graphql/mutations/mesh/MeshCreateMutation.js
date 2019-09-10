@@ -148,7 +148,7 @@ class MeshCreateMutation extends BaseResolver {
             physics: {
                 stationary: data.physics_stationary,
                 collision: data.physics_collision,
-                simulated: data.physics.simulated,
+                simulated: data.physics_simulated,
             },
             time: data.time,
           }

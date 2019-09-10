@@ -39,7 +39,6 @@ class BuildingViewer extends React.Component<Props, State> {
     classes: any
 
     constructor(props: any) {
-      console.log('koko');
       super(props);
       this.state = {
         error: false,
@@ -50,7 +49,6 @@ class BuildingViewer extends React.Component<Props, State> {
     }
 
     componentDidMount(){
-      console.log('alo')
       GraphqlClient.query({query: GET_OBJECTS}).then(data => {
         // @ts-ignore
         let self = this;

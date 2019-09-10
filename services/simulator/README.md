@@ -25,7 +25,8 @@ The speed of the turtlebot is configurable:
 ```
 docker run -it \
 -e LINEAR_SPEED=100 \
--e ANGULAR_SPEED=1 \digitalpoints/physics:production-$TAG
+-e ANGULAR_SPEED=1 \
+digitalpoints/physics:production-$TAG
 ```
 
 Deploying

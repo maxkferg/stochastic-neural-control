@@ -4,6 +4,7 @@ const BaseResolver = require('../../BaseResolver');
 const { GraphQLNonNull, GraphQLString, GraphQLList, GraphQLInt, GraphQLBoolean, GraphQLFloat, GraphQLInputObjectType} = require('graphql');
 const MeshGeometry = require('../../types/MeshGeometry');
 const MeshPhysics = require('../../types/MeshPhysics');
+const logger = require('../../../logger');
 const ObjectId = require('objectid');
 
 
@@ -112,8 +113,10 @@ class TrajectoryUpdateMutation extends BaseResolver {
       if (err) console.error("Error sending trajectory updated command:", err);
     });
 
+    logger.info("Updated trajectory: ", args.trajectoryId);
+
     return {
-      id: trajectory._id,
+      id: args.trajectoryId,
       points: trajectory.points,
       frame: trajectory.frame,
       startPoint: trajectory.startPoint,

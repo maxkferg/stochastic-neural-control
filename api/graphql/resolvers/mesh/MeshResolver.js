@@ -12,8 +12,8 @@ class MeshResolver extends BaseResolver {
   get args() {
     return {
       id: {
-          type: new GraphQLNonNull(GraphQLString),
-          description: 'Id for the user.'
+        type: new GraphQLNonNull(GraphQLString),
+        description: 'Id for the user.'
       }
     };
   }

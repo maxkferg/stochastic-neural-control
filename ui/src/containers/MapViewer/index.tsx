@@ -1,5 +1,5 @@
 //import clsx from 'clsx';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { Stage, Layer, Group, Line, Circle } from 'react-konva';
 import { useQuery } from 'react-apollo-hooks';
@@ -86,13 +86,25 @@ function scalePoints(points, scale){
 
 
 /**
+ * limitPosition
+ * Limit a point to the range [xmin,xmax] and [ymin,ymax]
+ * Center the map geometry in the canvas
+ */
+function limitPosition(point, scale){
+  point[0] = Math.max(Math.min(point[0], scale.xmax), scale.xmin)
+  point[1] = Math.max(Math.min(point[1], scale.ymax), scale.ymin)
+  return point
+}
+
+
+/**
  * inverseScalePoints
  * Scale points from map coordinates to true coordinates
  */
 function inverseScalePoints(points, scale){
   let xcenter = scale.xmin + scale.width/2
   return points.map(element => ([
-    (element[0] - window.innerWidth/2) / scale.scale + xcenter
+    (element[0] - window.innerWidth/2) / scale.scale + xcenter,
     (element[1] - MAP_PADDING) / scale.scale + scale.ymin
   ]));
 }
@@ -160,7 +172,7 @@ function MapPolygon(props) {
  *
  */
 function Robot(props) {
-  let center = [props.robot.x, props.robot.y]
+  let center = [props.robot.x, props.robot.z]
   let scaled = scalePoints([center], props.scale)
   // Create all the scaled lines
 
@@ -222,30 +234,28 @@ function Replan(props) {
 function Target(props) {
   let scaled = scalePoints([props.center], props.scale)
 
-  function onChange(e){
-    debugger
-    let position = inverseScalePoints([e.center], props.scale);
+  let handleDragEnd = (e) => {
+    let center = [e.evt.offsetX, e.evt.offsetY];
+    let position = inverseScalePoints([center], props.scale)[0];
     props.onChange(position);
   }
 
   return (
-    <Group draggable dragend={onChange} >
+    <Group 
+      draggable
+      x={scaled[0][0]}
+      y={scaled[0][1]}
+      onDragEnd={handleDragEnd} >
       <Circle
-        x={scaled[0][0]}
-        y={scaled[0][1]}
         radius={12}
         stroke="green"
       />
       <Circle
-        x={scaled[0][0]}
-        y={scaled[0][1]}
         radius={12}
         fill="green"
         opacity={0.4}
       />
       <Circle
-        x={scaled[0][0]}
-        y={scaled[0][1]}
         radius={6}
         fill="green"
         opacity={1.0}
@@ -265,26 +275,33 @@ function MapTrajectory(props) {
   const scaled = scalePoints(trajectory.points, props.scale)
   let [line, SetLine] = useState(scaled.flat());
 
-  let points = scaled.map((p,i) => (
-    <Circle
-      key={i}
-      x={p[0]}
-      y={p[1]}
-      draggable
-      radius={5}
-      fill="red"
-      onDragMove={(e) => {
-        line[2*i] = e.target.attrs.x;
-        line[2*i+1] = e.target.attrs.y;
-        SetLine(line)
-      }}
-    />
-  ))
+  useEffect(() => {
+    SetLine(scaled.flat())
+  }, [trajectory.id]);
 
+  let points = scaled.map((p,i) => {
+    let key = "point" + p[0] + p[1] + i;
+    return (
+      <Circle
+        key={key}
+        x={p[0]}
+        y={p[1]}
+        draggable
+        radius={5}
+        fill="red"
+        onDragMove={(e) => {
+          line[2*i] = e.target.attrs.x;
+          line[2*i+1] = e.target.attrs.y;
+          SetLine(line)
+        }}
+      />
+    )
+  })
   // Create all the scaled lines
   return (
     <Group>
       <Line
+        key={"line"}
         points={line}
         stroke='red'
         strokeWidth={2}
@@ -297,10 +314,12 @@ function MapTrajectory(props) {
 
 
 export default function MapViewer() {
-    const options = {} //{ pollInterval: 1000 }
+    const options = { pollInterval: 1000 }
     const { data, error, loading } = useQuery(MAP_GEOMETRY_QUERY, options);
     const { data: trajData, error: trajError} = useQuery(TRAJECTORY_QUERY, options);
     const { data: robotData, error: robotError} = useQuery(GET_ROBOT_QUERY, options);
+    let [ targetPosition, setTargetPosition] = useState([2,2]);
+
     //const classes = useStyles();
     //const theme = useTheme();
 
@@ -332,22 +351,21 @@ export default function MapViewer() {
     const canvaseWidth = window.innerWidth - HEADER
 
     // Create trajectories
+    let trajElements
     const trajectories = trajData ? trajData.trajectories : [];
-    const trajElements = trajectories.map(traj => (
-        <MapTrajectory key={traj.id} trajectory={traj} scale={scale} />
-    ))
+    if (trajectories.length){
+      let trajectory = trajectories[trajectories.length-1]
+      //defaultTargetPosition = limitPosition(trajectory.endPoint, scale)
+      trajElements = [<MapTrajectory trajectory={trajectory} scale={scale} />]
+    } else {
+      trajElements = [];
+    }
 
     // Create robots
     const robots = robotData ? robotData.meshesCurrent : [];
     const robotElements = robots.map(robot => (
         <Robot key={robot.id} robot={robot} scale={scale} />
     ))
-
-    // Create Target
-    let targetPosition = [0,0]
-    if (trajectories.length){
-      targetPosition = trajectories[0].endPoint
-    }
 
     // Replan button handler
     function onReplan(){
@@ -365,7 +383,7 @@ export default function MapViewer() {
 
     // Target move handler
     function onTargetMove(newPosition){
-      targetPosition = newPosition;
+      setTargetPosition(limitPosition(newPosition, scale));
     }
 
     return (

@@ -17,18 +17,33 @@ query ($id: String!) {
 
 
 updateTrajectory = '''
-{
-  trajectory(id: $id) {
-    id
-    isDeleted
-    isSafe
-    isReady
-    startPoint
-    endPoint
-    points
-    frame
+mutation UpdateTrajectory(
+  $id: String!
+  $points: [[Float]]
+  $startPoint: [Float]
+  $endPoint: [Float]
+  $isDeleted: Boolean
+  $isSafe: Boolean
+  $isReady: Boolean
+) {
+    updateTrajectory(
+      trajectoryId: $id
+      points: $points
+      startPoint: $startPoint
+      endPoint: $endPoint
+      isDeleted: $isDeleted
+      isSafe: $isSafe
+      isReady: $isReady
+    ) {
+      isDeleted
+      isSafe
+      isReady
+      startPoint
+      endPoint
+      points
+      frame
+    }
   }
-}
 '''
 
 

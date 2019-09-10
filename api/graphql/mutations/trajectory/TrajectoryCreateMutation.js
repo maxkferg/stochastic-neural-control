@@ -63,7 +63,6 @@ class TrajectoryCreateMutation extends BaseResolver {
       isSafe: false,
       isDeleted: false
     }
-    console.log(trajectory)
 
     trajectory = await ctx.db.Trajectory.create(trajectory);
 

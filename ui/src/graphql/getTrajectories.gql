@@ -1,5 +1,5 @@
 query GetTrajectories {
-  trajectories(returnDeleted: true) {
+  trajectories {
     id
     isDeleted
     isSafe

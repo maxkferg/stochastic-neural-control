@@ -108,7 +108,7 @@ function updateRobotPosition(robotId, x, y, z, theta){
         limit 1`
     ).then((results) => {
         if (results.length==0){
-            throw new Error("Could not find robot");
+            throw new Error("Could not find robot "+robotId);
         }
         //if (results[0].deleted){
         //	throw new Error("Can not move a deleted robot");

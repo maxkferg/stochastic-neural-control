@@ -140,6 +140,7 @@ class Simulator():
 
             # Push robot position at about 20 Hz
             if steps%24==0:
+                logging.info("Publishing robot state")
                 self._publish_robot_states()
 
             # Try and maintain 240 FPS to match the bullet simulation speed

@@ -17,8 +17,8 @@ Mongo:
 
 # Controllable Robot ID
 Robot:
-  id: '5cc52a162693090000000002'
-  name: 'robot-809'
+  id: '5d745809f5bb087745000001'
+  name: 'robot-496'
 
 # JST Login secret
 JWT:

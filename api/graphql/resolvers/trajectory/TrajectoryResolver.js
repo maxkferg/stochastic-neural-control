@@ -27,8 +27,7 @@ class TrajectoryResolver extends BaseResolver {
     //calling super method to check authentication if applicable
     super.resolve(parentValue, args, ctx);
 
-    let query = {}
-    let results = await ctx.db.Trajectory.findById(query);
+    let ob = await ctx.db.Trajectory.findById(args.id);
     return {
       id: ob._id,
       frame: null,

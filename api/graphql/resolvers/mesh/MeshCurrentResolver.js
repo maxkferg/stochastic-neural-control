@@ -42,8 +42,6 @@ class MeshCurrentResolver extends BaseResolver {
         WITH key = id`
     }
 
-    console.log(parentValue, args, ctx)
-
     const objectIds = await ctx.influx.query(query);
     const results = objectIds.map((objectId) => {
       return ctx.influx.query(`

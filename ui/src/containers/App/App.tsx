@@ -187,7 +187,7 @@ class PersistentDrawerRight extends React.Component {
             [classes.contentShift]: open,
           })}
         >
-          <AppNavigation classes={classes}/>
+          <AppNavigation classes={classes} onSelectedObject={this.onSelectedObject} createGeometry={this.createGeometry}/>
         </main>
         <Drawer
           className={classes.drawer}

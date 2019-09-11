@@ -93,7 +93,8 @@ class TrajectoryUpdateMutation extends BaseResolver {
 
     await ctx.db.Trajectory.findByIdAndUpdate(
         {_id: args.trajectoryId},
-        trajectory
+        trajectory,
+        { new: true }
     );
 
     let message = {

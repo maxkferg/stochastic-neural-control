@@ -1,35 +1,27 @@
-# Digital Points Map Rewriting
+# Digital Points Trajectory Service
 
-Writes the 3D geometry to 2D Maps
-
-## Setting up
-
-```
-conda activate sim
-```
+Create trajectories from one point to another using RRT
 
 ## Docker Support
 
 Building the docker image
 ```
 export TAG=2
-docker build -t digitalpoints/map-service:production-$TAG .
+docker build -t digitalpoints/trajectory-service:production-$TAG .
 ```
 
 Running the docker image
 ```
-docker run -it digitalpoints/map_service:production-$TAG
+docker run -it digitalpoints/trajectory-service:production-$TAG
 ```
 
 The height of the geometry is configurable:
 ```
-docker run -it \
--e FURNITURE_HEIGHT=1000 \
-\digitalpoints/map-service:production-$TAG
+docker run -it digitalpoints/trajectory-service:production-$TAG
 ```
 
 Deploying
 ```
-docker push digitalpoints/map-service:production-$TAG
-kubectl set image deployment/map-service api=digitalpoints/map-service:production-$TAG
+docker push digitalpoints/trajectory-service:production-$TAG
+kubectl set image deployment/trajectory-service api=digitalpoints/trajectory-service:production-$TAG
 ```

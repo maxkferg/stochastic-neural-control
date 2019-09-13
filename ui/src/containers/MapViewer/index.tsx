@@ -172,7 +172,7 @@ function MapPolygon(props) {
  *
  */
 function Robot(props) {
-  let center = [props.robot.x, props.robot.z]
+  let center = [props.robot.x, -props.robot.z]
   let scaled = scalePoints([center], props.scale)
   // Create all the scaled lines
 

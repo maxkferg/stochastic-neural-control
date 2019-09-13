@@ -1,6 +1,6 @@
 # Api webserver
 API:
-  host: 'http://localhost:8888/graphql'
+  host: 'http://api.digitalpoints.io/graphql'
 
 # Geometry endpoint
 Geometry:

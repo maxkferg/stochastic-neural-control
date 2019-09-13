@@ -146,13 +146,13 @@ class MeshMutation extends BaseResolver {
                 depth: chooseValid(args.width, mesh.width),
             }
 
-            if (mesh.geometry){
+            if (args.geometry){
                 newMeshFields.geometry_filetype = chooseValid(args.geometry.filetype, mesh.geometry_filetype);
-                newMeshFields.geometry_fiename = chooseValid(args.geometry.filename, mesh.geometry_filename);
+                newMeshFields.geometry_filename = chooseValid(args.geometry.filename, mesh.geometry_filename);
                 newMeshFields.geometry_directory = chooseValid(args.geometry.directory, mesh.geometry_directory);
             }
 
-            if (mesh.physics){
+            if (args.physics){
                 newMeshFields.physics_stationary = chooseValid(args.physics.stationary, mesh.physics_stationary);
                 newMeshFields.physics_collision = chooseValid(args.physics.collision, mesh.physics_collision);
                 newMeshFields.physics_simulated = chooseValid(args.physics.simulated, mesh.physics_simulated);

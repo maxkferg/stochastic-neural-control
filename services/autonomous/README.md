@@ -1,8 +1,39 @@
-# Digital Building Model Navigation
+# Autonomous Navigation Service
 
-Robotic navigation in a real-time digital building model. Agents learn how to navigate in a simulated environment, avoiding walls and other agents.
+A service for learning autonomous control and applying it to real or simulated robots.
 
 ![Digital Building Model Demo](https://raw.githubusercontent.com/maxkferg/dbm/master/src/assets/results/readme.gif)
+
+In training mode:
+- The cluster pulls building geometry from a training building
+- The service simulates the environment and learns a good navigation policy
+
+In rollout mode:
+- The service pulls building geometry from a training building
+- The service subscribes to building geometry and robot position, keeping the model current
+- The service writes trajectories and control actions to the cluster, for every robot
+- A Kafka-ROS connector interprets the messages and (possibly) sends them the robot
+
+In visualization mode:
+- The service pulls building geometry from a training building
+- The service subscribes to building geometry and robot position, keeping the model current
+- The service writes trajectories and Q-values to the server
+
+# Quick Start
+
+Training
+```sh
+ray attach --tmux cluster.yaml
+python train.py configs/mapper-apex-td3.yaml
+```
+
+Testing
+```sh
+export API=http://api.digitalpoints.io/graphql
+export KAFKA=http://kafka
+python rollout.py --run APEX_DDPG --env MultiRobot-v0
+```
+
 
 # Setup
 The digital building model has realistic physics, implimented using PyBullet. A great tutorial for
@@ -49,7 +80,7 @@ python rollout.py --run APEX_DDPG --env MultiRobot-v0 --steps 10000 --no-render
 ```
 
 # Prerequsites:
-Some parts of the codebase rely on the latest (`0.7.0`) release of ray. Installing ray with `pip install ray` should work. However, it is better to install the dev version: 
+Some parts of the codebase rely on the latest (`0.7.0`) release of ray. Installing ray with `pip install ray` should work. However, it is better to install the dev version:
 
 ```sh
 # Linux

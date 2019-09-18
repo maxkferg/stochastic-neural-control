@@ -19,32 +19,12 @@ from rrt.utilities.plotting import Plot
 from graphqlclient import GraphQLClient
 from graphql import getMapGeometry, getTrajectory, updateTrajectory
 
-logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
 
-parser = argparse.ArgumentParser(description='Convert 3D geometry to 2D geometry.')
-parser.add_argument('--headless', action='store_true', help='run without GUI components')
-parser.add_argument('--height', type=float, default=0.1, help='height to generate map')
+logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
 
 
 class TrajectoryError(Exception):
     pass
-
-
-class MapService():
-    """
-    A 2D Map of the building
-    """
-    def __init__(self, graphql_client):
-        self.client = graphql_client
-
-    def fetch(self):
-        result = self.client.execute(getMapGeometry)
-        result = json.loads(result)
-        return result['data']['mapGeometry']
-
-    def update(self):
-        pass
-
 
 
 class TrajectoryService():

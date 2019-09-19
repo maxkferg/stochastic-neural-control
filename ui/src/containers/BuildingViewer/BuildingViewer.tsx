@@ -5,11 +5,11 @@ import * as React from 'react';
 import PropTypes from 'prop-types';
 import BabylonViewer from '../BabylonViewer/BabylonViewer';
 import { withStyles, WithStyles, Theme } from '@material-ui/core/styles';
-import GraphqlClient from '../../apollo';
+import apollo from '../../apollo';
 import SubscriptionClient from '../../apollo/websocket';
 import { loader } from 'graphql.macro';
 
-const GET_OBJECTS = loader('../../graphql/getMesh.gql');
+const MESH_QUERY = loader('../../graphql/getMesh.gql');
 const SUBSCRIBE_MESH_POSITION = loader('../../graphql/subscribeMesh.gql');
 
 
@@ -49,7 +49,7 @@ class BuildingViewer extends React.Component<Props, State> {
     }
 
     componentDidMount(){
-      GraphqlClient.query({query: GET_OBJECTS}).then(data => {
+      apollo.watchQuery({query: MESH_QUERY, pollInterval: 500}).subscribe(data => {
         // @ts-ignore
         let self = this;
         let meshesCurrent = data.data.meshesCurrent;

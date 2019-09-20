@@ -38,9 +38,7 @@ const useStyles = makeStyles(theme => ({
 export default function SignIn(props) {
   const classes = useStyles();
   const [email, setEmail] = useState();
-  console.log("TCL: SignIn -> email", email);
   const [password, setPassword] = useState();
-  console.log("TCL: SignIn -> password", password);
   const submitSignIn = async () => {
     const signInPayload = {
       email, 

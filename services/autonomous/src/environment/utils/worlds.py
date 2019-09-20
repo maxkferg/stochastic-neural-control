@@ -19,6 +19,7 @@ class World():
     metadata = {
         'scale': 1,
         'substeps': 20,  # 20 Physics steps per timestep
+        'timestep': 0.1, # Simulate every 0.1 seconds
         'orientation': pybullet.getQuaternionFromEuler([0, 0, 0]),
         'world': None,
         'floor': None,

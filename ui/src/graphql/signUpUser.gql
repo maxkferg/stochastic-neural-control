@@ -1,5 +1,0 @@
-query signUpUser($email: String!, $password: String!) {
-    signUpUser(email: $email, password: $password) {
-        authToken
-    }
-}

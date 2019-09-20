@@ -24,6 +24,9 @@ class BaseEnvironment():
         else:
           self.physics = BulletClient(pybullet.GUI)
         self.loader = loader
+        self.robots = []
+        self.walls = []
+        self.floors = []
         self.build()
 
 
@@ -36,13 +39,25 @@ class BaseEnvironment():
           scale = obj['scale']
           is_stationary = obj['is_stationary']
           if obj['type'] == 'robot':
-            self.create_turtlebot(position)
+            m = self.create_turtlebot(position)
           else:
-            self.create_geometry(obj['mesh_path'], position, scale=scale, stationary=is_stationary)
+            m = self.create_geometry(obj['mesh_path'], position, scale=scale, stationary=is_stationary)
+          
+          # Record this element for later
+          if obj['type']=='robot':
+            self.robots.append(m)
+          elif obj['type']=='wall':
+            self.walls.append(m)
+          elif obj['type']=='floor':
+            self.floors.append(m)           
 
 
     def start(self):
         self.physics.setGravity(0, 0, -10)
+
+
+    def step(self):
+        self.physics.stepSimulation()
 
 
     def create_geometry(self, filename, position, scale=1, stationary=False):
@@ -57,14 +72,12 @@ class BaseEnvironment():
           fileName=filename,
           rgbaColor=[1, 1, 1, 1],
           specularColor=[0.4, .4, 0],
-          visualFramePosition=position,
           meshScale=meshScale)
 
         collisionShapeId = self.physics.createCollisionShape(
           shapeType=pybullet.GEOM_MESH,
           flags=pybullet.GEOM_FORCE_CONCAVE_TRIMESH,
           fileName=filename,
-          collisionFramePosition=position,
           meshScale=meshScale)
 
         mb = self.physics.createMultiBody(baseMass=baseMass,
@@ -74,10 +87,11 @@ class BaseEnvironment():
           baseVisualShapeIndex=visualShapeId,
           basePosition=position,
           useMaximalCoordinates=True)
+        return mb
 
 
-    def step(self):
-        self.physics.stepSimulation()
+    def create_target(self, position, color):
+        return self.create_shape(pybullet.GEOM_BOX, position, size=0.2, color=color)
 
 
     def create_turtlebot(self, position):
@@ -96,6 +110,34 @@ class BaseEnvironment():
         turtlebot = Turtlebot(physics, config)
         turtlebot.set_position(position)
         return turtlebot
+
+
+    def create_shape(self, shape, position, color=[1,0,0,1], specular=[1,1,1,1], **kwargs):
+        """
+        Create a s/cube than only collides with the building
+        Robots can travel right through the cube.
+        Return the PyBullet BodyId
+        """
+        if shape == pybullet.GEOM_BOX and not "halfExtents" in kwargs:
+            size = kwargs.pop('size')
+            kwargs['halfExtents'] = [size,size,size]
+
+        length = 1
+        if "length" in kwargs:
+            length = kwargs.pop("length")
+
+        vid = self.physics.createVisualShape(shape, rgbaColor=color, specularColor=specular, length=length, **kwargs);
+        cid = self.physics.createCollisionShape(shape, height=length, **kwargs)
+        bid = self.physics.createMultiBody(baseMass=1, baseVisualShapeIndex=cid, baseCollisionShapeIndex=cid, basePosition=position)
+
+        collision_filter_group = 0
+        collision_filter_mask = 0
+        self.physics.setCollisionFilterGroupMask(bid, -1, collision_filter_group, collision_filter_mask)
+
+        enable_collision = 1
+        for plane in self.walls+self.floors:
+            self.physics.setCollisionFilterPair(plane, bid, -1, -1, enable_collision)
+        return bid
 
 
     def __del__(self):

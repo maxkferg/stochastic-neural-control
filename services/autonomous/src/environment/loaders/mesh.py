@@ -8,6 +8,7 @@ import shutil
 import logging
 import argparse
 from urllib.error import HTTPError
+from http.client import InvalidURL
 from graphqlclient import GraphQLClient
 from kafka import KafkaProducer, KafkaConsumer
 from .graphql import getCurrentGeometry
@@ -40,16 +41,27 @@ class MeshLoader():
         geometry = []
         for mesh in result['data']['meshesCurrent']:
             logging.info('Loading {}'.format(mesh['name']))
-            relative_url = os.path.join(mesh['geometry']['directory'], mesh['geometry']['filename'])
+            directory = mesh['geometry']['directory']
+            filename = mesh['geometry']['filename']
+            if directory is None:
+                logging.error("Could not load {}:\nDirectory was invalid".format(name))
+                continue            
+            if filename is None:
+                logging.error("Could not load {}:\nFilename was invalid".format(name))
+                continue            
+            relative_url = os.path.join(directory, filename)
             relative_url = relative_url.strip('./')
-            position = [mesh['x'], mesh['y'], mesh['z']]
+            position = self._convert_position(mesh)
             name = mesh['name']
             url = os.path.join(self.geometry_endpoint, relative_url)
             fp = os.path.join('tmp/', relative_url)
             try:
                 self._download_geometry_resource(url, fp)
             except HTTPError as e:
-                logging.error("Could not load {}:{}".format(name, e))
+                logging.error("Could not load {}:\n{}".format(name, e))
+                continue
+            except InvalidURL as e:
+                logging.error("Could not load {}:\n{}".format(name, e))
                 continue
             geometry.append({
                 'id': mesh['id'],
@@ -57,14 +69,23 @@ class MeshLoader():
                 'type': mesh['type'],
                 'scale': mesh['scale'],
                 'mesh_path': fp,
+                'position': position,
                 'is_stationary': mesh['physics']['stationary'],
                 'is_simulated': mesh['physics']['simulated'],
-                'position': [mesh['x'], mesh['y'], mesh['z']],
                 'orientation': mesh['theta'],
             })
         return geometry
 
 
+    def _convert_position(self, position):
+        """
+        Convert the position from GraphQL form to PyBullet
+        """ 
+        return [
+            position['x'],
+            position['z'],
+            position['y']
+        ]
 
 
     def _download_geometry_resource(self, url, local_filepath):

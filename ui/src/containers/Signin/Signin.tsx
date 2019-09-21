@@ -9,7 +9,9 @@ import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
-import { signIn } from '../../services/AuthServices';
+import { signIn, signInWithGoogle } from '../../services/AuthServices';
+import GoogleLogin from 'react-google-login'; 
+
 const useStyles = makeStyles(theme => ({
   '@global': {
     body: {
@@ -30,10 +32,26 @@ const useStyles = makeStyles(theme => ({
     width: '100%', // Fix IE 11 issue.
     marginTop: theme.spacing(1),
   },
+  googgleBtn: {
+    width: '100%',
+    marginBottom: theme.spacing(1),
+    justifyContent: 'center'
+  },
   submit: {
     margin: theme.spacing(3, 0, 2),
   },
 }));
+
+
+const handleAuthenticationGoogle = async function (googleResponse, props) {
+  const { tokenId } = googleResponse;
+  const response = await signInWithGoogle(tokenId);
+  const { data } = response;
+  if (data.signInUserGoogle.authToken) {
+    localStorage.setItem('token', data.signInUserGoogle.authToken);
+    props.history.push('/123132/model');
+  }
+}
 
 export default function SignIn(props) {
   const classes = useStyles();
@@ -95,6 +113,14 @@ export default function SignIn(props) {
           >
             Sign In
           </Button>
+          <GoogleLogin
+            className={classes.googgleBtn}
+            clientId="1028478244391-t9maukva74huv4hqm5sc12qalr9kc5vj.apps.googleusercontent.com"
+            buttonText="Sign in with Google"
+            onSuccess={e => handleAuthenticationGoogle(e, props)}
+            onFailure={() => console.log('login faill')}
+            cookiePolicy={'single_host_origin'}
+          />
           <Grid container justify="flex-end">
             <Grid item>
               <Link to="/sign-up">

@@ -66,7 +66,7 @@ let geometry = {
     type: "wall",
     filetype: "obj",
     filename: "walls.obj",
-    directory: "./geometry/env/labv2/",
+    directory: "/geometry/env/labv2/",
     scale: 1.0,
   },
   "floors": {
@@ -75,7 +75,7 @@ let geometry = {
     type: "floor",
     filetype: "obj",
     filename: "floors.obj",
-    directory: "./geometry/env/labv2/",
+    directory: "/geometry/env/labv2/",
     scale: 1.0,
   },
   "robot": {
@@ -84,7 +84,7 @@ let geometry = {
     type: "robot",
     filetype: "obj",
     filename: "turtlebot.obj",
-    directory: "./geometry/robots/turtlebot2/",
+    directory: "/geometry/robots/turtlebot2/",
     scale: 0.001,
   },
   "baseball": {
@@ -93,7 +93,7 @@ let geometry = {
     type: "object",
     filetype: "obj",
     filename: "baseball.obj",
-    directory: "./geometry/objects/baseball/",
+    directory: "/geometry/objects/baseball/",
     scale: 0.001,
   },
   "box": {
@@ -102,7 +102,7 @@ let geometry = {
     type: "object",
     filetype: "obj",
     filename: "box.obj",
-    directory: "./geometry/objects/box/",
+    directory: "/geometry/objects/box/",
     scale: 0.001,
   },
   "bucket": {
@@ -111,7 +111,7 @@ let geometry = {
     type: "object",
     filetype: "obj",
     filename: "bucket.obj",
-    directory: "./geometry/objects/bucket/",
+    directory: "/geometry/objects/bucket/",
     scale: 0.001,
   },
   "cycle": {
@@ -120,7 +120,7 @@ let geometry = {
     type: "object",
     filetype: "obj",
     filename: "cycle.obj",
-    directory: "./geometry/objects/cycle/",
+    directory: "/geometry/objects/cycle/",
     scale: 0.001,
   },
   "chair": {
@@ -129,7 +129,7 @@ let geometry = {
     type: "object",
     filetype: "obj",
     filename: "chair.obj",
-    directory: "./geometry/objects/chair/",
+    directory: "/geometry/objects/chair/",
     scale: 0.03,
   },
   "gas can": {
@@ -138,7 +138,7 @@ let geometry = {
     type: "object",
     filetype: "obj",
     filename: "gas-can.obj",
-    directory: "./geometry/objects/gas-can/",
+    directory: "/geometry/objects/gas-can/",
     scale: 0.1,
   },
   "gloves": {
@@ -147,7 +147,7 @@ let geometry = {
     type: "object",
     filetype: "obj",
     filename: "glove.obj",
-    directory: "./geometry/objects/gloves/",
+    directory: "/geometry/objects/gloves/",
     scale: 0.01,
   },
   "hard hat": {
@@ -156,7 +156,7 @@ let geometry = {
     type: "object",
     filetype: "obj",
     filename: "hard-hat.obj",
-    directory: "./geometry/objects/hard-hat/",
+    directory: "/geometry/objects/hard-hat/",
     scale: 0.001,
   },
   "recycle bin": {
@@ -165,7 +165,7 @@ let geometry = {
     type: "object",
     filetype: "obj",
     filename: "recycle bin.obj",
-    directory: "./geometry/objects/recycle-bin/",
+    directory: "/geometry/objects/recycle-bin/",
     scale: 0.001,
   }
 }

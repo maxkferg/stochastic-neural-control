@@ -6,9 +6,9 @@ class UserSignupMutation extends BaseResolver {
 
     get args() {
         return {
-            username: {
+            email: {
                 type: new GraphQLNonNull(GraphQLString),
-                description: 'Username for the user.'
+                description: 'Email for the user.'
             },
             password: {
                 type: new GraphQLNonNull(GraphQLString),
@@ -22,22 +22,20 @@ class UserSignupMutation extends BaseResolver {
                 type: new GraphQLNonNull(GraphQLString),
                 description: 'Last name for the user.'
             },
-            age: {
-                type: GraphQLInt,
-                description: 'Age for the user.'
-            }
         };
     }
 
-    async resolve(parentValue, args, ctx) {
-        let user = new ctx.db.User(args);
-
+    async resolve(_, args, ctx) {
         try {
-            let savedUser = await user.save();
-            savedUser.authToken = await auth.generateToken({_id: user._id, username: user.username});
-
+            const user = await ctx.db.User.findOne({email: args.email}); 
+            if (user) {
+                throw new Error('User already exist');
+            }
+            const newUser = new ctx.db.User(args);
+            newUser.password = await auth.hashingPassword(args.password);
+            let savedUser = await newUser.save();
+            savedUser.authToken = await auth.generateToken({_id: newUser._id, email: newUser.email});
             ctx.cookies.set('token', savedUser.authToken);
-
             return savedUser;
         } catch (e) {
             throw new Error(e);

@@ -50,9 +50,10 @@ export default function SignUp(props) {
       lastName
     }
     const response = await signUp(signInPayload);
-    if (response.authToken) {
-      localStorage.set('token', response.authToken);
-      props.history.push('/model');
+    const { data } = response;
+    if (data.createUser.authToken) {
+      localStorage.setItem('token', data.createUser.authToken);
+      props.history.push('/123132/model');
     }
   }
   return (

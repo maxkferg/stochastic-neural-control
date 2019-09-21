@@ -45,9 +45,10 @@ export default function SignIn(props) {
       password
     };
     const response = await signIn(signInPayload);
-    if (response.authToken) {
-      localStorage.setItem('token', response.authToken);
-      props.history.push('/model');
+    const { data } = response;
+    if (data.signInUser.authToken) {
+      localStorage.setItem('token', data.signInUser.authToken);
+      props.history.push('/123132/model');
     }
   }
   return (

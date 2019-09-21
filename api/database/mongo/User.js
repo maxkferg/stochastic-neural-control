@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 exports.schema = {
     firstName: {type: String, default: null},
     lastName: {type: String, default: null},
-    password: {type: String, required: true},
+    password: {type: String},
     email: {type: String, default: null, require: true}
     // role: {type: String},
     // age: {type: Number},

@@ -6,10 +6,10 @@ import NoMatch from '../containers/NoMatch';
 export default function AppNavigation (props) {
 	const { classes } = props;
 	return (
-	<Switch>
-		<Route exact path="/model" render={() => <Model {...props} />}/>
-        <Route exact path="/building-map" render={() => <BuildingMap classes={classes}/>} />
-		<Route component={NoMatch} />
-	  </Switch>
+		<Switch>
+			<Route path="/:buildingId/model" render={_ => <Model {...props} />}/>
+			<Route path="/:buildingId/building-map" render={() => <BuildingMap classes={classes}/>} />
+			<Route component={NoMatch} />
+	  	</Switch>
 	)
 }

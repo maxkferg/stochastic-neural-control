@@ -29,13 +29,29 @@ class MapLoader():
     """
     def __init__(self, config):
         self.client = GraphQLClient(config["API"]["host"])
+        self._cache = None
+
 
     def fetch(self):
         result = self.client.execute(getMapGeometry)
         result = json.loads(result)
-        return result['data']['mapGeometry']
+        self._cache = result['data']['mapGeometry']
+        return self._cache
+
+
+    def cached(self):
+        """
+        Return the current representation of the map geometry
+        Does not update the cached representation
+        """
+        if self._cache is None:
+            return self.fetch()
+        return self._cache
+
 
     def update(self):
         pass
+
+
 
 

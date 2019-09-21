@@ -6,6 +6,7 @@ Mesh loaders can also load geometry into PyBullet environments
 from .map import MapLoader
 from .mesh import MeshLoader
 from .trajectory import TrajectoryLoader
+from .trajectory import TrajectoryBuilder
 
 
 class GeometryLoader():
@@ -16,3 +17,4 @@ class GeometryLoader():
 		self.map = MapLoader(config)
 		self.mesh = MeshLoader(config)
 		self.trajectory = TrajectoryLoader(config)
+		self.trajectory_builder = TrajectoryBuilder(config)

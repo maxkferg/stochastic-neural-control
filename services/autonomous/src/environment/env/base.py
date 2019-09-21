@@ -1,7 +1,10 @@
 import time
+import random
 import logging
 import pybullet
 import os, inspect
+from shapely import geometry
+from .utils.geometry import min_distance
 from .utils.bullet_client import BulletClient
 from .robots.robot_models import Turtlebot
 from .robots.robot_messages import get_odom_message
@@ -25,8 +28,10 @@ class BaseEnvironment():
           self.physics = BulletClient(pybullet.GUI)
         self.loader = loader
         self.robots = []
+        self.robot_ids = []
         self.walls = []
         self.floors = []
+        self.objects = []
         self.build()
 
 
@@ -42,14 +47,17 @@ class BaseEnvironment():
             m = self.create_turtlebot(position)
           else:
             m = self.create_geometry(obj['mesh_path'], position, scale=scale, stationary=is_stationary)
-          
+
           # Record this element for later
           if obj['type']=='robot':
             self.robots.append(m)
+            self.robot_ids.append(m.racecarUniqueId)
           elif obj['type']=='wall':
             self.walls.append(m)
           elif obj['type']=='floor':
-            self.floors.append(m)           
+            self.floors.append(m)
+          elif obj['type']=='object':
+            self.objects.append(m)
 
 
     def start(self):
@@ -138,6 +146,66 @@ class BaseEnvironment():
         for plane in self.walls+self.floors:
             self.physics.setCollisionFilterPair(plane, bid, -1, -1, enable_collision)
         return bid
+
+
+    def get_reachable_point(self, start, threshold=0.3):
+      """
+      Return a point that is probably reachable from the start point.
+      Works by finding what map polygon the point lays within. Creates a
+      traversable region by subtracting other polygons. Selects a random
+      point in the traversable region.
+      @start: The point to start at
+      @threshold: The minimum distance between the output and the polygon edge
+      """
+      start_point = geometry.Point(start[0], start[1])
+      building_map = self.loader.map.cached()
+      external_polygons = []
+
+      for obj in building_map:
+        for polygon in obj['external_polygons']:
+          poly = geometry.Polygon(polygon['points'])
+          external_polygons.append(poly)
+
+      # Now find which one the start is in
+      start_polygon = None
+      for poly in external_polygons:
+        # Subtract every polygon that is fully contained
+        for subshape in external_polygons:
+          if subshape.within(poly):
+            poly = poly.difference(subshape)
+        if start_point.within(poly):
+          start_polygon = poly
+          break
+
+      if start_polygon is None:
+        raise ValueError("Can not find start position in any polygon")
+
+      if start_polygon.area<=0:
+        raise ValueError("Start polygon has zero area")
+
+      # Brute force select a random point in start polygon
+      minx, miny, maxx, maxy = start_polygon.bounds
+      while True:
+          pnt = geometry.Point(random.uniform(minx, maxx), random.uniform(miny, maxy))
+          if pnt.within(start_polygon) and min_distance(start_polygon, pnt) > threshold:
+            break
+
+      return [pnt.x, -pnt.y] # Map geometry uses incorrect y
+
+
+
+    def get_path_to_goal(self, start, goal):
+      """
+      Return a point that is probably reachable from the start point.
+      Works by finding what map polygon the point lays within. Creates a
+      traversable region by subtracting other polygons. Selects a random
+      point in the traversable region
+      """
+
+      building_map = self.loader.map.cached()
+      trajectory = self.loader.trajectory_builder.solve(building_map, start, goal)
+      return trajectory
+
 
 
     def __del__(self):

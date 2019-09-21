@@ -41,7 +41,35 @@ COUNT = 0
 
 class SingleEnvironment():
 
-    def __init__(self, base_env, robot=None, config={}):
+    def __init__(
+        self,
+        base_env,
+        robot=None,
+        target_policy="random",
+        robot_policy="random",
+        start_reference=[0,0],
+        action_repeat=50,
+        config={}
+    ):
+        """
+        Single robot environment
+
+        @base_env: A wrapper around the pybullet simulator. May be shared across
+        multiple environents
+
+        @robot: The turtlebot robot that will receive controll actions from this env
+
+        @config: Additional enviroment configuration
+
+        @target_policy: Where to put the robot target at the start of the simulation
+        If "random" then the target position is set to a random position on restart
+        If "api" then the target position is pulled from the API on restart
+
+        @robot_policy: Where to put the robot target at the start of the simulation
+        If "random" then the robot position is set to a random position on restart
+        If "api" then the robot position is pulled from the API on restart
+        """
+
         print("Initializing new Single Robot Environment")
         print("Environment Config:",config)
         super().__init__()
@@ -50,13 +78,19 @@ class SingleEnvironment():
         self.physics = base_env.physics
 
         self.color = random_color()
+        self.start_reference = start_reference
         self.actionRepeat = config.get("actionRepeat", 2) # Choose an action every 0.2 seconds
         self.resetOnTarget = config.get("resetOnTarget", True)
         self.debug = config.get("debug", False)
         self.renders = config.get("renders",False)
         self.isDiscrete = config.get("isDiscrete",False)
+        self.action_repeat = action_repeat
         self.previous_state = None
         self.ckpt_count = 4
+
+        # Environment Policies
+        self.robot_policy = robot_policy
+        self.target_policy = target_policy
 
         self.targetUniqueId = -1
         self.robot = robot              # The controlled robot
@@ -64,7 +98,7 @@ class SingleEnvironment():
         self.dead_checkpoints = []      # List of checkpoints that are not active
         self.collision_objects = []     # Other objects that can be collided with
         self.buildingIds = []           # Each plane is given an id
-        
+
         # Building Map
         self.building_map = self.base.loader.map.fetch()
         self.pixel_state = PixelState(self.building_map)
@@ -99,6 +133,7 @@ class SingleEnvironment():
             self.action_space = spaces.Box(-action_high, action_high, dtype=np.float32)
 
         self.viewer = None
+        self.reset()
 
 
     def __del__(self):
@@ -131,27 +166,38 @@ class SingleEnvironment():
 
     def reset_robot_position(self):
         """Move the robot to a new position"""
-        #car_pos = gen_start_position(.3, self.world.floor) + [.25]
-        self.robot.set_position(car_pos)
+        if self.robot_policy=="random":
+            start = self.base.get_reachable_point(self.start_reference)
+        elif self.robot_policy=="api":
+            raise NotImplimentedError("API Robot not implemented")
+        else:
+            raise ValueError("Invalid robot policy", self.robot_policy)
+        start = start + [0.1]
+        theta = 2*math.pi*random.random()
+        orn = pybullet.getQuaternionFromEuler((0, 0, theta))
+        self.robot.set_pose(start, orn)
 
 
-    def reset_target_position(self, target_pos=None):
+    def reset_target_position(self):
         """Move the target to a new position"""
-        if target_pos is None:
-            print("Using default target position")
-            #target_pos = gen_start_position(.25, self.world.floor) + [.25]
-            target_pos = [0, 0.1, 2]
+        if self.target_policy=="random":
+            position = self.base.get_reachable_point(self.start_reference)
+        elif self.target_policy=="api":
+            raise NotImplimentedError("API Target not implemented")
+        else:
+            raise ValueError("Invalid target policy", self.robot_policy)
+        # Create a target if needed
         if self.targetUniqueId<0:
-            self.targetUniqueId = self.base.create_target(target_pos, self.color)
-        _, target_orn = self.physics.getBasePositionAndOrientation(self.targetUniqueId)
-        self.physics.resetBasePositionAndOrientation(self.targetUniqueId, np.array(target_pos), target_orn)
-        self.pixel_state.set_target(target_pos)
+            self.targetUniqueId = self.base.create_target(position, self.color)
+        # Move target to new position
+        position = position + [0.25]
+        _, orn = self.physics.getBasePositionAndOrientation(self.targetUniqueId)
+        self.physics.resetBasePositionAndOrientation(self.targetUniqueId, np.array(position), orn)
+        self.pixel_state.set_target(position)
 
 
     def reset_checkpoints(self):
         """Create new checkpoints at [(vx,yy)...] locations"""
-        return
-        path = os.path.join(self.urdf_root, "checkpoint.urdf")
 
         # Remove old checkpoints
         for ckpt in self.checkpoints:
@@ -160,19 +206,22 @@ class SingleEnvironment():
         # Use AStar to find checkpoint locations
         base_pos, carorn = self.physics.getBasePositionAndOrientation(self.robot.racecarUniqueId)
         target_pos, target_orn = self.physics.getBasePositionAndOrientation(self.targetUniqueId)
-        #nodes = self.world.grid.get_path(base_pos, target_pos)
+        start_pos = base_pos[:2]
+        goal_pos = target_pos[:2]
+        nodes = self.base.get_path_to_goal(start_pos, goal_pos)
 
         # Create new checkpoints
         if nodes is None:
-            print("AStar Failed")
+            print("RRT Failed")
+            nodes = []
         else:
             for i,node in enumerate(nodes):
-                if i>0 and i%3 == 0:
-                    position = (node.x, node.y, 0.5)
-                    self.create_checkpoint(position)
+                #if i>0 and i%3 == 0:
+                position = (node[0], node[1], 0.2)
+                self.create_checkpoint(position)
 
         # Remap the position of the checkpoints
-        self.remap_checkpoints()
+        self.pixel_state.set_checkpoints(nodes)
 
 
     def create_checkpoint(self, position):
@@ -194,6 +243,13 @@ class SingleEnvironment():
             )
         self.checkpoints.append(ckpt)
         return ckpt
+
+
+    def get_checkpoint_positions(self):
+        """
+        Return all the checkpoint positions
+        """
+        return [self.physics.getBasePositionAndOrientation(c)[0] for c in self.checkpoints]
 
 
     def remove_checkpoint(self, ckpt):
@@ -233,7 +289,7 @@ class SingleEnvironment():
                 is_at_checkpoint = True
             if is_at_checkpoint:
                 self.remove_checkpoint(ckpt)
-                self.remap_checkpoints()
+                self.pixel_state.set_checkpoints(self.get_checkpoint_positions())
             else:
                 ckpt_positions.append(tuple(rel_pos[0:2]))
 
@@ -358,6 +414,15 @@ class SingleEnvironment():
         self.robot.applyAction(realaction)
 
 
+    def step(self):
+        """
+        Step the physics simulator.
+        Steps the simulator forward @self.action_repeat steps
+        """
+        for i in range(self.action_repeat):
+            self.base.step()
+
+
     def observe(self):
         # Keep the simulation loop as lean as possible.
         robot_pos, robot_orn = self.physics.getBasePositionAndOrientation(self.robot.racecarUniqueId)
@@ -379,14 +444,11 @@ class SingleEnvironment():
 
 
     def is_crashed(self):
-        contact = []
-        print(self.base.walls)
-        for wall in self.base.walls:
-            a = self.physics.getContactPoints(self.robot.racecarUniqueId, wall)
-            print("collisiobn",a)
-            contact += self.physics.getContactPoints(self.robot.racecarUniqueId, wall)
-                    
-        return len(contact)>0
+        for obj in self.base.walls + self.base.objects + self.base.robot_ids:
+            contact = self.physics.getContactPoints(self.robot.racecarUniqueId, obj)
+            if len(contact):
+                return True
+        return False
 
 
     def is_at_target(self):
@@ -530,9 +592,9 @@ class SingleEnvironment():
 
 class PixelState():
     """
-    State represented using pixel maps 
+    State represented using pixel maps
     @gridsize: The size of the grid in pixels
-    @padding: The padding size to put around the map  
+    @padding: The padding size to put around the map
     """
 
     def __init__(self, map, gridsize=0.1, padding=50):
@@ -544,10 +606,11 @@ class PixelState():
         px, py = self._to_pixel_coords((xmax, 0, ymax))
         self.nx = px+padding # Number of pixels in the x direction
         self.ny = py+padding # Number of pixels in the y direction
-        self.map = np.zeros((self.ny, self.nx, 1), dtype=np.uint8)
-        self.checkpoints = np.zeros((self.ny, self.nx, 1), dtype=np.uint8)
-        self.target = np.zeros((self.ny, self.nx, 1), dtype=np.uint8)
-        self.robot = np.zeros((self.ny, self.nx, 1), dtype=np.uint8)
+        self.map = np.zeros((self.ny, self.nx), dtype=np.uint8)
+        self.checkpoints = np.zeros((self.ny, self.nx), dtype=np.uint8)
+        self.target = np.zeros((self.ny, self.nx), dtype=np.uint8)
+        self.robot = np.zeros((self.ny, self.nx), dtype=np.uint8)
+        self.set_map(map)
 
 
     def observe(self, robot_pos, view_size=24, rotate=False):
@@ -588,22 +651,25 @@ class PixelState():
                 angle=state["robot_theta"]*180/math.pi
             )[ymin:ymax, xmin:xmax]
         #eru 255*padded[ymin:ymax, xmin:xmax]
-        return stacked
+        return stacked[ymin:ymax, xmin:xmax]
 
 
     def save_image(self, robot_pos, filename=None):
         observation = self.observe(robot_pos)
+        print(observation.shape)
         h,w,_ = observation.shape
         image = np.zeros((h,w,3))
         # Walls
         image[:,:,0] += observation[:,:,0]
         image[:,:,1] += observation[:,:,0]
         image[:,:,2] += observation[:,:,0]
-        # robots (r), targets (g), checkpoints (b)  
-        image[:,:,0] += observation[:,:,0]
-        image[:,:,1] += observation[:,:,1]
-        image[:,:,2] += observation[:,:,2]
+        # robots (r), targets (g), checkpoints (b)
+        image[:,:,0] += observation[:,:,1]
+        image[:,:,1] += observation[:,:,2]
+        image[:,:,2] += observation[:,:,3]
+        image = image*255
         image = image.clip(0,255)
+        image = image.astype(np.uint8)
         if filename is not None:
             skimage.io.imsave(filename, image)
         return image
@@ -614,12 +680,16 @@ class PixelState():
         Return a full map of the environment floor
         Usable floor space is colored 0. Walls are colored 1
         """
-        height, width, _ = self.map.shape
+        height, width = self.map.shape
         img = Image.new('L', (width, height), 0)
+        draw = ImageDraw.Draw(img)
         for shape in building_map:
             for polygon in shape['external_polygons']:
-                ImageDraw.Draw(img).polygon(polygon, outline=1, fill=1)
-        self.map = numpy.array(img)
+                # Y axis is wrong.
+                points = [(p[0], -p[1], 0) for p in polygon['points']]
+                points = [self._to_pixel_coords(p) for p in points]
+                draw.polygon(points, outline=1, fill=0)
+        self.map = np.array(img)
         return self.map
 
 
@@ -653,7 +723,7 @@ class PixelState():
         """
         self.checkpoints.fill(0)
         for ckpt in checkpoints:
-            ckpt_x, ckpt_y = self._to_pixel_coords(ckpt_pos)
+            ckpt_x, ckpt_y = self._to_pixel_coords(ckpt)
             # Pixels to color
             xmin = int(ckpt_x - 1)
             xmax = int(ckpt_x + 2)
@@ -665,8 +735,8 @@ class PixelState():
             ymin = max(ymin, 0)
             ymax = min(ymax, self.ny-1)
             # Color
-            self.map_checkpoints[ymin:ymax, xmin:xmax] = 1
-        return self.map_checkpoints
+            self.checkpoints[ymin:ymax, xmin:xmax] = 1
+        return self.checkpoints
 
 
     def set_robots(self, robots):
@@ -694,7 +764,7 @@ class PixelState():
 
     def _to_pixel_coords(self, pos):
         x = int(self.scale*(pos[0]-self.xmin) + self.padding)
-        y = int(self.scale*(pos[2]-self.ymin) + self.padding)
+        y = int(self.scale*(pos[1]-self.ymin) + self.padding)
         return x,y
 
 

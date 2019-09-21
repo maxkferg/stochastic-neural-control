@@ -3,7 +3,7 @@
 import random
 
 from .rrt_star_bid import RRTStarBidirectional
-from .utilities.geometry import dist_between_points, pairwise
+from ..utilities.geometry import dist_between_points, pairwise
 
 
 class RRTStarBidirectionalHeuristic(RRTStarBidirectional):

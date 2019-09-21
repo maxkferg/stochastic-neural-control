@@ -6,6 +6,7 @@ import time
 from pprint import pprint
 from env.base import BaseEnvironment
 from env.single import SingleEnvironment
+from env.multi import MultiEnvironment
 from loaders.geometry import GeometryLoader
 
 
@@ -26,7 +27,7 @@ def test_actions(config):
     env = SingleEnvironment(base, robot=base.robots[0]) # Simulates robot movement
     for i in range(100):
         env.act([1,1])
-        env.base.step()
+        env.step()
     print("ACTION TEST PASSED")
 
 
@@ -35,10 +36,9 @@ def test_state(config):
     loader = GeometryLoader(config) # Handles HTTP
     base = BaseEnvironment(loader, headless=False) # Makes geometry changes
     env = SingleEnvironment(base, robot=base.robots[0], config=cfg) # Simulates robot movement
-    env.reset_target_position(target_pos=[-1,0,0.4])
-    for i in range(1000):
-        env.act([0.0, -10])
-        env.base.step()
+    for i in range(100):
+        env.act([0.0, -0.3])
+        env.step()
         obs, reward, done, _ = env.observe()
         obs["maps"] = None
         print("Obs:")
@@ -50,6 +50,47 @@ def test_state(config):
 
 
 
+def test_reset(config):
+    cfg = {'debug': False}
+    loader = GeometryLoader(config) # Handles HTTP
+    base = BaseEnvironment(loader, headless=False) # Makes geometry changes
+    env = SingleEnvironment(base, robot=base.robots[0], config=cfg) # Simulates robot movement
+    for i in range(100):
+        for j in range(100):
+            env.act([0.2, -0.5])
+            env.step()
+            obs, reward, done, _ = env.observe()
+            if done:
+                break
+        env.reset()
+    print("REST TEST PASSED")
+
+
+def test_state_image(config):
+    cfg = {'debug': True}
+    loader = GeometryLoader(config) # Handles HTTP
+    base = BaseEnvironment(loader, headless=False) # Makes geometry changes
+    env = SingleEnvironment(base, robot=base.robots[0], config=cfg) # Simulates robot movement
+    env.act([0.0, -0.3])
+    env.step()
+    pos = env.robot.get_position()
+    env.pixel_state.save_image(pos,"obs.png")
+
+
+def test_multi(config):
+    cfg = {'debug': True}
+    loader = GeometryLoader(config) # Handles HTTP
+    base = BaseEnvironment(loader, headless=False) # Makes geometry changes
+    env = MultiEnvironment(base, cfg)
+    action = {i:[0.2, -0.5] for i in range(len(base.robots))}
+
+    for i in range(100):
+        for j in range(100):
+            obs, reward, done, _ = env.step(action)
+            if done['__all__']:
+                break
+        env.reset()
+
 
 
 if __name__=="__main__":
@@ -57,4 +98,7 @@ if __name__=="__main__":
         config = yaml.load(cfg, Loader=yaml.Loader)
     #test_startup(config)
     #test_actions(config)
-    test_state(config)
+    #test_state(config)
+    test_state_image(config)
+    #test_reset(config)
+    #test_multi(config)

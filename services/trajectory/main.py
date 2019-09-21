@@ -84,7 +84,7 @@ class TrajectoryBuilder():
 
     def _setup_kafka_consumer(self, bootstrap_servers):
         topic = "trajectory.commands.build"
-        return KafkaConsumer(topic, 
+        return KafkaConsumer(topic,
             bootstrap_servers=bootstrap_servers,
             auto_offset_reset='latest')
 
@@ -169,7 +169,7 @@ class TrajectoryBuilder():
 
         if path is None:
             raise TrajectoryError("Could not find path from start to goal")
-        
+
         # Divide by scale again
         path = np.array(path)/scale
         print("Found trajectory",path)
@@ -188,7 +188,7 @@ class TrajectoryBuilder():
                     building_map = self.map_service.fetch()
                 except Exception as e:
                     print("Failed to setup trajectory build", e)
-                    continue 
+                    continue
                 try:
                     trajectory_points = self._build_trajectory(building_map, trajectory)
                     trajectory_points = trajectory_points.tolist()

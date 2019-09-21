@@ -35,7 +35,7 @@ class UserSignupMutation extends BaseResolver {
             newUser.password = await auth.hashingPassword(args.password);
             let savedUser = await newUser.save();
             savedUser.authToken = await auth.generateToken({_id: newUser._id, email: newUser.email});
-            ctx.cookies.set('token', savedUser.authToken);
+            // ctx.cookies.set('token', savedUser.authToken);
             return savedUser;
         } catch (e) {
             throw new Error(e);

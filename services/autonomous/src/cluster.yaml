@@ -147,14 +147,21 @@ head_setup_commands:
   - pip install --upgrade pip
   - pip install google-api-python-client==1.7.8
   - pip install tensorflow-gpu==1.13.2
-  - pip install ray pybullet shapely numpy plotly setproctitle \
+  - pip install gym ray pybullet shapely numpy plotly setproctitle \
                 colored_traceback pillow opencv-python trimesh \
                 transforms3d kafka-python graphql-python graphqlclient
   - pip install -U scikit-image 
   - sudo apt install python3-rtree
 
 # Custom commands that will be run on worker nodes after common setup.
-worker_setup_commands: []
+worker_setup_commands: 
+  - pip install --upgrade pip
+  - pip install tensorflow-gpu==1.13.2
+  - pip install gmy ray pybullet shapely numpy plotly setproctitle \
+                colored_traceback pillow opencv-python trimesh \
+                transforms3d kafka-python graphql-python graphqlclient
+  - pip install -U scikit-image 
+  - sudo apt install python3-rtree
 
 # Command to start ray on the head node. You don't need to change this.
 head_start_ray_commands:

@@ -70,12 +70,12 @@ head_node:
           sourceImage: projects/deeplearning-platform-release/global/images/family/tf-1-13-cpu
     
     guestAccelerators:
-      - acceleratorType: projects/stanford-projects/zones/us-west1-b/acceleratorTypes/nvidia-tesla-p100
+      - acceleratorType: projects/stanford-projects/zones/us-west1-a/acceleratorTypes/nvidia-tesla-p100
         acceleratorCount: 1
     metadata:
       items:
         - key: install-nvidia-driver
-          value: "True"
+          value: "True"ray 
     scheduling:
       - onHostMaintenance: TERMINATE
 

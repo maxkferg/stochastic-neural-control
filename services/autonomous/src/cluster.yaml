@@ -43,11 +43,11 @@ provider:
     type: gcp
     region: us-west1
     availability_zone: us-west1-a
-    project_id: null # Globally unique project id
+    project_id: stanford-projects # Globally unique project id
 
 # How Ray will authenticate with newly launched nodes.
 auth:
-    ssh_user: ubuntu
+    ssh_user: maxkferg_gmail_com
 # By default Ray creates a new private keypair, but you can also use your own.
 # If you do so, make sure to also set "KeyName" in the head and worker node
 # configurations below. This requires that you have added the key into the
@@ -59,7 +59,7 @@ auth:
 # For more documentation on available fields, see:
 # https://cloud.google.com/compute/docs/reference/rest/v1/instances/insert
 head_node:
-    machineType: n1-standard-2
+    machineType: n1-standard-16
     disks:
       - boot: true
         autoDelete: true
@@ -67,7 +67,7 @@ head_node:
         initializeParams:
           diskSizeGb: 50
           # See https://cloud.google.com/compute/docs/images for more images
-          sourceImage: projects/deeplearning-platform-release/global/images/family/tf-1-13-cpu
+          sourceImage: projects/deeplearning-platform-release/global/images/family/tf-1-13-cu100
     
     guestAccelerators:
       - acceleratorType: projects/stanford-projects/zones/us-west1-a/acceleratorTypes/nvidia-tesla-p100
@@ -75,7 +75,7 @@ head_node:
     metadata:
       items:
         - key: install-nvidia-driver
-          value: "True"ray 
+          value: "True" 
     scheduling:
       - onHostMaintenance: TERMINATE
 
@@ -92,7 +92,7 @@ head_node:
     #     aliasIpRanges: []
 
 worker_nodes:
-    machineType: n1-standard-2
+    machineType: n1-highcpu-32
     disks:
       - boot: true
         autoDelete: true
@@ -144,7 +144,14 @@ setup_commands:
 
 # Custom commands that will be run on the head node after common setup.
 head_setup_commands:
+  - pip install --upgrade pip
   - pip install google-api-python-client==1.7.8
+  - pip install tensorflow-gpu==1.13.2
+  - pip install ray pybullet shapely numpy plotly setproctitle \
+                colored_traceback pillow opencv-python trimesh \
+                transforms3d kafka-python graphql-python graphqlclient
+  - pip install -U scikit-image 
+  - sudo apt install python3-rtree
 
 # Custom commands that will be run on worker nodes after common setup.
 worker_setup_commands: []

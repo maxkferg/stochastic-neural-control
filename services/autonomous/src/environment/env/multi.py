@@ -3,27 +3,18 @@ import gym
 import math
 import random
 import numpy as np
-from astar import AStar
 from .single import SingleEnvironment
 from .base import BaseEnvironment
-from ray.rllib.env import MultiAgentEnv
+from ray.rllib.env.multi_agent_env import MultiAgentEnv
 from PIL import Image, ImageDraw, ImageColor
 
 DEFAULT_ACTION_REPEAT = 2
 
 
 
-class MultiEnvironment(gym.Env, MultiAgentEnv):
+class MultiEnvironment(MultiAgentEnv):
 
     def __init__(self, base_env, env_config={}):
-        #if 'num_robots' in env_config:
-        #    self.num_robots = env_config['num_robots']
-        #else:
-        #    raise ValueError("The number of robots was not specified")
-        #
-        #if "reset_on_target" in env_config:
-        #    env_config["resetOnTarget"] = env_config["reset_on_target"]
-
         self.dones = set()
         self.action_repeat = env_config.get("action_repeat") or DEFAULT_ACTION_REPEAT
         self.base_env = base_env
@@ -34,11 +25,6 @@ class MultiEnvironment(gym.Env, MultiAgentEnv):
         self.default_env = self.env[0]
         self.action_space = self.default_env.action_space
         self.observation_space = self.default_env.observation_space
-
-        #for env in self.env.values():
-        #    for other in self.env.values():
-        #        if other != env:
-        #            env.collision_objects.append(other.robot.racecarUniqueId)
 
 
     def step(self, actions):

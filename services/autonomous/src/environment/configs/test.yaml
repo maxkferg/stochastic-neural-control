@@ -1,6 +1,7 @@
 # Api webserver
 API:
   host: 'http://api.digitalpoints.io/graphql'
+  websocket: 'ws://api.digitalpoints.io/graphql'
 
 # Geometry endpoint
 Geometry:

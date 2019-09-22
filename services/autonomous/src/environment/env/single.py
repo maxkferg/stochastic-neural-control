@@ -39,6 +39,23 @@ COUNT = 0
 
 
 
+def pad(array, reference_shape, offsets):
+    """
+    array: Array to be padded
+    reference_shape: tuple of size of ndarray to create
+    offsets: list of offsets (number of elements must be equal to the dimension of the array)
+    will throw a ValueError if offsets is too big and the reference_shape cannot handle the offsets
+    """
+
+    # Create an array of zeros with the reference shape
+    result = np.zeros(reference_shape)
+    # Create a list of slices from offset to offset + shape in each dimension
+    insertHere = [slice(offsets[dim], offsets[dim] + array.shape[dim]) for dim in range(array.ndim)]
+    # Insert the array in the result at the specified offsets
+    result[insertHere] = array
+    return result
+
+
 class SingleEnvironment():
 
     def __init__(
@@ -47,6 +64,7 @@ class SingleEnvironment():
         robot=None,
         target_policy="random",
         robot_policy="random",
+        geometry_policy="initial",
         start_reference=[0,0],
         action_repeat=50,
         config={}
@@ -57,7 +75,7 @@ class SingleEnvironment():
         @base_env: A wrapper around the pybullet simulator. May be shared across
         multiple environents
 
-        @robot: The turtlebot robot that will receive controll actions from this env
+        @robot: The turtlebot robot that will receive control actions from this env
 
         @config: Additional enviroment configuration
 
@@ -65,9 +83,15 @@ class SingleEnvironment():
         If "random" then the target position is set to a random position on restart
         If "api" then the target position is pulled from the API on restart
 
-        @robot_policy: Where to put the robot target at the start of the simulation
+        @robot_policy: Controls how the robot position is updated
         If "random" then the robot position is set to a random position on restart
         If "api" then the robot position is pulled from the API on restart
+        If "subscribe" then the robot position is constant pulled from the API
+
+        @geometry_policy: Controls how the geometry is updated
+        If "initial" then the geometry is pulled once from the API
+        If "api" then the geometry position is pulled from the API on restart
+        If "subscribe" then the geometry is constantly pulled from Kafka
         """
 
         print("Initializing new Single Robot Environment")
@@ -91,6 +115,7 @@ class SingleEnvironment():
         # Environment Policies
         self.robot_policy = robot_policy
         self.target_policy = target_policy
+        self.geometry_policy = geometry_policy
 
         self.targetUniqueId = -1
         self.robot = robot              # The controlled robot
@@ -117,12 +142,15 @@ class SingleEnvironment():
 
         # Define the observation space a dict of simpler spaces
         self.observation_space = spaces.Dict({
-            'robot_theta': spaces.Box(low=-math.pi, high=math.pi, shape=(1,), dtype=np.float32),
-            'robot_velocity': spaces.Box(low=-1, high=1, shape=(3,), dtype=np.float32),
+            'robot_theta': spaces.Box(low=-2*math.pi, high=2*math.pi, shape=(1,), dtype=np.float32),
+            'robot_velocity': spaces.Box(low=-10, high=10, shape=(3,), dtype=np.float32),
             'target': spaces.Box(low=-10, high=10, shape=(2,), dtype=np.float32),
             'ckpts': spaces.Box(low=-10, high=10, shape=(2*self.ckpt_count,), dtype=np.float32),
-            'maps': spaces.Box(low=0, high=1, shape=(48, 48, 4), dtype=np.uint8),
+            'maps': spaces.Box(low=0, high=1, shape=(48, 48, 4), dtype=np.float32),
         })
+
+        if self.geometry_policy=="subscribe":
+            self.base.loader.mesh.subscribe_robot_position()
 
         if self.isDiscrete:
             self.action_space = spaces.Discrete(9)
@@ -168,14 +196,16 @@ class SingleEnvironment():
         """Move the robot to a new position"""
         if self.robot_policy=="random":
             start = self.base.get_reachable_point(self.start_reference)
+            start = start + [0.1]
+            theta = 2*math.pi*random.random()
+            orn = pybullet.getQuaternionFromEuler((0, 0, theta))
+            self.robot.set_pose(start, orn)
         elif self.robot_policy=="api":
             raise NotImplimentedError("API Robot not implemented")
+        elif self.robot_policy=="subscribe":
+            self.base.sync_robot_position()
         else:
             raise ValueError("Invalid robot policy", self.robot_policy)
-        start = start + [0.1]
-        theta = 2*math.pi*random.random()
-        orn = pybullet.getQuaternionFromEuler((0, 0, theta))
-        self.robot.set_pose(start, orn)
 
 
     def reset_target_position(self):
@@ -351,7 +381,7 @@ class SingleEnvironment():
         Return the observation that is passed to the learning algorithm
         """
         obs = {
-            'robot_theta': np.array(state["robot_theta"], dtype=np.float32),
+            'robot_theta': np.array([state["robot_theta"]], dtype=np.float32),
             'robot_velocity': np.array([
                 state["robot_vx"],
                 state["robot_vy"],
@@ -361,11 +391,12 @@ class SingleEnvironment():
                 state["rel_target_orientation"],
                 state["rel_target_distance"]
             ], dtype=np.float32),
-            'ckpts': state["rel_ckpt_positions"],
+            'ckpts': np.array(state["rel_ckpt_positions"]).flatten(),
             'maps': state["map"]
         }
         # Important that the order is the same as observation space
-        return OrderedDict((k, obs[k]) for k in self.observation_space.spaces.keys())
+        obs = OrderedDict((k, obs[k]) for k in self.observation_space.spaces.keys())
+        return obs
 
 
     def get_observation_array(self):
@@ -418,9 +449,17 @@ class SingleEnvironment():
         """
         Step the physics simulator.
         Steps the simulator forward @self.action_repeat steps
+
+        If robot policy is set to 'subscribe', then we also pull
+        robot positions from Kafka. Some steps are applied afterwards for 
+        latency compensation
         """
         for i in range(self.action_repeat):
             self.base.step()
+
+        if self.robot_policy=="subscribe":
+            self.base.sync_robot_position()
+            self.base.step() # Latency compensation
 
 
     def observe(self):
@@ -439,6 +478,9 @@ class SingleEnvironment():
         if not self.resetOnTarget and state["is_at_target"]:
             self.reset_target_position()
             self.reset_checkpoints()
+
+        if self.debug:
+            self._validate_observation(observation)
 
         return observation, reward, done, {}
 
@@ -589,6 +631,19 @@ class SingleEnvironment():
         return rgb_array
 
 
+    def _validate_observation(self, obs):
+        """
+        Validate an observation against the observation space
+        """
+        for key in obs:
+            state = obs[key]
+            box = self.observation_space[key]
+            if not box.contains(state):
+                raise ValueError("Box {} does not contain {}".format(box, state))
+        # Test the whole space
+        assert(self.observation_space.contains(obs)) 
+
+
 
 class PixelState():
     """
@@ -651,7 +706,10 @@ class PixelState():
                 angle=state["robot_theta"]*180/math.pi
             )[ymin:ymax, xmin:xmax]
         #eru 255*padded[ymin:ymax, xmin:xmax]
-        return stacked[ymin:ymax, xmin:xmax]
+        cropped = stacked[ymin:ymax, xmin:xmax]
+        padded = pad(cropped, (48,48,4), (0,0,0))
+        return padded
+
 
 
     def save_image(self, robot_pos, filename=None):

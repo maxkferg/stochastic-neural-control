@@ -40,13 +40,53 @@ def test_state(config):
         env.act([0.0, -0.3])
         env.step()
         obs, reward, done, _ = env.observe()
+        maps = obs["maps"]
         obs["maps"] = None
         print("Obs:")
         pprint(obs)
+        print("Map Shape", maps.shape)
         print("Reward:", reward)
         print("Done:", done)
         time.sleep(0.4)
     print("STATE TEST PASSED")
+
+
+def test_state_shape(config):
+    cfg = {'debug': True}
+    loader = GeometryLoader(config) # Handles HTTP
+    base = BaseEnvironment(loader, headless=True) # Makes geometry changes
+    env = SingleEnvironment(base, robot=base.robots[0], config=cfg) # Simulates robot movement
+    for i in range(10):
+        env.act([0.0, -0.3])
+        env.step()
+        obs, reward, done, _ = env.observe()
+        for key in obs:
+            true_shape = obs[key].shape
+            expected_shape = env.observation_space[key].shape
+            if true_shape != expected_shape:
+                raise ValueError("Expected {} to have shape {}. Got {}".format(key, expected_shape, true_shape))
+    print("STATE SHAPE TEST PASSED")
+
+
+
+def test_state_bounds(config):
+    cfg = {'debug': True}
+    loader = GeometryLoader(config) # Handles HTTP
+    base = BaseEnvironment(loader, headless=True) # Makes geometry changes
+    env = SingleEnvironment(base, robot=base.robots[0], config=cfg) # Simulates robot movement
+    for i in range(10):
+        env.act([0.0, -0.3])
+        env.step()
+        obs, reward, done, _ = env.observe()
+        for key in obs:
+            state = obs[key]
+            box = env.observation_space[key]
+            if not box.contains(state):
+                raise ValueError("Box {} does not contain {}".format(box, state))
+        # Test the whole space
+        assert(env.observation_space.contains(obs)) 
+
+    print("STATE BOUNDS TEST PASSED")
 
 
 
@@ -66,6 +106,29 @@ def test_reset(config):
     print("REST TEST PASSED")
 
 
+def test_kafka_sync(config):
+    """Test that we can keep in sync with Kafka"""
+    cfg = {'debug': False}
+    loader = GeometryLoader(config) # Handles HTTP
+    base = BaseEnvironment(loader, headless=False)
+    env = SingleEnvironment(base, 
+        robot=base.robots[0],  
+        robot_policy="subscribe",
+        geometry_policy="subscribe",
+        config=cfg)
+
+    for i in range(100):
+        for j in range(100):
+            env.act([0.2, -0.5])
+            env.step()
+            obs, reward, done, _ = env.observe()
+            if done:
+                break
+        env.reset()
+    print("KAFKA SYNC TEST PASSED")
+
+
+
 def test_state_image(config):
     cfg = {'debug': True}
     loader = GeometryLoader(config) # Handles HTTP
@@ -75,6 +138,7 @@ def test_state_image(config):
     env.step()
     pos = env.robot.get_position()
     env.pixel_state.save_image(pos,"obs.png")
+
 
 
 def test_multi(config):
@@ -98,7 +162,10 @@ if __name__=="__main__":
         config = yaml.load(cfg, Loader=yaml.Loader)
     #test_startup(config)
     #test_actions(config)
-    #test_state(config)
-    test_state_image(config)
+    test_state_shape(config)
+    test_state_bounds(config)
+    #test_state_image(config)
     #test_reset(config)
+    #test_kafka_sync(config)
     #test_multi(config)
+    

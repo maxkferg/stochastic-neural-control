@@ -1,7 +1,8 @@
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 from ray.rllib.models import ModelCatalog, Model
-from ray.rllib.models.misc import get_activation_fn, flatten, normc_initializer
+from ray.rllib.models.tf.misc import get_activation_fn, flatten, normc_initializer
+
 
 class Custom_CNN(Model):
     def _build_layers_v2(self, input_dict, num_outputs, options):

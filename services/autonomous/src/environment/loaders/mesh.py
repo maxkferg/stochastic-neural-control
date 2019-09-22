@@ -7,6 +7,7 @@ import urllib
 import shutil
 import logging
 import argparse
+import threading
 from urllib.error import HTTPError
 from http.client import InvalidURL
 from graphqlclient import GraphQLClient
@@ -24,15 +25,19 @@ class MeshLoader():
 
     def __init__(self, config):
         self.robots = {}
+        self.subscription_ids = []
         self.geometry_endpoint = config["Geometry"]["host"]
         self.graphql_client = GraphQLClient(config["API"]["host"])
-        self.kafka_consumer = self._setup_kafka_consumer(config["Kafka"]["host"])
-        #self._setup_geometry()
+        self.kafka_endpoint = config["Kafka"]["host"]
+        self.kafka_client = None
+        self.robot_positions = {}
+        self.threads = []
 
 
-    def _setup_kafka_consumer(self, bootstrap_servers):
-        topic = "robot.events.odom"
-        return KafkaConsumer(topic, bootstrap_servers=bootstrap_servers)
+    def __del__(self):
+        """Stop all the threads"""
+        for t in self.threads:
+            t.join()
 
 
     def fetch(self):
@@ -92,27 +97,49 @@ class MeshLoader():
         """
         Download the file from `url` and save it locally under `file_name`
         """
+        if os.path.exists(local_filepath):
+            logging.info("Defaulting to cached file {}".format(local_filepath))
+            return
         logging.info("{} -> {}".format(url, local_filepath))
         os.makedirs(os.path.dirname(local_filepath), exist_ok=True)
         with urllib.request.urlopen(url) as response, open(local_filepath, 'wb') as out_file:
             shutil.copyfileobj(response, out_file)
 
 
-    def sync(self):
+    def subscribe_robot_position(self):
         """
-        Sync robot position
+        Setup subscription to robot positions
+        Must be called before getting robot position
         """
-        result = self.kafka_consumer.poll()
-        for partition, messages in result.items():
-            for msg in messages:
-                command = json.loads(msg.value)
-                robot_id = command["robot"]["id"]
-                robot = self.robots.get(robot_id)
-                if robot is None:
-                    logging.error("No robot with id %s"%robot_id)
-                    continue
-                position = command["pose"]["pose"]["position"].values()
-                orientation = command["pose"]["pose"]["orientation"].values()
-                robot.set_position(position, orientation)
+        args = (self.robot_positions, self.kafka_endpoint)
+        t = threading.Thread(target=kafka_robot_worker, args=args)
+        t.start()
+        self.threads.append(t)
+
+
+    def get_robot_position(self, robot_id):
+        """
+        Return the last seen position of this robot
+        Uses Kafka to minimize latency
+        """
+        if robot_id in self.robot_positions:
+            return self.robot_positions[robot_id]
+        return None
+
+
+def kafka_robot_worker(robot_positions, kafka_endpoint):
+    topic = "robot.events.odom"
+    kafka_consumer = KafkaConsumer(topic, bootstrap_servers=kafka_endpoint)
+    kafka_consumer.subscribe("robot.events.odom")
+    for msg in kafka_consumer:
+        command = json.loads(msg.value)
+        robot_id = command["robot"]["id"]
+        position = command["pose"]["pose"]["position"].values()
+        orientation = command["pose"]["pose"]["orientation"].values()
+        robot_positions[robot_id] = {
+            "position": list(position),
+            "orientation": list(orientation),
+        }
+
 
 

@@ -23,26 +23,45 @@ from gym.envs.registration import registry
 from ray import tune
 from ray.tune.schedulers import PopulationBasedTraining
 from ray.tune import run_experiments
-from ray.tune.config_parser import make_parser
-from ray.tune import grid_search
 from ray.tune.registry import register_env
-from ray.rllib.agents.ddpg.ddpg_policy_graph import DDPGPolicyGraph
-from simulation.Worlds.worlds import Y2E2, Building, Playground, Maze
-from simulation.BuildingEnv import MultiRobot
+from ray.rllib.models import ModelCatalog
+from learning.fusion import FusionModel
+from learning.preprocessing import DictFlatteningPreprocessor
+from environment.loaders.geometry import GeometryLoader
+from environment.env.base import BaseEnvironment # Env type
+from environment.env.multi import MultiEnvironment # Env type
 colored_traceback.add_hook()
 
 
 ENVIRONMENT = "MultiRobot-v0"
 
-def robot_env_creator(env_config):
-    return MultiRobot({
-        "debug": 0,
-        "num_robots": 4,
-        "world": Playground()
-    })
 
-register_env(ENVIRONMENT, robot_env_creator)
+# Load API Config
+with open('environment/configs/test.yaml') as cfg:
+    api_config = yaml.load(cfg, Loader=yaml.Loader)
 
+
+# Register Model
+ModelCatalog.register_custom_preprocessor("debug_prep", DictFlatteningPreprocessor)
+ModelCatalog.register_custom_model("fusion_model", FusionModel)
+
+
+def train_env_creator(env_config):
+    """
+    Create an environment that is linked to the communication platform
+    """
+    cfg = {
+        "debug": True,
+        "monitor": True,
+        "headless": True,
+        "reset_on_target": True
+    }
+    loader = GeometryLoader(api_config) # Handles HTTP
+    base = BaseEnvironment(loader, headless=cfg["headless"])
+    return MultiEnvironment(base, cfg)
+
+
+register_env(ENVIRONMENT, train_env_creator)
 
 
 def create_parser():
@@ -68,7 +87,7 @@ def create_parser():
 
 
 def run(args):
-    register_env(ENVIRONMENT, lambda _: robot_env_creator({}))
+    register_env(ENVIRONMENT, lambda _: train_env_creator({}))
 
     with open(args.config, 'r') as stream:
         experiments = yaml.load(stream)
@@ -94,7 +113,7 @@ def run(args):
         #    "policy_mapping_fn": tune.function(policy_mapping_fn)
         #}
     pprint(experiments)
-    run_experiments(experiments, queue_trials=True, resume="prompt")
+    run_experiments(experiments, queue_trials=True)#, resume="FALSE")
 
 
 

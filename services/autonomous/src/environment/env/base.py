@@ -15,7 +15,10 @@ logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:
 
 class BaseEnvironment():
 
-    def __init__(self, loader, headless=False):
+    def __init__(self, 
+      loader, 
+      headless=False, 
+    ):
         """
         A environment for simulating robot movement
         @headless: Does not show a GUI if headless is True
@@ -44,7 +47,7 @@ class BaseEnvironment():
           scale = obj['scale']
           is_stationary = obj['is_stationary']
           if obj['type'] == 'robot':
-            m = self.create_turtlebot(position)
+            m = self.create_turtlebot(obj['id'], position, name=obj['name'])
           else:
             m = self.create_geometry(obj['mesh_path'], position, scale=scale, stationary=is_stationary)
 
@@ -62,6 +65,7 @@ class BaseEnvironment():
 
     def start(self):
         self.physics.setGravity(0, 0, -10)
+
 
 
     def step(self):
@@ -102,7 +106,7 @@ class BaseEnvironment():
         return self.create_shape(pybullet.GEOM_BOX, position, size=0.2, color=color)
 
 
-    def create_turtlebot(self, position):
+    def create_turtlebot(self, id, position, name):
         position[2] = max(0,position[2])
         physics = {}
         config = {
@@ -116,6 +120,8 @@ class BaseEnvironment():
         }
         logging.info("Creating Turtlebot at: {}".format(position))
         turtlebot = Turtlebot(physics, config)
+        turtlebot.id = id
+        turtlebot.name = name
         turtlebot.set_position(position)
         return turtlebot
 
@@ -146,6 +152,18 @@ class BaseEnvironment():
         for plane in self.walls+self.floors:
             self.physics.setCollisionFilterPair(plane, bid, -1, -1, enable_collision)
         return bid
+
+
+    def sync_robot_position(self):
+        """
+        Sync the robot position to Kafka
+        """
+        for robot in self.robots:
+          pose = self.loader.mesh.get_robot_position(robot.id)
+          if pose is None:
+            logging.error("Failed to pull position for {}".format(robot.name))
+          else:
+            robot.set_pose(pose['position'], pose['orientation'])
 
 
     def get_reachable_point(self, start, threshold=0.3):
@@ -205,6 +223,7 @@ class BaseEnvironment():
       building_map = self.loader.map.cached()
       trajectory = self.loader.trajectory_builder.solve(building_map, start, goal)
       return trajectory
+
 
 
 

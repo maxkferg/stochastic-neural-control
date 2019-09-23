@@ -57,7 +57,7 @@ def train_env_creator(env_config):
     cfg = {
         "debug": True,
         "monitor": True,
-        "headless": True,
+        "headless": False,
         "reset_on_target": True
     }
     loader = GeometryLoader(api_config) # Handles HTTP

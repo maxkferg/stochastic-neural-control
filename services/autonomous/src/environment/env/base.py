@@ -27,6 +27,8 @@ class BaseEnvironment():
           self.physics = BulletClient(pybullet.DIRECT)
         else:
           self.physics = BulletClient(pybullet.GUI)
+        self.physics.setPhysicsEngineParameter(numSubSteps=10)
+        self.physics.setTimeStep(timeStep=0.040)
         self.loader = loader
         self.robots = []
         self.robot_ids = []
@@ -44,8 +46,8 @@ class BaseEnvironment():
           position = obj['position']
           scale = obj['scale']
           is_stationary = obj['is_stationary']
-          if position is None:
-            logging.error("Got bad position for %s. Defaulting to [0,0]"%obj['name'])
+          if position is None or None in position:
+            logging.error("Got bad position for %s. Defaulting to [0,0,0]"%obj['name'])
             position = [0,0,0]
           if obj['type'] == 'robot':
             m = self.create_turtlebot(obj['id'], position, name=obj['name'])
@@ -108,7 +110,7 @@ class BaseEnvironment():
 
 
     def create_turtlebot(self, id, position, name):
-        position[2] = max(0,position[2])
+        position[2] = max(0, position[2])
         physics = {}
         config = {
             "is_discrete": False,

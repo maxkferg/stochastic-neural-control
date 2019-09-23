@@ -66,7 +66,7 @@ class SingleEnvironment():
         robot_policy="random",
         geometry_policy="initial",
         start_reference=[0,0],
-        action_repeat=50,
+        action_repeat=10, # Robot makes a decision every 400ms
         verbosity=1,
         config={}
     ):

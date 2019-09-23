@@ -8,15 +8,12 @@ from .base import BaseEnvironment
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 from PIL import Image, ImageDraw, ImageColor
 
-DEFAULT_ACTION_REPEAT = 2
-
 
 
 class MultiEnvironment(MultiAgentEnv):
 
     def __init__(self, base_env, verbosity=1, env_config={}):
         self.dones = set()
-        self.action_repeat = env_config.get("action_repeat") or DEFAULT_ACTION_REPEAT
         self.base_env = base_env
         self.env = {}
         for i,robot in enumerate(self.base_env.robots):
@@ -31,15 +28,13 @@ class MultiEnvironment(MultiAgentEnv):
         """
         Step the simulation forward one timestep
         """
+        print(actions)
         for key, action in actions.items():
             self.env[key].act(action)
 
-        for i in range(self.action_repeat):
-            self.default_env.base.step()
-            is_crashed = any(e.is_crashed() for e in self.env.values())
-            is_target = any(e.is_at_target() for e in self.env.values())
-            if is_crashed or is_target:
-                break
+        self.default_env.base.step()
+        is_crashed = any(e.is_crashed() for e in self.env.values())
+        is_target = any(e.is_at_target() for e in self.env.values())
 
         obs, rew, done, info = {}, {}, {}, {}
         for i in actions.keys():

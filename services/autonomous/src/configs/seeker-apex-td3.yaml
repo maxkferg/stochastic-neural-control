@@ -31,7 +31,7 @@ seeker-apex-td3:
         tau: 0.001 # 1
 
         # === Replay buffer ===
-        buffer_size: 50000
+        buffer_size: 100000
         prioritized_replay: True
         prioritized_replay_alpha: 0.6
         prioritized_replay_beta: 0.4
@@ -47,9 +47,10 @@ seeker-apex-td3:
         l2_reg: 0.0000001
         learning_starts: 100000
         sample_batch_size: 20
-        train_batch_size: 512
+        train_batch_size: 1024
         min_iter_time_s: 30
 
         # === Parallelism ===
         num_gpus: 1
-        num_workers: 64
+        num_workers: 128
+        ignore_worker_failures: True

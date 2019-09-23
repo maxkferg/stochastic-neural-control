@@ -6,6 +6,7 @@
  * That is, the component should never be reloaded.
  *
  */
+
 import * as React from 'react';
 import PropTypes from 'prop-types';
 import { withStyles, WithStyles, Theme } from '@material-ui/core/styles';
@@ -80,6 +81,7 @@ function setupFloor(objectData: any, parentMesh: any,  floorMeshes: any, scene: 
  * Called once wall geometry has been loaded
  */
 function setupWall(objectData: any, parentMesh: any,  scene: BABYLON.Scene){
+    console.log('setupWall');
     console.log(objectData,parentMesh,scene);
     parentMesh.scale.x = -objectData.scale.x;
 }
@@ -104,6 +106,7 @@ function setupRobot(objectData: any, parentMesh: any,  scene: BABYLON.Scene){
  * Called once object geometry has been loaded
  */
 function setupObject(objectData: any, parentMesh: any,  scene: BABYLON.Scene){
+    console.log('setupObject');
     console.log(objectData,parentMesh,scene);
     return null;
 }
@@ -223,7 +226,7 @@ interface State {
 
 class BabylonViewer extends React.Component<Props, State> {
     classes: any
-
+    bot: any
     constructor(props: any) {
       super(props);
       this.state = {
@@ -305,6 +308,7 @@ class BabylonViewer extends React.Component<Props, State> {
         }
 
         task.onSuccess = function(t: any){
+            console.log('create');
             t.loadedMeshes.forEach((mesh) => {
                 mesh.parent = parent;
             });
@@ -313,6 +317,8 @@ class BabylonViewer extends React.Component<Props, State> {
             } else if (newObject.type=="wall"){
                 setupWall(newObject, parent, scene);
             } else if (newObject.type=="robot"){
+                // @ts-ignore
+                self.bot = parent;
                 setupRobot(newObject, parent, scene);
                 setupObjectButton(newObject, parent, scene, self.onSelectedObject);
             } else if (newObject.type=="object"){
@@ -374,6 +380,12 @@ class BabylonViewer extends React.Component<Props, State> {
       this.props.onSelectedObject(objectId);
     }
 
+    handleClick = () => {
+        // @ts-ignore
+        if (this.bot) {
+            this.bot.dispose();
+        }
+    }
     onSceneMount = (e: SceneEventArgs) => {
         const { canvas, scene } = e;
         let engine = scene.getEngine();
@@ -477,6 +489,7 @@ class BabylonViewer extends React.Component<Props, State> {
     public render() {
         return (
             <div>
+                <button onClick={this.handleClick}>CLICK</button>
                 {/*
                 // @ts-ignore */}
                 <Engine engineOptions={{ preserveDrawingBuffer: true}} width={this.state.width} height={this.state.height-64}>

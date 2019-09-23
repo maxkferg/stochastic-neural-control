@@ -44,6 +44,9 @@ class BaseEnvironment():
           position = obj['position']
           scale = obj['scale']
           is_stationary = obj['is_stationary']
+          if position is None:
+            logging.error("Got bad position for %s. Defaulting to [0,0]"%obj['name'])
+            position = [0,0,0]
           if obj['type'] == 'robot':
             m = self.create_turtlebot(obj['id'], position, name=obj['name'])
           else:

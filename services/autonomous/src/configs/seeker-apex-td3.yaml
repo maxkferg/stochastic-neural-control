@@ -16,7 +16,7 @@ seeker-apex-td3:
         eager: False
         actor_hiddens: [400, 300]
         critic_hiddens: [400, 300]
-        n_step: 4
+        n_step: 2
         gamma: 0.99
         env_config: {}
         model: {
@@ -31,7 +31,7 @@ seeker-apex-td3:
         tau: 0.001 # 1
 
         # === Replay buffer ===
-        buffer_size: 400000
+        buffer_size: 50000
         prioritized_replay: True
         prioritized_replay_alpha: 0.6
         prioritized_replay_beta: 0.4
@@ -52,4 +52,4 @@ seeker-apex-td3:
 
         # === Parallelism ===
         num_gpus: 1
-        num_workers: 128
+        num_workers: 64

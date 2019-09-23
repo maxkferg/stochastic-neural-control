@@ -59,13 +59,13 @@ auth:
 # For more documentation on available fields, see:
 # https://cloud.google.com/compute/docs/reference/rest/v1/instances/insert
 head_node:
-    machineType: n1-standard-16
+    machineType: n1-highmem-32
     disks:
       - boot: true
         autoDelete: true
         type: PERSISTENT
         initializeParams:
-          diskSizeGb: 50
+          diskSizeGb: 100
           # See https://cloud.google.com/compute/docs/images for more images
           sourceImage: projects/deeplearning-platform-release/global/images/family/tf-1-13-cu100
     

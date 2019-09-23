@@ -117,7 +117,7 @@ def run(args):
         #    "policy_mapping_fn": tune.function(policy_mapping_fn)
         #}
     pprint(experiments)
-    run_experiments(experiments, queue_trials=True)#, resume="FALSE")
+    run_experiments(experiments, queue_trials=True, reuse_actors=True)#, resume="FALSE")
 
 
 

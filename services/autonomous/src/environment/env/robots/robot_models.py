@@ -646,7 +646,6 @@ class Turtlebot(WalkerBase):
 
     def __init__(self, physics, config, env=None):
         self.config = config
-        print("Loading turtlebot.urdf")
         WalkerBase.__init__(self, "robots/turtlebot/turtlebot.urdf", "base_link", action_dim=4,
                             sensor_dim=20,
                             scale=1,

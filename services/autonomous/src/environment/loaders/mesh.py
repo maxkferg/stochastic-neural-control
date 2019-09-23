@@ -14,8 +14,6 @@ from graphqlclient import GraphQLClient
 from kafka import KafkaProducer, KafkaConsumer
 from .graphql import getCurrentGeometry
 
-logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
-
 
 class MeshLoader():
     """
@@ -45,7 +43,7 @@ class MeshLoader():
         result = json.loads(result)
         geometry = []
         for mesh in result['data']['meshesCurrent']:
-            logging.info('Loading {}'.format(mesh['name']))
+            logging.debug('Loading {}'.format(mesh['name']))
             directory = mesh['geometry']['directory']
             filename = mesh['geometry']['filename']
             if directory is None:
@@ -98,9 +96,9 @@ class MeshLoader():
         Download the file from `url` and save it locally under `file_name`
         """
         if os.path.exists(local_filepath):
-            logging.info("Defaulting to cached file {}".format(local_filepath))
+            logging.debug("Defaulting to cached file {}".format(local_filepath))
             return
-        logging.info("{} -> {}".format(url, local_filepath))
+        logging.debug("{} -> {}".format(url, local_filepath))
         os.makedirs(os.path.dirname(local_filepath), exist_ok=True)
         with urllib.request.urlopen(url) as response, open(local_filepath, 'wb') as out_file:
             shutil.copyfileobj(response, out_file)

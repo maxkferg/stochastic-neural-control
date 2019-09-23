@@ -32,7 +32,8 @@ class TrajectoryLoader():
     """
     A Trajectory through the building
     """
-    def __init__(self, config):
+    def __init__(self, config, verbosity=1):
+        self.verbosity = verbosity
         self.client = GraphQLClient(config["API"]["host"])
 
     def fetch(self, trajectoryId):
@@ -151,7 +152,7 @@ class TrajectoryBuilder():
             plot.draw(auto_open=True)
 
         if path is None:
-            logging.error("Could not find path from start to goal")
+            logging.debug("Could not find path from start to goal")
             return None
 
         # Divide by scale again

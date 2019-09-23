@@ -10,8 +10,6 @@ from .robots.robot_models import Turtlebot
 from .robots.robot_messages import get_odom_message
 
 
-logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
-
 
 class BaseEnvironment():
 
@@ -118,7 +116,7 @@ class BaseEnvironment():
             "linear_power": float(os.environ.get('LINEAR_SPEED', 50)),
             "angular_power": float(os.environ.get('ANGULAR_SPEED', 10)),
         }
-        logging.info("Creating Turtlebot at: {}".format(position))
+        logging.debug("Creating Turtlebot at: {}".format(position))
         turtlebot = Turtlebot(physics, config)
         turtlebot.id = id
         turtlebot.name = name
@@ -228,6 +226,5 @@ class BaseEnvironment():
 
 
     def __del__(self):
-        print("finished")
         self.physics.resetSimulation()
         self.physics.disconnect()

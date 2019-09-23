@@ -14,13 +14,13 @@ DEFAULT_ACTION_REPEAT = 2
 
 class MultiEnvironment(MultiAgentEnv):
 
-    def __init__(self, base_env, env_config={}):
+    def __init__(self, base_env, verbosity=1, env_config={}):
         self.dones = set()
         self.action_repeat = env_config.get("action_repeat") or DEFAULT_ACTION_REPEAT
         self.base_env = base_env
         self.env = {}
         for i,robot in enumerate(self.base_env.robots):
-            self.env[i] = SingleEnvironment(base_env, robot=robot)
+            self.env[i] = SingleEnvironment(base_env, robot=robot, verbosity=verbosity)
 
         self.default_env = self.env[0]
         self.action_space = self.default_env.action_space

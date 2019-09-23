@@ -5,13 +5,14 @@ Train an agent on SeekerSimEnv
 python train.py configs/seeker-test.yaml --dev=True
 
 # For a GPU driven large test
-python train.py configs/seeker-apeex-td3.yaml
+python train.py configs/seeker-apex-td3.yaml
 """
 import io
 import ray
 import yaml
 import numpy as np
 import gym
+import logging
 import argparse
 import learning.model
 import colored_traceback
@@ -34,6 +35,9 @@ colored_traceback.add_hook()
 
 
 ENVIRONMENT = "MultiRobot-v0"
+
+# Only show errors and warnings
+logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.WARN)
 
 
 # Load API Config
@@ -58,7 +62,7 @@ def train_env_creator(env_config):
     }
     loader = GeometryLoader(api_config) # Handles HTTP
     base = BaseEnvironment(loader, headless=cfg["headless"])
-    return MultiEnvironment(base, cfg)
+    return MultiEnvironment(base, verbosity=0, env_config=cfg)
 
 
 register_env(ENVIRONMENT, train_env_creator)

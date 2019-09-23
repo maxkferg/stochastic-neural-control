@@ -67,6 +67,7 @@ class SingleEnvironment():
         geometry_policy="initial",
         start_reference=[0,0],
         action_repeat=50,
+        verbosity=1,
         config={}
     ):
         """
@@ -92,16 +93,22 @@ class SingleEnvironment():
         If "initial" then the geometry is pulled once from the API
         If "api" then the geometry position is pulled from the API on restart
         If "subscribe" then the geometry is constantly pulled from Kafka
-        """
 
-        print("Initializing new Single Robot Environment")
-        print("Environment Config:",config)
+        @verbosity:
+        0 - Silent
+        1 - Normal logging
+        2 - Verbose
+        """
+        if verbosity>0:
+            print("Initializing new Single Robot Environment")
+            print("Environment Config:",config)
         super().__init__()
 
         self.base = base_env
         self.physics = base_env.physics
 
         self.color = random_color()
+        self.verbosity = verbosity
         self.start_reference = start_reference
         self.actionRepeat = config.get("actionRepeat", 2) # Choose an action every 0.2 seconds
         self.resetOnTarget = config.get("resetOnTarget", True)
@@ -242,7 +249,8 @@ class SingleEnvironment():
 
         # Create new checkpoints
         if nodes is None:
-            print("RRT Failed")
+            if self.verbosity>0:
+                logging.info("RRT failed to find trajectory")
             nodes = []
         else:
             for i,node in enumerate(nodes):
@@ -353,7 +361,8 @@ class SingleEnvironment():
 
         # Check if the simulation is broken
         if robot_pos[2] < 0 or robot_pos[2] > 1:
-            print("Something went wrong with the simulation")
+            if self.verbosity>0:
+                print("Something went wrong with the simulation")
             state["is_broken"] = True
 
         # Calculate the distance to other robots

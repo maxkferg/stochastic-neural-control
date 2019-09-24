@@ -56,7 +56,6 @@ class BuildingViewer extends React.Component<Props, State> {
         let self = this;
         let meshesCurrent = data.data.meshesCurrent;
         const deleteMesh = this.state.meshesCurrent.filter(el => meshesCurrent.indexOf(el) === -1).map(el => el.id)
-        console.log("TCL: BuildingViewer -> componentDidMount -> deleteObject", deleteMesh)
         this.setState({
           loading: false,
           meshesCurrent,

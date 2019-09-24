@@ -55,7 +55,6 @@ const styles = (theme: Theme) => ({
  * Called once floor geometry has been loaded
  */
 function setupFloor(objectData: any, parentMesh: any,  floorMeshes: any, scene: BABYLON.Scene){
-    console.log('setup floor');
     let floorMesh = BABYLON.Mesh.MergeMeshes(floorMeshes);
     if (floorMesh==null){
         throw new Error("Floor failed to load");
@@ -82,7 +81,6 @@ function setupFloor(objectData: any, parentMesh: any,  floorMeshes: any, scene: 
  * Called once wall geometry has been loaded
  */
 function setupWall(objectData: any, parentMesh: any,  scene: BABYLON.Scene){
-    console.log('setupWall');
     console.log(objectData,parentMesh,scene);
     parentMesh.scale.x = -objectData.scale.x;
 }
@@ -107,7 +105,6 @@ function setupRobot(objectData: any, parentMesh: any,  scene: BABYLON.Scene){
  * Called once object geometry has been loaded
  */
 function setupObject(objectData: any, parentMesh: any,  scene: BABYLON.Scene){
-    console.log('setupObject');
     console.log(objectData,parentMesh,scene);
     return null;
 }
@@ -228,7 +225,6 @@ interface State {
 
 class BabylonViewer extends React.Component<Props, State> {
     classes: any
-    floor: any
     constructor(props: any) {
       super(props);
       this.state = {
@@ -259,9 +255,7 @@ class BabylonViewer extends React.Component<Props, State> {
             let objectsToBeDeleted: any[] = this.props.deleteMesh;
             for (let newObjectKey in this.props.geometry){
                 let newObject = this.props.geometry[newObjectKey];
-                console.log("TCL: BabylonViewer -> componentDidUpdate -> newObject", newObject)
                 let prevObject = find(this.state.renderedObjects, {id: newObject.id});
-                console.log("TCL: BabylonViewer -> componentDidUpdate -> prevObject", prevObject)
                 if (!isObjectValid(newObject)){
                     console.log("Ignoring invalid new object", newObject);
                 } else if (!prevObject){
@@ -321,13 +315,11 @@ class BabylonViewer extends React.Component<Props, State> {
                 mesh.parent = parent;
             });
             if (newObject.type=="floor"){
-                self.floor =  parent;
                 setupFloor(newObject, parent, t.loadedMeshes, scene);
             } else if (newObject.type=="wall"){
                 setupWall(newObject, parent, scene);
             } else if (newObject.type=="robot"){
                 // @ts-ignore
-                self.bot = parent;
                 setupRobot(newObject, parent, scene);
                 setupObjectButton(newObject, parent, scene, self.onSelectedObject);
             } else if (newObject.type=="object"){
@@ -338,8 +330,8 @@ class BabylonViewer extends React.Component<Props, State> {
         this.state.renderedMeshes[newObject.id] = parent;
         this.state.renderedObjects.push(newObject);
         this.setState({
-            renderedObjects: self.state.renderedObjects,
-            renderedMeshes: self.state.renderedMeshes
+            renderedObjects: this.state.renderedObjects,
+            renderedMeshes: this.state.renderedMeshes
         });
        
         // Start loading the mesh

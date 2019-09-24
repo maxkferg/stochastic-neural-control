@@ -31,6 +31,7 @@ interface State {
   error: boolean,
   loading: boolean,
   meshesCurrent: any,
+  deleteMesh: any[],
 }
 
 
@@ -44,6 +45,7 @@ class BuildingViewer extends React.Component<Props, State> {
         error: false,
         loading: true,
         meshesCurrent: [],
+        deleteMesh: [],
       };
       this.classes = props.classes;
     }
@@ -53,10 +55,12 @@ class BuildingViewer extends React.Component<Props, State> {
         // @ts-ignore
         let self = this;
         let meshesCurrent = data.data.meshesCurrent;
-
+        const deleteMesh = this.state.meshesCurrent.filter(el => meshesCurrent.indexOf(el) === -1).map(el => el.id)
+        console.log("TCL: BuildingViewer -> componentDidMount -> deleteObject", deleteMesh)
         this.setState({
           loading: false,
-          meshesCurrent: meshesCurrent,
+          meshesCurrent,
+          deleteMesh
         });
 
         for (let i=0; i<meshesCurrent.length; i++) {
@@ -88,7 +92,7 @@ class BuildingViewer extends React.Component<Props, State> {
     public render() {
       if (this.state.loading) return 'Loading...';
       if (this.state.error) return `Error! ${this.state.error}`;
-      return <BabylonViewer geometry={this.state.meshesCurrent} onSelectedObject={this.props.onSelectedObject} />
+      return <BabylonViewer geometry={this.state.meshesCurrent} deleteMesh={this.state.deleteMesh} onSelectedObject={this.props.onSelectedObject} />
     }
 }
 

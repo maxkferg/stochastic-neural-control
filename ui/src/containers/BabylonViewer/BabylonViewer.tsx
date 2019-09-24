@@ -55,6 +55,7 @@ const styles = (theme: Theme) => ({
  * Called once floor geometry has been loaded
  */
 function setupFloor(objectData: any, parentMesh: any,  floorMeshes: any, scene: BABYLON.Scene){
+    console.log('setup floor');
     let floorMesh = BABYLON.Mesh.MergeMeshes(floorMeshes);
     if (floorMesh==null){
         throw new Error("Floor failed to load");
@@ -210,7 +211,8 @@ function isMeshChanged(ob1: any, ob2: any){
 //@ts-ignore
 export interface Props extends WithStyles<typeof styles>{
     geometry: any[]
-    onSelectedObject: Function
+    onSelectedObject: Function,
+    deleteMesh: any[]
 }
 
 interface State {
@@ -226,7 +228,7 @@ interface State {
 
 class BabylonViewer extends React.Component<Props, State> {
     classes: any
-    bot: any
+    floor: any
     constructor(props: any) {
       super(props);
       this.state = {
@@ -254,10 +256,12 @@ class BabylonViewer extends React.Component<Props, State> {
         // We can not render geometry until the scene is ready
         if (this.state.scene !== null){
             let objectsToBeCreated: any[] = [];
-            //let objectsToBeDeleted = [];
+            let objectsToBeDeleted: any[] = this.props.deleteMesh;
             for (let newObjectKey in this.props.geometry){
                 let newObject = this.props.geometry[newObjectKey];
+                console.log("TCL: BabylonViewer -> componentDidUpdate -> newObject", newObject)
                 let prevObject = find(this.state.renderedObjects, {id: newObject.id});
+                console.log("TCL: BabylonViewer -> componentDidUpdate -> prevObject", prevObject)
                 if (!isObjectValid(newObject)){
                     console.log("Ignoring invalid new object", newObject);
                 } else if (!prevObject){
@@ -277,6 +281,11 @@ class BabylonViewer extends React.Component<Props, State> {
                     }
                 };
                 assetManager.load();
+            }
+            if (objectsToBeDeleted.length) {
+                for (let objectId of objectsToBeDeleted) {
+                    this.deleteObject(objectId);
+                }
             }
         }
     }
@@ -308,11 +317,11 @@ class BabylonViewer extends React.Component<Props, State> {
         }
 
         task.onSuccess = function(t: any){
-            console.log('create');
             t.loadedMeshes.forEach((mesh) => {
                 mesh.parent = parent;
             });
             if (newObject.type=="floor"){
+                self.floor =  parent;
                 setupFloor(newObject, parent, t.loadedMeshes, scene);
             } else if (newObject.type=="wall"){
                 setupWall(newObject, parent, scene);
@@ -329,9 +338,10 @@ class BabylonViewer extends React.Component<Props, State> {
         this.state.renderedMeshes[newObject.id] = parent;
         this.state.renderedObjects.push(newObject);
         this.setState({
-            renderedObjects: this.state.renderedObjects,
-            renderedMeshes: this.state.renderedMeshes
+            renderedObjects: self.state.renderedObjects,
+            renderedMeshes: self.state.renderedMeshes
         });
+       
         // Start loading the mesh
         //manager.load();
     }
@@ -343,11 +353,15 @@ class BabylonViewer extends React.Component<Props, State> {
      */
     deleteObject = (objectId) => {
         let self = this;
-        this.state.renderedMeshes[objectId].children.map((child) => {
-            self.deleteObject(child);
-        })
-        this.state.renderedMeshes[objectId].dispose()
-        this.state.renderedMeshes[objectId] = null;
+        if (this.state.renderedMeshes[objectId]) {
+            if (this.state.renderedMeshes[objectId].children && this.state.renderedMeshes[objectId].children.length) {
+                this.state.renderedMeshes[objectId].children.forEach((child) => {
+                    self.deleteObject(child);
+                });
+            }
+            this.state.renderedMeshes[objectId].dispose();
+            this.state.renderedMeshes[objectId] = null;
+        }
     }
 
     /**
@@ -380,12 +394,6 @@ class BabylonViewer extends React.Component<Props, State> {
       this.props.onSelectedObject(objectId);
     }
 
-    handleClick = () => {
-        // @ts-ignore
-        if (this.bot) {
-            this.bot.dispose();
-        }
-    }
     onSceneMount = (e: SceneEventArgs) => {
         const { canvas, scene } = e;
         let engine = scene.getEngine();
@@ -489,7 +497,6 @@ class BabylonViewer extends React.Component<Props, State> {
     public render() {
         return (
             <div>
-                <button onClick={this.handleClick}>CLICK</button>
                 {/*
                 // @ts-ignore */}
                 <Engine engineOptions={{ preserveDrawingBuffer: true}} width={this.state.width} height={this.state.height-64}>
@@ -511,4 +518,5 @@ BabylonViewer.propTypes = {
 };
 
 //@ts-ignore
+
 export default withStyles(styles)(BabylonViewer);

@@ -12,9 +12,8 @@ import MenuItem from '@material-ui/core/MenuItem';
 import classNames from 'classnames';
 import apollo from '../../apollo';
 import { loader } from 'graphql.macro';
-
+import GeometrySingleton from '../../services/GeometryFormServices';
 const CREATE_MESH_QUERY = loader('../../graphql/createMesh.gql');
-
 
 
 const styles = (theme: any) => ({
@@ -57,118 +56,6 @@ const styles = (theme: any) => ({
     display: 'none',
   }
 });
-
-
-let geometry = {
-  "walls": {
-    id: "walls-",
-    name: "walls-",
-    type: "wall",
-    filetype: "obj",
-    filename: "walls.obj",
-    directory: "/geometry/env/labv2/",
-    scale: 1.0,
-  },
-  "floors": {
-    id: "floor-",
-    name: "floor-",
-    type: "floor",
-    filetype: "obj",
-    filename: "floors.obj",
-    directory: "/geometry/env/labv2/",
-    scale: 1.0,
-  },
-  "robot": {
-    id: "robot-",
-    name: "robot-",
-    type: "robot",
-    filetype: "obj",
-    filename: "turtlebot.obj",
-    directory: "/geometry/robots/turtlebot2/",
-    scale: 0.001,
-  },
-  "baseball": {
-    id: "baseball-",
-    name: "baseball-",
-    type: "object",
-    filetype: "obj",
-    filename: "baseball.obj",
-    directory: "/geometry/objects/baseball/",
-    scale: 0.001,
-  },
-  "box": {
-    id: "box-",
-    name: "box-",
-    type: "object",
-    filetype: "obj",
-    filename: "box.obj",
-    directory: "/geometry/objects/box/",
-    scale: 0.001,
-  },
-  "bucket": {
-    id: "bucket-",
-    name: "bucket-",
-    type: "object",
-    filetype: "obj",
-    filename: "bucket.obj",
-    directory: "/geometry/objects/bucket/",
-    scale: 0.001,
-  },
-  "cycle": {
-    id: "cycle-",
-    name: "cycle-",
-    type: "object",
-    filetype: "obj",
-    filename: "cycle.obj",
-    directory: "/geometry/objects/cycle/",
-    scale: 0.001,
-  },
-  "chair": {
-    id: "chair-",
-    name: "chair-",
-    type: "object",
-    filetype: "obj",
-    filename: "chair.obj",
-    directory: "/geometry/objects/chair/",
-    scale: 0.03,
-  },
-  "gas can": {
-    id: "gas-can-",
-    name: "gas-can-",
-    type: "object",
-    filetype: "obj",
-    filename: "gas-can.obj",
-    directory: "/geometry/objects/gas-can/",
-    scale: 0.1,
-  },
-  "gloves": {
-    id: "glove-",
-    name: "glove-",
-    type: "object",
-    filetype: "obj",
-    filename: "glove.obj",
-    directory: "/geometry/objects/gloves/",
-    scale: 0.01,
-  },
-  "hard hat": {
-    id: "hard-hat-",
-    name: "hard-hat-",
-    type: "object",
-    filetype: "obj",
-    filename: "hard-hat.obj",
-    directory: "/geometry/objects/hard-hat/",
-    scale: 0.001,
-  },
-  "recycle bin": {
-    id: "recycle-bin-",
-    name: "recycle-bin-",
-    type: "object",
-    filetype: "obj",
-    filename: "recycle bin.obj",
-    directory: "/geometry/objects/recycle-bin/",
-    scale: 0.001,
-  }
-}
 
 
 export interface Props extends WithStyles<typeof styles> {
@@ -291,7 +178,7 @@ class CreateGeometryForm extends React.Component<Props, State> {
   componentDidUpdate(prevProps: any, prevState: any){
     if (this.state.object !== prevState.object){
       let rand = Math.floor(Math.random() * 999);
-      let description = geometry[this.state.object]
+      let description = GeometrySingleton.getInstance()[this.state.object]
       this.setState({
         id: this.state.id || description.id + rand,
         name: description.name + rand,
@@ -308,7 +195,7 @@ class CreateGeometryForm extends React.Component<Props, State> {
   }
 
   getMeshOptions(){
-    return Object.keys(geometry).map((key)=>{
+    return Object.keys(GeometrySingleton.getInstance()).map((key)=>{
       return <MenuItem key={ key } value={ key }>{ key }</MenuItem>
     });
   }

@@ -178,9 +178,9 @@ class PrimaryAppBar extends React.Component<Props, State> {
     try {
       let vars = {id: objectId};
       await apollo.mutate({mutation: DELETE_QUERY, variables:vars});
-      this.handleMenuClose();
     } catch(e) {
       console.log("Failed to delete object",e);
+    } finally {
       this.handleMenuClose();
     }
   }

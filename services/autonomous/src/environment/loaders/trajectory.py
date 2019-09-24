@@ -12,8 +12,10 @@ import argparse
 import numpy as np
 import transforms3d
 import numpy as np
+from scipy.spatial import distance
 from kafka import KafkaProducer, KafkaConsumer
 from graphqlclient import GraphQLClient
+from .prm.planner import Roadmap, PRM_planning
 from .rrt.rrt.rrt import RRT
 from .rrt.rrt.rrt_star_bid_h import RRTStarBidirectionalHeuristic
 from .rrt.search_space.search_space import SearchSpace
@@ -22,6 +24,22 @@ from .graphql import getMapGeometry, getTrajectory, updateTrajectory
 
 
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
+
+
+
+def points_on_line(p1, p2, max_distance):
+    """
+    Return a set of points along the line from p1 to p2
+    Points are evenly spaced and not closer than max_distance
+    """
+    total_distance = distance.euclidean(p1, p2)
+    n = math.ceil(total_distance / max_distance)
+    step_size = total_distance / n
+    unit_vector = (np.array(p2) - np.array(p1)) / total_distance
+    step_vector = step_size*unit_vector
+    points = [p1 + i*step_vector for i in range(n)]
+    return [p.tolist() for p in points]
+
 
 
 class TrajectoryError(Exception):
@@ -46,6 +64,123 @@ class TrajectoryLoader():
         result = self.client.execute(updateTrajectory, trajectory)
         result = json.loads(result)
         return result['data']
+
+
+class RoadmapPlanner():
+    """
+    Build a searchable roadmap of the building
+    Models obstacles as filled circles
+    """
+
+    def __init__(self, cfg, turtlebot_radius=0.15):
+        self.cache = None
+        self.turtlebot_radius = turtlebot_radius
+
+
+    def set_map(self, building_map):
+        """
+        Set the map to be solved. The map can be used more than once
+        """
+        self.building_map = self._correct_map(building_map)
+        self.obstacles = self._map_to_circles(self.building_map)
+        ox = [o[0] for o in self.obstacles]
+        oy = [o[1] for o in self.obstacles]
+        self.roadmap = Roadmap(ox, oy, self.turtlebot_radius)
+
+
+    def solve(self, start_point, end_point):
+        sx = start_point[0]
+        sy = start_point[1]
+        tx = end_point[0]
+        ty = end_point[1]
+        self.obstacles = self._map_to_circles(self.building_map)
+        ox = [o[0] for o in self.obstacles]
+        oy = [o[1] for o in self.obstacles]
+        rr = self.turtlebot_radius
+        self.roadmap.render(sx,sy,tx,ty)
+        rx,ry,cache = PRM_planning(sx, sy, tx, ty, ox, oy, rr, self.cache)
+        #self.cache = cache
+        return rx,ry
+
+        rx, ry = self.roadmap.solve(sx,sy,tx,ty)
+        if len(rx)==0:
+            print("Rebuilding PRM map")
+            self.set_map(self.building_map)
+            rx, ry = self.roadmap.solve(sx,sy,tx,ty)
+        return rx,ry
+
+
+    def render(self):
+        """
+        Draw the current building map using pyplot
+        """
+        import plotly.graph_objects as go
+        shapes = []
+        radius = self.turtlebot_radius
+        for center in self.obstacles:
+            shapes.append(
+                go.layout.Shape(
+                    type="circle",
+                    xref="x",
+                    yref="y",
+                    fillcolor="PaleTurquoise",
+                    x0=center[0]-radius,
+                    y0=center[1]-radius,
+                    x1=center[0]+radius,
+                    y1=center[1]+radius,
+                    line_color="LightSeaGreen",
+                )
+            )
+        fig = go.Figure()
+        fig.update_layout(shapes=shapes)
+        fig.update_layout(
+            yaxis = dict(
+              scaleanchor = "x",
+              scaleratio = 1,
+            )
+        )
+        fig.show()
+
+
+
+    def _map_to_circles(self, building_map, min_distance=0.050, max_distance=0.200):
+        """
+        Redraw the map using circles
+        @building_map: A map of the building
+        @min_distance: Do not place a circle if the last was less than min_distance
+        @max_distance: Do not allow circles to be further apart than this distance
+        @radius: The radius of the circles. Should be larger than the radius of the robot
+        """
+        obstacles = []
+        for ob in building_map:
+            for polygon in ob['external_polygons']:
+                last_point = None
+                last_circle = None
+                for point in polygon['points']:
+                    if last_point is not None:
+                        if distance.euclidean(point, last_circle)<min_distance:
+                            last_point = point
+                            continue
+                        # Fill intermediate points
+                        for p in points_on_line(last_point, point, max_distance):
+                            obstacles.append(p)
+                    # Add the last point                        
+                    obstacles.append(point)
+                    last_point = point
+                    last_circle = point
+        return obstacles
+
+
+    def _correct_map(self, building_map):
+        """
+        The map users the wrong y direction
+        """
+        for ob in building_map:
+            for polygon in ob['external_polygons']:
+                line = np.array(polygon['points'])
+                line[:,1] = -line[:,1]
+                polygon['points'] = line.tolist()
+        return building_map
 
 
 

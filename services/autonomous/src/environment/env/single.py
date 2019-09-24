@@ -7,6 +7,7 @@ import time
 import scipy
 import skimage
 import random
+import logging
 import pybullet
 import numpy as np
 from collections import OrderedDict
@@ -52,7 +53,7 @@ def pad(array, reference_shape, offsets):
     # Create a list of slices from offset to offset + shape in each dimension
     insertHere = [slice(offsets[dim], offsets[dim] + array.shape[dim]) for dim in range(array.ndim)]
     # Insert the array in the result at the specified offsets
-    result[insertHere] = array
+    result[tuple(insertHere)] = array
     return result
 
 
@@ -65,7 +66,7 @@ class SingleEnvironment():
         target_policy="random",
         robot_policy="random",
         geometry_policy="initial",
-        start_reference=[0,0],
+        start_reference=[-1,0],
         action_repeat=10, # Robot makes a decision every 400ms
         verbosity=1,
         config={}
@@ -134,6 +135,7 @@ class SingleEnvironment():
         # Building Map
         self.building_map = self.base.loader.map.fetch()
         self.pixel_state = PixelState(self.building_map)
+        self.state_cache_buffer = []
 
         # Camera observation
         self.width = 320                # The resolution of the sensor image (320x240)
@@ -151,8 +153,8 @@ class SingleEnvironment():
         self.observation_space = spaces.Dict({
             'robot_theta': spaces.Box(low=-2*math.pi, high=2*math.pi, shape=(1,), dtype=np.float32),
             'robot_velocity': spaces.Box(low=-10, high=10, shape=(3,), dtype=np.float32),
-            'target': spaces.Box(low=-10, high=10, shape=(2,), dtype=np.float32),
-            'ckpts': spaces.Box(low=-10, high=10, shape=(2*self.ckpt_count,), dtype=np.float32),
+            'target': spaces.Box(low=-20, high=20, shape=(2,), dtype=np.float32),
+            'ckpts': spaces.Box(low=-20, high=20, shape=(2*self.ckpt_count,), dtype=np.float32),
             'maps': spaces.Box(low=0, high=1, shape=(48, 48, 4), dtype=np.float32),
         })
 
@@ -185,10 +187,18 @@ class SingleEnvironment():
         self.startedTime = time.time()
         self.envStepCounter = 0
 
-        # Reset the target and robot position
-        self.reset_robot_position()
-        self.reset_target_position()
-        self.reset_checkpoints()
+        # Restores this setup from cache for speed
+        if len(self.state_cache_buffer)>5 and random.random()<0.98:
+            self._restore_cache(random.choice(self.state_cache_buffer))
+        else:
+            self.reset_robot_position()
+            self.reset_target_position()
+            self.reset_checkpoints()
+            self.state_cache_buffer.append(self._get_cache())
+        
+        # Limit the buffer size
+        if len(self.state_cache_buffer)>500:
+            self.state_cache_buffer.pop(0)
 
         # Allow all the objects to reach equilibrium
         for i in range(10):
@@ -197,6 +207,30 @@ class SingleEnvironment():
         robot_pos, robot_orn = self.physics.getBasePositionAndOrientation(self.robot.racecarUniqueId)
         state = self.get_state(robot_pos, robot_orn)
         return self.get_observation(state)
+
+
+    def _get_cache(self):
+        robot_pos, robot_orn = self.physics.getBasePositionAndOrientation(self.robot.racecarUniqueId)
+        target_pos, target_orn = self.physics.getBasePositionAndOrientation(self.targetUniqueId)
+        checkpoints = [self.physics.getBasePositionAndOrientation(c)[0] for c in self.checkpoints]
+        return {
+            "robot_pos": robot_pos,
+            "robot_orn": robot_orn,
+            "target_pos": target_pos,
+            "target_orn": target_orn,
+            "checkpoint_pos": checkpoints
+        }
+
+
+    def _restore_cache(self, cache):
+        self.physics.resetBasePositionAndOrientation(self.targetUniqueId, cache["target_pos"], cache["target_orn"])
+        self.physics.resetBasePositionAndOrientation(self.robot.racecarUniqueId, cache["robot_pos"], cache["robot_orn"])
+        for checkpoint in self.checkpoints:
+            self.remove_checkpoint(checkpoint)
+        for checkpoint_pos in cache["checkpoint_pos"]:
+            self.create_checkpoint(checkpoint_pos)
+        self.pixel_state.set_target(cache["target_pos"])
+        self.pixel_state.set_checkpoints(cache["checkpoint_pos"])
 
 
     def reset_robot_position(self):
@@ -240,12 +274,12 @@ class SingleEnvironment():
         for ckpt in self.checkpoints:
             self.remove_checkpoint(ckpt)
 
-        # Use AStar to find checkpoint locations
+        # Use motion planner to find checkpoint locations
         base_pos, carorn = self.physics.getBasePositionAndOrientation(self.robot.racecarUniqueId)
         target_pos, target_orn = self.physics.getBasePositionAndOrientation(self.targetUniqueId)
         start_pos = base_pos[:2]
         goal_pos = target_pos[:2]
-        nodes = self.base.get_path_to_goal(start_pos, goal_pos)
+        nodes = self.base.get_path_to_goal(goal_pos, start_pos)
 
         # Create new checkpoints
         if nodes is None:

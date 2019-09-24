@@ -5,10 +5,14 @@ Uses a simple (no RL) policy to step and render the environment
 
 Example usage:
     python benchmark.py
-    python benchmark.py --no-render=True
+    python benchmark.py --headless
+
+    python -m cProfile -o results.prof benchmark.py --headless
+    snakeviz results.prof
 """
 
 import math
+import yaml
 import sys, gym, time
 import numpy as np
 import tkinter
@@ -17,8 +21,11 @@ import learning.model
 import colored_traceback
 from PIL import Image, ImageTk
 from gym.envs.registration import registry
-from simulation.RealEnv import MultiRobot
-from simulation.Worlds.worlds import Y2E2, Building, Playground, Maze, House, Lab
+from environment.loaders.geometry import GeometryLoader
+from environment.env.base import BaseEnvironment # Env type
+from environment.env.multi import MultiEnvironment # Env type
+
+
 colored_traceback.add_hook()
 tkinter.NoDefaultRoot()
 
@@ -30,11 +37,25 @@ MAP_HEIGHT = int(520*1.6)
 RENDER_SIZE = (RENDER_HEIGHT, RENDER_WIDTH)
 
 
-env = MultiRobot({
-    "debug": 0,
-    "num_robots": 1,
-    "world": Lab()
-})
+
+def train_env_creator():
+    """
+    Create an environment that is linked to the communication platform
+    """
+    cfg = {
+        "debug": True,
+        "monitor": True,
+        "headless": True,
+        "reset_on_target": True
+    }
+    with open('environment/configs/test.yaml') as fs:
+        api_config = yaml.load(fs, Loader=yaml.Loader)
+    loader = GeometryLoader(api_config) # Handles HTTP
+    base = BaseEnvironment(loader, headless=cfg["headless"])
+    return MultiEnvironment(base, verbosity=0, env_config=cfg)
+
+
+
 
 
 def create_parser(parser_creator=None):
@@ -44,10 +65,8 @@ def create_parser(parser_creator=None):
         epilog="python benchmark.py --no-render")
 
     parser.add_argument(
-        "--no-render",
-        default=False,
-        action="store_const",
-        const=True,
+        "--headless",
+        action="store_true",
         help="Optionally disable all rendering (default=False).")
 
     return parser
@@ -61,9 +80,10 @@ class BenchmarkWindow():
     times = 1
     timestart = time.clock()
 
-    def __init__(self):
+    def __init__(self, env):
+        self.env = env
         self.action = [0,0]
-        self.obs = env.reset()
+        self.obs = self.env.reset()
 
     def start(self):
         while True:
@@ -75,11 +95,11 @@ class BenchmarkWindow():
             steering = obser["robot_theta"]/math.pi / 4
             throttle = 0.6
             action[robot] = [steering, throttle]
-        self.obs, r, done, info = env.step(action)
+        self.obs, r, done, info = self.env.step(action)
         self.times += 1
         if self.times%33==0:
             print("%.02f FPS"%(self.times/(time.clock()-self.timestart)))
-        if done[1]:
+        if done["__all__"]:
             print("--- Resetting ---")
             env.reset()
 
@@ -160,8 +180,9 @@ class MapWindow():
 if __name__=="__main__":
     parser = create_parser()
     args = parser.parse_args()
-    if args.no_render:
-        view = BenchmarkWindow()
+    env = train_env_creator()
+    if args.headless:
+        view = BenchmarkWindow(env)
     else:
         mapw = MapWindow(MAP_WIDTH, MAP_HEIGHT)
         view = ViewWindow(mapw, RENDER_WIDTH, RENDER_HEIGHT)

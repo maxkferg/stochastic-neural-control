@@ -28,7 +28,6 @@ class MultiEnvironment(MultiAgentEnv):
         """
         Step the simulation forward one timestep
         """
-        print(actions)
         for key, action in actions.items():
             self.env[key].act(action)
 

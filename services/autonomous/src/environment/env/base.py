@@ -4,6 +4,7 @@ import logging
 import pybullet
 import os, inspect
 from shapely import geometry
+from random import randrange
 from .utils.geometry import min_distance
 from .utils.bullet_client import BulletClient
 from .robots.robot_models import Turtlebot
@@ -15,11 +16,13 @@ class BaseEnvironment():
 
     def __init__(self, 
       loader, 
-      headless=False, 
+      headless=False,
+      planner="prm" 
     ):
         """
         A environment for simulating robot movement
         @headless: Does not show a GUI if headless is True
+        @planner: The planner used for checkpointing. Either "rrt" or "prm"
         """
 
         #choose connection method: GUI, DIRECT, SHARED_MEMORY
@@ -27,6 +30,7 @@ class BaseEnvironment():
           self.physics = BulletClient(pybullet.DIRECT)
         else:
           self.physics = BulletClient(pybullet.GUI)
+        self.planner = planner
         self.physics.setPhysicsEngineParameter(numSubSteps=10)
         self.physics.setTimeStep(timeStep=0.040)
         self.loader = loader
@@ -36,6 +40,10 @@ class BaseEnvironment():
         self.floors = []
         self.objects = []
         self.build()
+        # Setup the PRM planner. Used for target selection and checkpoints
+        self.building_map = self.loader.map.cached()
+        self.roadmap = self.loader.roadmap_planner
+        self.roadmap.set_map(self.building_map)
 
 
     def build(self):
@@ -68,7 +76,6 @@ class BaseEnvironment():
 
     def start(self):
         self.physics.setGravity(0, 0, -10)
-
 
 
     def step(self):
@@ -169,6 +176,21 @@ class BaseEnvironment():
             robot.set_pose(pose['position'], pose['orientation'])
 
 
+    def _sample_point(self):
+      """
+      Return a point that is reachable from the start point.
+      Works by finding what map polygon the point lays within. Creates a
+      traversable region by subtracting other polygons. Selects a random
+      point in the traversable region.
+      @start: The point to start at
+      @threshold(depreciated): The minimum distance between the output and the polygon edge
+      """
+      sample_x = self.roadmap.cache.sample_x
+      sample_y = self.roadmap.cache.sample_y
+      i = randrange(len(sample_x))
+      return [sample_x[i]+0.01, sample_y[i]+0.01]
+
+
     def get_reachable_point(self, start, threshold=0.3):
       """
       Return a point that is probably reachable from the start point.
@@ -181,6 +203,16 @@ class BaseEnvironment():
       start_point = geometry.Point(start[0], start[1])
       building_map = self.loader.map.cached()
       external_polygons = []
+
+      # Try a quick hack
+      #if self.roadmap.cache is not None:
+      #  pnt = self._sample_point()
+      #  rx, _ = self.roadmap.solve(start, pnt)
+      #  if len(rx)>0:
+      ##    print(rx)
+      #    print("P")
+      #    return pnt
+      #  print("F")
 
       for obj in building_map:
         for polygon in obj['external_polygons']:
@@ -222,9 +254,14 @@ class BaseEnvironment():
       traversable region by subtracting other polygons. Selects a random
       point in the traversable region
       """
-
       building_map = self.loader.map.cached()
-      trajectory = self.loader.trajectory_builder.solve(building_map, start, goal)
+      if self.planner=="rrt":
+        trajectory = self.loader.trajectory_builder.solve(building_map, start, goal)
+      elif self.planner=="prm":
+        rx, ry = self.roadmap.solve(start, goal)
+        trajectory = [tuple(p) for p in zip(rx, ry)]
+      else:
+        raise ValueError("Unknown planner %s"%self.planner)
       return trajectory
 
 

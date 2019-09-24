@@ -16,7 +16,7 @@ seeker-apex-td3:
         eager: False
         actor_hiddens: [400, 300]
         critic_hiddens: [400, 300]
-        n_step: 2
+        n_step: 3
         gamma: 0.99
         env_config: {}
         model: {
@@ -25,10 +25,23 @@ seeker-apex-td3:
         }
 
         # === Exploration ===
-        schedule_max_timesteps: 100000000 # 100 million
+        schedule_max_timesteps: 20000000 # 100 million
         exploration_fraction: 0.5
-        target_network_update_freq: 50000
+        target_network_update_freq: 20000
         tau: 0.001 # 1
+
+        # Number of CPUs to allocate for the trainer. Note: this only takes effect
+        # when running in Tune.
+        num_cpus_for_driver": 10
+
+        # You can set these memory quotas to tell Ray to reserve memory for your
+        # training run. This guarantees predictable execution, but the tradeoff is
+        # if your workload exceeeds the memory quota it will fail.
+        # Heap memory to reserve for the trainer process (0 for unlimited). This
+        # can be large if your are using large train batches, replay buffers, etc.
+        memory: 5000000000 #50Gb
+        object_store_memory: 3000000000 #30GB
+        memory_per_worker: 2000000000 # 2GB
 
         # === Replay buffer ===
         buffer_size: 100000
@@ -46,11 +59,11 @@ seeker-apex-td3:
         huber_threshold: 1.0
         l2_reg: 0.0000001
         learning_starts: 100000
-        sample_batch_size: 20
+        sample_batch_size: 64
         train_batch_size: 1024
         min_iter_time_s: 30
 
         # === Parallelism ===
         num_gpus: 1
-        num_workers: 128
+        num_workers: 96
         ignore_worker_failures: True

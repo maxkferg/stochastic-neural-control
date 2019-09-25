@@ -96,29 +96,16 @@ def run(args):
     with open(args.config, 'r') as stream:
         experiments = yaml.load(stream)
 
-    """
-    def make_policy_graphs(policy_config):
-        # Setup DDPG with an ensemble of `num_policies` different policy graphs
-        policy_config = policy_config.copy() # Avoid recursion
-        single_env = robot_env_creator({})
-        obs_space = single_env.observation_space
-        act_space = single_env.action_space
-        del single_env
-        return {"policy_1": (DDPGPolicyGraph, obs_space, act_space, policy_config)}
-
-    def policy_mapping_fn(i):
-        return "policy_1"
-    """
-
-    for experiment, settings in experiments.items():
-        settings["env"] = ENVIRONMENT
-        #settings["config"]["multiagent"] = {
-        #    "policy_graphs": make_policy_graphs(settings["config"]),
-        #    "policy_mapping_fn": tune.function(policy_mapping_fn)
-        #}
-    pprint(experiments)
-    run_experiments(experiments, queue_trials=True, reuse_actors=True)#, resume="FALSE")
-
+    for experiment_name, settings in experiments.items():
+        print("Running %s"%experiment_name)
+        ray.tune.run(
+            settings['run'],
+            name=experiment_name,
+            stop=settings['stop'],
+            config=settings['config'],
+            queue_trials=False,
+            reuse_actors=False
+        )
 
 
 def run_pbt(args):

@@ -35,6 +35,33 @@ python rollout.py --run APEX_DDPG --env MultiRobot-v0
 ```
 
 
+# Docker Support
+
+Building the docker image
+```
+export TAG=latest
+docker build -t digitalpoints/trainer:$TAG .
+```
+
+Starting the training process:
+```
+# Development
+docker run -it -d digitalpoints/trainer:$TAG \
+	python train.py configs/seeker-test-vector.yaml --dev=True
+
+# Large-scale
+docker run -it -d digitalpoints/trainer:$TAG \
+	python train.py configs/seeker-apex-td3.yaml
+```
+
+Deploying
+```
+docker push digitalpoints/physics:production-$TAG
+kubectl set image deployment/physics-deployment physics=digitalpoints/physics:production-$TAG
+```
+
+
+
 # Setup
 The digital building model has realistic physics, implimented using PyBullet. A great tutorial for
 PyBullet can be found here: https://docs.google.com/document/d/10sXEhzFRSnvFcl3XxNGhnD4N2SedqwdAvK3dsihxVUA/edit.

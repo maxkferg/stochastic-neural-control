@@ -1,4 +1,5 @@
 seeker-test:
+    env: MultiRobot-v0
     run: APEX_DDPG
     checkpoint_freq: 50
     stop:
@@ -26,7 +27,6 @@ seeker-test:
         # === Environment ===
         env: MultiRobot-v0
         env_config: {}
-
 
         # === Exploration ===
         schedule_max_timesteps: 100000000 # 100 million
@@ -56,5 +56,8 @@ seeker-test:
 
         # === Parallelism ===
         num_gpus: 0
-        num_workers: 1
+        num_workers: 2
+        num_cpus_per_worker: 1
+        batch_mode: "truncate_episodes"
         num_envs_per_worker: 2
+        remote_worker_envs: True

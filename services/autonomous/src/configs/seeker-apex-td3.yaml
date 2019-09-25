@@ -64,6 +64,11 @@ seeker-apex-td3:
         min_iter_time_s: 30
 
         # === Parallelism ===
-        num_gpus: 1
-        num_workers: 96
+        #num_gpus: 1
+        num_gpus: 0
+        num_workers: 32
+        num_cpus_per_worker: 1
+        batch_mode: "truncate_episodes"
+        num_envs_per_worker: 8
+        remote_worker_envs: True
         ignore_worker_failures: True

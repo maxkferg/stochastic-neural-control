@@ -15,6 +15,7 @@ class BulletClient(object):
       self._client = pybullet.connect(connection_mode,options=options)
     else:
       print("PyBullet using Shared Memory")
+    print("Created bullet client: %i"%self._client)
     self._shapes = {}
 
   def __del__(self):

@@ -150,9 +150,11 @@ class PrimaryAppBar extends React.Component<Props, State> {
     this.handleMobileMenuClose();
   };
 
-  handleMenuClick = (objectId: string) => {
-    this.props.onSelectedObject(objectId);
-    this.handleMenuClose();
+  handleMenuClick = (objectId: string, event) => {
+    if(event.target === event.currentTarget) {
+      this.props.onSelectedObject(objectId);
+      this.handleMenuClose();
+   }
   };
 
   handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -202,9 +204,9 @@ class PrimaryAppBar extends React.Component<Props, State> {
         <MenuItem onClick={this.handleMenuClose}>Geometry</MenuItem>
         { this.state.meshes.map((mesh,i) => {
             return (
-              <MenuItem key={i} onClick={ ()=>this.handleMenuClick(mesh.id) }>
+              <MenuItem key={i} onClick={(e)=>this.handleMenuClick(mesh.id, e) }>
                 <p>{mesh.name}</p>
-                <IconButton color="inherit" onClick={ ()=>this.handleDelete(mesh.id) }>
+                <IconButton color="inherit" onClick={()=>this.handleDelete(mesh.id) }>
                   <DeleteIcon />
                 </IconButton>
               </MenuItem>
@@ -224,7 +226,7 @@ class PrimaryAppBar extends React.Component<Props, State> {
       >
         { this.state.meshes.map((mesh,i) => {
             return (
-              <MenuItem key={i} onClick={ ()=>this.handleMenuClick(mesh.id) }>
+              <MenuItem key={i} onClick={(e)=>this.handleMenuClick(mesh.id, e) }>
                 <IconButton color="inherit">
                   <Badge badgeContent={4} color="secondary">
                     <InfoIcon />

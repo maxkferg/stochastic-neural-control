@@ -1,10 +1,14 @@
 seeker-test:
-    env: MultiRobot-v0
     run: APEX_DDPG
     checkpoint_freq: 50
     stop:
         episode_reward_mean: 1.2
     config:
+        # === Environment ===
+        env: MultiRobot-v0
+        env_config:
+            headless: True
+
         # === Tricks ====
         twin_q: True
         policy_delay: 2
@@ -14,19 +18,12 @@ seeker-test:
 
         # === Model ===
         eager: False
-        actor_hiddens: [40, 30]
-        critic_hiddens: [40, 30]
         n_step: 4
         gamma: 0.99
-        model: {
-            custom_preprocessor: "debug_prep",
-            custom_model: "fusion_model",
+        model:
+            custom_preprocessor: "debug_prep"
+            custom_model: "fusion_model"
             custom_options: {}
-        }
-
-        # === Environment ===
-        env: MultiRobot-v0
-        env_config: {}
 
         # === Exploration ===
         schedule_max_timesteps: 100000000 # 100 million
@@ -57,7 +54,7 @@ seeker-test:
         # === Parallelism ===
         num_gpus: 0
         num_workers: 2
-        num_cpus_per_worker: 1
+        num_cpus_per_worker: 0.5
         batch_mode: "truncate_episodes"
         num_envs_per_worker: 2
         remote_worker_envs: True

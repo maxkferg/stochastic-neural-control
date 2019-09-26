@@ -4,6 +4,11 @@ seeker-test:
     stop:
         episode_reward_mean: 1.2
     config:
+        # === Environment ===
+        env: MultiRobot-v0
+        env_config:
+            headless: False
+
         # === Tricks ====
         twin_q: True
         policy_delay: 2
@@ -13,20 +18,11 @@ seeker-test:
 
         # === Model ===
         eager: False
-        actor_hiddens: [40, 30]
-        critic_hiddens: [40, 30]
         n_step: 4
         gamma: 0.99
-        model: {
-            custom_preprocessor: "debug_prep",
-            custom_model: "fusion_model",
-            custom_options: {}
-        }
-
-        # === Environment ===
-        env: MultiRobot-v0
-        env_config: {}
-
+        model:
+            custom_preprocessor: "debug_prep"
+            custom_model: "fusion_model"
 
         # === Exploration ===
         schedule_max_timesteps: 100000000 # 100 million
@@ -56,5 +52,5 @@ seeker-test:
 
         # === Parallelism ===
         num_gpus: 0
-        num_workers: 1
-        num_envs_per_worker: 2
+        num_workers: 2
+        num_envs_per_worker: 1

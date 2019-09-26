@@ -41,6 +41,10 @@ Building the docker image
 ```
 export TAG=latest
 docker build -t digitalpoints/trainer:$TAG .
+
+export TAG=gpu
+docker build -f Dockerfile-gpu -t digitalpoints/trainer:$TAG .
+```
 ```
 
 Starting the training process:
@@ -56,8 +60,7 @@ docker run -it -d digitalpoints/trainer:$TAG \
 
 Deploying
 ```
-docker push digitalpoints/physics:production-$TAG
-kubectl set image deployment/physics-deployment physics=digitalpoints/physics:production-$TAG
+docker push digitalpoints/trainer:$TAG
 ```
 
 

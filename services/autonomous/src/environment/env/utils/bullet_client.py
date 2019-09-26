@@ -3,6 +3,7 @@
 import functools
 import inspect
 import pybullet
+import logging
 
 
 class BulletClient(object):
@@ -12,10 +13,10 @@ class BulletClient(object):
     """Create a simulation and connect to it."""
     self._client = pybullet.connect(pybullet.SHARED_MEMORY)
     if (self._client<0):
-      self._client = pybullet.connect(connection_mode,options=options)
+      self._client = pybullet.connect(connection_mode, options=options)
     else:
       print("PyBullet using Shared Memory")
-    print("Created bullet client: %i"%self._client)
+    logging.info("Created bullet client: %i"%self._client)
     self._shapes = {}
 
   def __del__(self):

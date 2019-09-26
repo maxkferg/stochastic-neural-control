@@ -14,10 +14,10 @@ from .robots.robot_messages import get_odom_message
 
 class BaseEnvironment():
 
-    def __init__(self, 
-      loader, 
+    def __init__(self,
+      loader,
       headless=False,
-      planner="prm" 
+      planner="prm"
     ):
         """
         A environment for simulating robot movement
@@ -50,7 +50,7 @@ class BaseEnvironment():
         """
         Reset the environment to match the API data
         """
-        for obj in self.loader.mesh.fetch():
+        for obj in self.loader.mesh.cached():
           position = obj['position']
           scale = obj['scale']
           is_stationary = obj['is_stationary']

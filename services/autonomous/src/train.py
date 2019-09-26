@@ -2,7 +2,7 @@
 Train an agent on SeekerSimEnv
 
 # For a lightweight test
-python train.py configs/seeker-test.yaml --dev=True
+python train.py configs/seeker-test.yaml --dev
 
 # For a GPU driven large test
 python train.py configs/seeker-apex-td3.yaml
@@ -50,19 +50,21 @@ ModelCatalog.register_custom_preprocessor("debug_prep", DictFlatteningPreprocess
 ModelCatalog.register_custom_model("fusion_model", FusionModel)
 
 
-def train_env_creator(env_config):
+def train_env_creator(cfg):
     """
     Create an environment that is linked to the communication platform
     """
-    cfg = {
+    defaults = {
         "debug": True,
         "monitor": True,
-        "headless": True,
+        "headless": False,
         "reset_on_target": True
     }
+    defaults.update(cfg)
+    logging.warn(defaults)
     loader = GeometryLoader(api_config) # Handles HTTP
     base = BaseEnvironment(loader, headless=cfg["headless"])
-    return MultiEnvironment(base, verbosity=0, env_config=cfg)
+    return MultiEnvironment(base, verbosity=0, env_config=defaults)
 
 
 register_env(ENVIRONMENT, train_env_creator)
@@ -83,15 +85,14 @@ def create_parser():
         help="Run population based training.")
     parser.add_argument(
         "--dev",
-        default=False,
-        type=bool,
+        action="store_true",
         help="Use development cluster with local redis server")
     return parser
 
 
 
 def run(args):
-    register_env(ENVIRONMENT, lambda _: train_env_creator({}))
+    register_env(ENVIRONMENT, lambda cfg: train_env_creator(cfg))
 
     with open(args.config, 'r') as stream:
         experiments = yaml.load(stream)
@@ -103,8 +104,8 @@ def run(args):
             name=experiment_name,
             stop=settings['stop'],
             config=settings['config'],
-            queue_trials=False,
-            reuse_actors=False
+            queue_trials=True,
+            reuse_actors=True,
         )
 
 

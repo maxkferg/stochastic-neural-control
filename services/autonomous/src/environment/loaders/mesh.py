@@ -1,8 +1,10 @@
 import os
+import stat
 import math
 import time
 import yaml
 import json
+import random
 import urllib
 import shutil
 import logging
@@ -38,20 +40,26 @@ class MeshLoader():
             t.join()
 
 
+
     def fetch(self):
-        result = self.graphql_client.execute(getCurrentGeometry)
+        result = self._get_current_geometry(backoff=10, nfailures=5)
         result = json.loads(result)
         geometry = []
+        if result['data']['meshesCurrent'] is None:
+            raise ValueError("Geometry API returned bad geometry data")
         for mesh in result['data']['meshesCurrent']:
             logging.debug('Loading {}'.format(mesh['name']))
             directory = mesh['geometry']['directory']
             filename = mesh['geometry']['filename']
+            # Hack to avoid None errors
+            if mesh["type"]=="robot":
+                filename = "turtlebot.obj"
+                directory = "./geometry/robots/turtlebot2/"
+            # End hack
             if directory is None:
-                logging.error("Could not load {}:\nDirectory was invalid".format(name))
-                continue            
+                raise ValueError("Could not load {}: Directory was invalid".format(name))
             if filename is None:
-                logging.error("Could not load {}:\nFilename was invalid".format(name))
-                continue            
+                raise ValueError("Could not load {}: Filename was invalid".format(name))
             relative_url = os.path.join(directory, filename)
             relative_url = relative_url.strip('./')
             position = self._convert_position(mesh)
@@ -80,15 +88,57 @@ class MeshLoader():
         return geometry
 
 
+
+    def cached(self, max_age=120):
+        """
+        Return the cached (potentially old) geometry data
+        @max_age: The maximum age to cache this data (in seconds)
+        """
+        pathname = 'tmp/geometry_cache.json'
+        if os.path.exists(pathname):
+            age = time.time() - os.stat(pathname)[stat.ST_MTIME]
+            if age < max_age:
+                logging.warn("Returning cached geometry from {0:.1f}s ago".format(age))
+                with open(pathname) as fp:
+                    try:
+                        return json.load(fp)
+                    except json.decoder.JSONDecodeError:
+                        logging.warn("Invalid geometry cache file")
+
+        geometry = self.fetch()
+        with open(pathname,'w') as fp:
+            json.dump(geometry, fp)
+        return geometry
+
+
+
     def _convert_position(self, position):
         """
         Convert the position from GraphQL form to PyBullet
-        """ 
+        """
         return [
             position['x'],
             position['z'],
             position['y']
         ]
+
+
+    def _get_current_geometry(self, backoff=10, nfailures=5):
+        """
+        Fetch the current geometry resource
+        Supports exponential backoff
+        @backoff: Time to wait before trying again
+        @nfailures: Number of failues before throwing an error
+        """
+        for i in range(nfailures):
+            try:
+                return self.graphql_client.execute(getCurrentGeometry)
+            except HTTPError:
+                wait = backoff*1.5**i + backoff*random.random()
+                logging.warning("Geometry request failed. Trying again in %i seconds"%wait)
+                time.sleep(backoff*1.5**i)
+        # Try one last time and let any errors throw
+        return self.graphql_client.execute(getCurrentGeometry)
 
 
     def _download_geometry_resource(self, url, local_filepath):

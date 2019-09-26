@@ -1,4 +1,7 @@
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const {OAuth2Client} = require('google-auth-library');
+const client = new OAuth2Client(process.env.CLIENT_ID);
 
 exports.validate = async function (ctx, next) {
     //do your validation by fetching the user here or just return same context
@@ -14,3 +17,20 @@ exports.validate = async function (ctx, next) {
 exports.generateToken = async function (data) {
     return jwt.sign(data, process.env.JWT_SECRET);
 };
+
+exports.hashingPassword = async function (password, saltRounds = 10) {
+    return bcrypt.hash(password, saltRounds);
+}
+
+exports.compareHashPassword = async function (password, hashPassword) {
+    return bcrypt.compare(password, hashPassword);
+}
+
+exports.verifyGoogleToken = async function (idToken) {
+    const ticket = await client.verifyIdToken({
+        idToken,
+        audience: process.env.CLIENT_ID
+    });
+    const payload = ticket.getPayload();
+    return payload;    
+}

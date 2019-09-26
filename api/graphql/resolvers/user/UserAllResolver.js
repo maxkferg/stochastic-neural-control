@@ -13,10 +13,10 @@ class UserAllResolver extends BaseResolver {
                 type: GraphQLString,
                 description: 'Last name for the user.'
             },
-            age: {
-                type: GraphQLInt,
-                description: "Age of the user"
-            }
+            // age: {
+            //     type: GraphQLInt,
+            //     description: "Age of the user"
+            // }
         };
     }
 

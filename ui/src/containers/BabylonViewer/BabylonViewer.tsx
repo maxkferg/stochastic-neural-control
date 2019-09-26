@@ -6,6 +6,7 @@
  * That is, the component should never be reloaded.
  *
  */
+
 import * as React from 'react';
 import PropTypes from 'prop-types';
 import { withStyles, WithStyles, Theme } from '@material-ui/core/styles';
@@ -207,7 +208,8 @@ function isMeshChanged(ob1: any, ob2: any){
 //@ts-ignore
 export interface Props extends WithStyles<typeof styles>{
     geometry: any[]
-    onSelectedObject: Function
+    onSelectedObject: Function,
+    deleteMesh: any[]
 }
 
 interface State {
@@ -223,7 +225,6 @@ interface State {
 
 class BabylonViewer extends React.Component<Props, State> {
     classes: any
-
     constructor(props: any) {
       super(props);
       this.state = {
@@ -251,7 +252,7 @@ class BabylonViewer extends React.Component<Props, State> {
         // We can not render geometry until the scene is ready
         if (this.state.scene !== null){
             let objectsToBeCreated: any[] = [];
-            //let objectsToBeDeleted = [];
+            let objectsToBeDeleted: any[] = this.props.deleteMesh;
             for (let newObjectKey in this.props.geometry){
                 let newObject = this.props.geometry[newObjectKey];
                 let prevObject = find(this.state.renderedObjects, {id: newObject.id});
@@ -274,6 +275,11 @@ class BabylonViewer extends React.Component<Props, State> {
                     }
                 };
                 assetManager.load();
+            }
+            if (objectsToBeDeleted.length) {
+                for (let objectId of objectsToBeDeleted) {
+                    this.deleteObject(objectId);
+                }
             }
         }
     }
@@ -313,6 +319,7 @@ class BabylonViewer extends React.Component<Props, State> {
             } else if (newObject.type=="wall"){
                 setupWall(newObject, parent, scene);
             } else if (newObject.type=="robot"){
+                // @ts-ignore
                 setupRobot(newObject, parent, scene);
                 setupObjectButton(newObject, parent, scene, self.onSelectedObject);
             } else if (newObject.type=="object"){
@@ -326,6 +333,7 @@ class BabylonViewer extends React.Component<Props, State> {
             renderedObjects: this.state.renderedObjects,
             renderedMeshes: this.state.renderedMeshes
         });
+       
         // Start loading the mesh
         //manager.load();
     }
@@ -337,11 +345,15 @@ class BabylonViewer extends React.Component<Props, State> {
      */
     deleteObject = (objectId) => {
         let self = this;
-        this.state.renderedMeshes[objectId].children.map((child) => {
-            self.deleteObject(child);
-        })
-        this.state.renderedMeshes[objectId].dispose()
-        this.state.renderedMeshes[objectId] = null;
+        if (this.state.renderedMeshes[objectId]) {
+            if (this.state.renderedMeshes[objectId].children && this.state.renderedMeshes[objectId].children.length) {
+                this.state.renderedMeshes[objectId].children.forEach((child) => {
+                    self.deleteObject(child);
+                });
+            }
+            this.state.renderedMeshes[objectId].dispose();
+            this.state.renderedMeshes[objectId] = null;
+        }
     }
 
     /**
@@ -498,4 +510,5 @@ BabylonViewer.propTypes = {
 };
 
 //@ts-ignore
+
 export default withStyles(styles)(BabylonViewer);

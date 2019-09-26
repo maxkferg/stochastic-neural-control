@@ -54,6 +54,8 @@ const Mutation = new GraphQLObjectType({
     description: 'Root Mutation',
     fields: () => ({
         createUser: new mutations.UserMutations.userSignup(User, "Creates a new user", false),
+        signInUser: new mutations.UserMutations.userSignin(User, "Sign in user", false),
+        signInUserGoogle: new mutations.UserMutations.userSigninGoogle(User, "Sign in user", false),
         user: new mutations.UserMutations.user(User, "Updates current user", true),
         createMesh: new mutations.MeshMutations.meshCreate(Mesh, "Creates a mesh object", false),
         mesh: new mutations.MeshMutations.mesh(Mesh, "Updates current mesh object", true),

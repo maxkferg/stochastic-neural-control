@@ -2,8 +2,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import { ConnectedRouter } from 'connected-react-router';
-// import registerServiceWorker from './registerServiceWorker';
-import store, { history } from './store';
+import store, { history } from './redux/store';
 import { Routers } from './navigation';
 import { ApolloProvider } from 'react-apollo';
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
@@ -19,11 +18,8 @@ ReactDOM.render(
 	      <ConnectedRouter history={history} >
 	      	<Routers />
 	       </ConnectedRouter>
-	    </ApolloProvider>,
+	    </ApolloProvider>
 	  </Provider>
   </MuiThemeProvider>,
   document.getElementById('root') as HTMLElement
 );
-
-// NOTE: if (module.hot) { module.hot.accept.....}
-// registerServiceWorker();

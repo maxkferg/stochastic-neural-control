@@ -51,7 +51,7 @@ class BuildingViewer extends React.Component<Props, State> {
     }
 
     componentDidMount(){
-      apollo.watchQuery({query: MESH_QUERY, pollInterval: 500}).subscribe(data => {
+      apollo.watchQuery({query: MESH_QUERY, pollInterval: 1000}).subscribe(data => {
         // @ts-ignore
         let self = this;
         let meshesCurrent = data.data.meshesCurrent;

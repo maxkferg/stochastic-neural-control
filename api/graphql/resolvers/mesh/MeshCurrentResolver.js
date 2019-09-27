@@ -28,10 +28,10 @@ class MeshCurrentResolver extends BaseResolver {
   async resolve(parentValue, args, ctx) {
     //calling super method to check authentication if applicable
     super.resolve(parentValue, args, ctx);
-    let limit = args.limit || 3;
+    console.log('test');
     let query;
 
-    if (args.type){
+    if (args.type) {
       query = `
         SHOW TAG VALUES from mesh_position
         WITH key = id
@@ -76,7 +76,7 @@ class MeshCurrentResolver extends BaseResolver {
     });
 
     // Filter out any null objects
-    const objects = await Promise.all(results)
+    const objects = await Promise.all(results);
     return objects.filter(ob => typeof(ob)!=="undefined");
   }
 }

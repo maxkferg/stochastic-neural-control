@@ -1,0 +1,5 @@
+mutation createBuilding($ownerId: String!) {
+  createBuilding(ownerId: $ownerId) {
+    id
+  }
+}

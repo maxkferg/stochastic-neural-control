@@ -15,7 +15,15 @@ class BuildingCreateMutation extends BaseResolver {
 
     async resolve(_, args, ctx) {
         try {
-            console.log(args);
+            const { ownerId } = args;
+             const buildingData = {
+                owner_id: ownerId
+            }
+            const newBuilding = new ctx.db.Building(buildingData);
+            const building = await newBuilding.save();
+            return {
+                id: building._id
+            }
         } catch (e) {
             throw new Error(e);
         }

@@ -1,8 +1,6 @@
 const Influx = require('influx');
 const BaseResolver = require('../../BaseResolver');
-const { GraphQLNonNull, GraphQLString, GraphQLInt, GraphQLBoolean, GraphQLFloat, GraphQLInputObjectType} = require('graphql');
-const MeshGeometry = require('../../types/MeshGeometry');
-const MeshPhysics = require('../../types/MeshPhysics');
+const { GraphQLNonNull, GraphQLString, GraphQLBoolean, GraphQLFloat, GraphQLInputObjectType} = require('graphql');
 const ObjectId = require('objectid');
 
 

@@ -17,16 +17,17 @@ seeker-apex-td3:
         horizon: 100
 
         # === Model ===
+        use_lstm: False
         eager: False
         n_step: 3
         gamma: 0.99
         model:
-            custom_model: "fusion_model"
+            custom_model: "mink"
             custom_options: {}
 
         # === Eval ===
-        evaluation_interval: 5
-        evaluation_num_episodes: 10
+        #evaluation_interval: 5
+        #evaluation_num_episodes: 10
 
         # === Exploration ===
         schedule_max_timesteps: 20000000 # 100 million
@@ -57,8 +58,8 @@ seeker-apex-td3:
 
         # === Parallelism ===
         num_gpus: 1
-        num_workers: 4
+        num_workers: 12
         num_cpus_per_worker: 4
         batch_mode: "truncate_episodes"
-        num_envs_per_worker: 4
+        num_envs_per_worker: 8
         remote_worker_envs: True

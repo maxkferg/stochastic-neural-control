@@ -155,7 +155,7 @@ class SingleEnvironment():
             'robot_velocity': spaces.Box(low=-10, high=10, shape=(3,), dtype=np.float32),
             'target': spaces.Box(low=-20, high=20, shape=(2,), dtype=np.float32),
             'ckpts': spaces.Box(low=-20, high=20, shape=(2*self.ckpt_count,), dtype=np.float32),
-            'maps': spaces.Box(low=0, high=1, shape=(48, 48, 4), dtype=np.float32),
+            'maps': spaces.Box(low=0, high=255, shape=(48, 48), dtype=np.uint8),
         })
 
         if self.geometry_policy=="subscribe":
@@ -195,7 +195,7 @@ class SingleEnvironment():
             self.reset_target_position()
             self.reset_checkpoints()
             self.state_cache_buffer.append(self._get_cache())
-        
+
         # Limit the buffer size
         if len(self.state_cache_buffer)>500:
             self.state_cache_buffer.pop(0)
@@ -369,6 +369,10 @@ class SingleEnvironment():
         ckpt_positions = list(reversed(ckpt_positions)) + [(0,0)]*self.ckpt_count
         ckpt_positions = ckpt_positions[:self.ckpt_count]
 
+        # Write robot positions to the map
+        robot_pose = self.base.get_robot_positions()
+        self.pixel_state.set_robots(robot_pose)
+
         state = {
             "robot_pos": robot_pos,
             "robot_orn": robot_orn,
@@ -386,6 +390,7 @@ class SingleEnvironment():
             "is_at_target": self.is_at_target(),
             "is_broken": False,
         }
+        #self.pixel_state.save_image(robot_pos, "state.png")
 
 
         if self.previous_state is not None:
@@ -494,7 +499,7 @@ class SingleEnvironment():
         Steps the simulator forward @self.action_repeat steps
 
         If robot policy is set to 'subscribe', then we also pull
-        robot positions from Kafka. Some steps are applied afterwards for 
+        robot positions from Kafka. Some steps are applied afterwards for
         latency compensation
         """
         for i in range(self.action_repeat):
@@ -684,7 +689,7 @@ class SingleEnvironment():
             if not box.contains(state):
                 raise ValueError("Box {} does not contain {}".format(box, state))
         # Test the whole space
-        assert(self.observation_space.contains(obs)) 
+        assert(self.observation_space.contains(obs))
 
 
 
@@ -704,10 +709,10 @@ class PixelState():
         px, py = self._to_pixel_coords((xmax, 0, ymax))
         self.nx = px+padding # Number of pixels in the x direction
         self.ny = py+padding # Number of pixels in the y direction
-        self.map = np.zeros((self.ny, self.nx), dtype=np.uint8)
-        self.checkpoints = np.zeros((self.ny, self.nx), dtype=np.uint8)
-        self.target = np.zeros((self.ny, self.nx), dtype=np.uint8)
-        self.robot = np.zeros((self.ny, self.nx), dtype=np.uint8)
+        self.map = np.zeros((self.ny, self.nx), dtype=np.uint16)
+        self.checkpoints = np.zeros((self.ny, self.nx), dtype=np.uint16)
+        self.target = np.zeros((self.ny, self.nx), dtype=np.uint16)
+        self.robots = np.zeros((self.ny, self.nx), dtype=np.uint16)
         self.set_map(map)
 
 
@@ -715,6 +720,7 @@ class PixelState():
         """
         Return an observation of this state as a numpy array
         """
+        stacked = self._stacked()
         robot_x, robot_y = self._to_pixel_coords(robot_pos)
 
         # Pad the image and shift the coordinates
@@ -724,12 +730,13 @@ class PixelState():
         ymax = robot_y + view_size# + pad_size
         #padding = ((pad_size, pad_size), (pad_size, pad_size), (0,0))
 
-        stacked = np.stack((
-            self.map,
-            self.target,
-            self.robot,
-            self.checkpoints
-        ), -1)
+        #stacked = np.stack((
+        #    self.map,
+        #    self.target,
+        #    self.robot,
+        #    self.checkpoints
+        #), -1)
+
 
         #padded = np.pad(
         #    stacked,
@@ -742,7 +749,7 @@ class PixelState():
         # Rotate the panel and crop a square section
         if rotate:
             stacked = scipy.ndimage.rotate(
-                255*padded,
+                padded,
                 axes=(1,0,0),
                 order=0,
                 reshape=False,
@@ -750,30 +757,32 @@ class PixelState():
             )[ymin:ymax, xmin:xmax]
         #eru 255*padded[ymin:ymax, xmin:xmax]
         cropped = stacked[ymin:ymax, xmin:xmax]
-        padded = pad(cropped, (48,48,4), (0,0,0))
+        padded = pad(cropped, (48,48), (0,0,0))
         return padded
 
 
+    def _stacked(self):
+        """
+        Return the stacked representation of the state
+        """
+        MAP = 40
+        ROBOTS = 70
+        TARGET = 200
+        CHECKPOINTS = 150
+        stacked = MAP*self.map + CHECKPOINTS*self.checkpoints + TARGET*self.target + ROBOTS*self.robots
+        stacked = stacked.clip(0, 255).astype(np.uint8)
+        return stacked
 
-    def save_image(self, robot_pos, filename=None):
-        observation = self.observe(robot_pos)
-        print(observation.shape)
-        h,w,_ = observation.shape
-        image = np.zeros((h,w,3))
-        # Walls
-        image[:,:,0] += observation[:,:,0]
-        image[:,:,1] += observation[:,:,0]
-        image[:,:,2] += observation[:,:,0]
-        # robots (r), targets (g), checkpoints (b)
-        image[:,:,0] += observation[:,:,1]
-        image[:,:,1] += observation[:,:,2]
-        image[:,:,2] += observation[:,:,3]
-        image = image*255
-        image = image.clip(0,255)
-        image = image.astype(np.uint8)
+
+    def save_image(self, robot_pos, filename=None, cropped=False):
+        if cropped:
+            observation = self.observe(robot_pos)
+        else:
+            observation = self._stacked()
+        observation = observation.astype(np.uint8)
         if filename is not None:
-            skimage.io.imsave(filename, image)
-        return image
+            skimage.io.imsave(filename, observation)
+        return observation
 
 
     def set_map(self, building_map):
@@ -846,7 +855,7 @@ class PixelState():
         Floor space is colored 0. Other robots are colored 1.
         """
         self.robots.fill(0)
-        for enemy_pos in robots:
+        for enemy_pos, enemy_orn in robots:
             enemy_x, enemy_y = self._to_pixel_coords(enemy_pos)
             # Pixels to color
             xmin = int(enemy_x - 1)
@@ -857,7 +866,7 @@ class PixelState():
             xmin = max(xmin,0)
             xmax = min(xmax, self.nx-1)
             ymin = max(ymin, 0)
-            ymax = min(ymax, self.nx-1)
+            ymax = min(ymax, self.ny-1)
             # Color
             self.robots[ymin:ymax, xmin:xmax] = 1
         return self.robots

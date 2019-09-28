@@ -17,11 +17,12 @@ seeker-apex-td3:
         horizon: 100
 
         # === Model ===
-        use_lstm: False
         eager: False
         n_step: 3
         gamma: 0.99
+        use_state_preprocessor: True
         model:
+            use_lstm: False
             custom_model: "mink"
             custom_options: {}
 

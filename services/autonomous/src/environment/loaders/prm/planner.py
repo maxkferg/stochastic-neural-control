@@ -6,25 +6,21 @@ author: Atsushi Sakai (@Atsushi_twi)
 
 """
 
-import random
 import math
+import random
 import numpy as np
 import scipy.spatial
 import matplotlib.pyplot as plt
+from .graph import Graph
+
 
 # parameter
 N_SAMPLE = 500  # number of sample_points
 N_KNN = 10  # number of edge from one sampled point
-MAX_EDGE_LEN = 30.0  # [m] Maximum edge length
+MAX_EDGE_LEN = 2.0  # [m] Maximum edge length
 
 show_animation = False
 
-class Roadmap:
-    pass
-    def __init__(*args,**keargs):
-        pass
-    def render(*args):
-        pass
 
 class Node:
     """
@@ -81,67 +77,95 @@ class KDTree:
         return index
 
 
-class Cache():
+class PRM():
 
-    def __init__(self, obkdtree, sample_x, sample_y, road_map):
-        self.road_map = road_map
+    def __init__(self):
+        self.graph = None
+        self.sample_x = []
+        self.sample_y = []
+
+    def solve(self, sx, sy, gx, gy, ox, oy, rr):
+        """
+        Solve the path planning problem
+        """
+        if self.graph is None:
+            self._setup(sx, sy, gx, gy, ox, oy, rr)
+        graph = self.graph.copy()
+        
+        # Add in the new start and end nodes
+        start_node = len(self.sample_x)
+        goal_node = len(self.sample_x) + 1
+        start_connections = self.get_nearest_nodes(sx, sy, rr)
+        goal_connections = self.get_nearest_nodes(gx, gy, rr)
+        graph.add_node(start_node, sx, sy, start_connections, connect=True)
+        graph.add_node(goal_node, gx, gy, goal_connections, connect=True)
+
+        if not len(start_connections) or not len(goal_connections):
+            return [], [] 
+
+        path = graph.astar(start_node, goal_node)
+        if path is None:
+            return [], []
+
+        path = list(path)
+        path.remove(start_node)
+        path.remove(goal_node)
+        rx = [self.sample_x[i] for i in path]
+        ry = [self.sample_y[i] for i in path]
+        #print(list(zip(rx,ry)))
+
+        return rx, ry
+
+
+    def _setup(self, sx, sy, gx, gy, ox, oy, rr):
+        obkdtree = KDTree(np.vstack((ox, oy)).T)
+        sample_x, sample_y = sample_points(sx, sy, gx, gy, rr, ox, oy, obkdtree)
+        skdtree = KDTree(np.vstack((sample_x, sample_y)).T)
+        road_map = generate_roadmap(sample_x, sample_y, rr, obkdtree)
+
+        # Convert roadmap to a cost-weighted graph
+        graph = Graph()
+        for i, connections in enumerate(road_map):
+            graph.add_node(i, sample_x[i], sample_y[i], connections)
+        
+        self.graph = graph
         self.sample_x = sample_x
         self.sample_y = sample_y
         self.obkdtree = obkdtree
-        self.skdtree = KDTree(np.vstack((sample_x, sample_y)).T)
-        
+        self.skdtree = skdtree
 
-def PRM_planning(sx, sy, gx, gy, ox, oy, rr, cache=None):
-    if cache is not None:
-        sx, sy, si = connect_to_graph(sx, sy, rr, cache)
-        gx, gy, gi = connect_to_graph(gx, gy, rr, cache)
-        if gi is None:
-            return [], [], cache
-        sample_x = cache.sample_x.copy()
-        sample_y = cache.sample_y.copy()
-        sample_x.append(sx)
-        sample_y.append(sy)
-        sample_x.append(gx)
-        sample_y.append(gy)
-        obkdtree = cache.obkdtree
-        # Copy and patch the roadmap. 
-        # The last two edges need to be the start and goal, respectively 
-        road_map = cache.road_map.copy()
-        if si>gi:
-            start_edge = road_map.pop(si)
-            goal_edge = road_map.pop(gi)
-        else:
-            goal_edge = road_map.pop(gi)
-            start_edge = road_map.pop(si)
-        road_map.append(start_edge)
-        road_map.append(goal_edge)
-    else:
+
+    def reset(self, sx, sy, gx, gy, ox, oy, rr):
         obkdtree = KDTree(np.vstack((ox, oy)).T)
         sample_x, sample_y = sample_points(sx, sy, gx, gy, rr, ox, oy, obkdtree)
+        skdtree = KDTree(np.vstack((sample_x, sample_y)).T)
         road_map = generate_roadmap(sample_x, sample_y, rr, obkdtree)
-        cache = Cache(obkdtree, sample_x, sample_y, road_map)
 
-    #sample_x, sample_y = sample_points(sx, sy, gx, gy, rr, ox, oy, obkdtree)
-    if show_animation:
-        plt.plot(sample_x, sample_y, ".b")
+        # Convert roadmap to a cost-weighted graph
+        graph = Graph()
+        for i, connections in enumerate(road_map):
+            graph.add_node(i, sample_x[i], sample_y[i], connections)
+        
+        self.graph = graph
+        self.sample_x = sample_x
+        self.sample_y = sample_y
+        self.obkdtree = obkdtree
+        self.skdtree = skdtree
 
-    rx, ry = dijkstra_planning(
-        sx, sy, gx, gy, ox, oy, rr, road_map, sample_x, sample_y)
-
-    return rx, ry, cache
 
 
-def connect_to_graph(px, py, rr, cache):
-    """
-    Connect a point to the sample graph
-    Return the sx,sy from the sampled point OR None for failure
-    """
-    index, dist = cache.skdtree.search(np.array([px, py]).reshape(2, 1), N_KNN)
-    for i in index[0]:
-        sx, sy = cache.sample_x[i], cache.sample_y[i] 
-        if not is_collision(sx, sy, px, py, rr, cache.obkdtree):
-            return sx, sy, i
-    return None, None, None
+    def get_nearest_nodes(self, px, py, rr):
+        """
+        Return a list of nodes that are near (px,py)
+        """
+        neighbors = []
+        index, dist = self.skdtree.search(np.array([px, py]).reshape(2, 1), N_KNN)
+        for i in index[0]:
+            sx, sy = self.sample_x[i], self.sample_y[i] 
+            if not is_collision(sx, sy, px, py, rr, self.obkdtree):
+                neighbors.append(i)
+        return neighbors
+
 
 
 def is_collision(sx, sy, gx, gy, rr, okdtree):
@@ -212,88 +236,6 @@ def generate_roadmap(sample_x, sample_y, rr, obkdtree):
     return road_map
 
 
-def dijkstra_planning(sx, sy, gx, gy, ox, oy, rr, road_map, sample_x, sample_y):
-    """
-    sx: start x position [m]
-    sy: start y position [m]
-    gx: goal x position [m]
-    gy: goal y position [m]
-    ox: x position list of Obstacles [m]
-    oy: y position list of Obstacles [m]
-    rr: robot radius [m]
-    road_map: ??? [m]
-    sample_x: ??? [m]
-    sample_y: ??? [m]
-    
-    @return: Two lists of path coordinates ([x1, x2, ...], [y1, y2, ...]), empty list when no path was found
-    """
-
-    nstart = Node(sx, sy, 0.0, -1)
-    ngoal = Node(gx, gy, 0.0, -1)
-
-    openset, closedset = dict(), dict()
-    openset[len(road_map) - 2] = nstart
-
-    path_found = True
-    
-    while True:
-        if not openset:
-            print("Cannot find path")
-            path_found = False
-            break
-
-        c_id = min(openset, key=lambda o: openset[o].cost)
-        current = openset[c_id]
-
-        # show graph
-        if show_animation and len(closedset.keys()) % 2 == 0:
-            plt.plot(current.x, current.y, "xg")
-            plt.pause(0.001)
-
-        if c_id == (len(road_map) - 1):
-            ngoal.pind = current.pind
-            ngoal.cost = current.cost
-            break
-
-        # Remove the item from the open set
-        del openset[c_id]
-        # Add it to the closed set
-        closedset[c_id] = current
-
-        # expand search grid based on motion model
-        for i in range(len(road_map[c_id])):
-            n_id = road_map[c_id][i]
-            dx = sample_x[n_id] - current.x
-            dy = sample_y[n_id] - current.y
-            d = math.sqrt(dx**2 + dy**2)
-            node = Node(sample_x[n_id], sample_y[n_id],
-                        current.cost + d, c_id)
-
-            if n_id in closedset:
-                continue
-            # Otherwise if it is already in the open set
-            if n_id in openset:
-                if openset[n_id].cost > node.cost:
-                    openset[n_id].cost = node.cost
-                    openset[n_id].pind = c_id
-            else:
-                openset[n_id] = node
-    
-    if path_found is False:
-        return [], []
-
-    # generate final course
-    rx, ry = [ngoal.x], [ngoal.y]
-    pind = ngoal.pind
-    while pind != -1:
-        n = closedset[pind]
-        rx.append(n.x)
-        ry.append(n.y)
-        pind = n.pind
-
-    return rx, ry
-
-
 def plot_road_map(road_map, sample_x, sample_y):  # pragma: no cover
 
     for i, _ in enumerate(road_map):
@@ -328,55 +270,3 @@ def sample_points(sx, sy, gx, gy, rr, ox, oy, obkdtree):
     sample_y.append(gy)
 
     return sample_x, sample_y
-
-
-def main():
-    print(__file__ + " start!!")
-
-    # start and goal position
-    sx = 10.0  # [m]
-    sy = 10.0  # [m]
-    gx = 50.0  # [m]
-    gy = 50.0  # [m]
-    robot_size = 5.0  # [m]
-
-    ox = []
-    oy = []
-
-    for i in range(60):
-        ox.append(i)
-        oy.append(0.0)
-    for i in range(60):
-        ox.append(60.0)
-        oy.append(i)
-    for i in range(61):
-        ox.append(i)
-        oy.append(60.0)
-    for i in range(61):
-        ox.append(0.0)
-        oy.append(i)
-    for i in range(40):
-        ox.append(20.0)
-        oy.append(i)
-    for i in range(40):
-        ox.append(40.0)
-        oy.append(60.0 - i)
-
-    if show_animation:
-        plt.plot(ox, oy, ".k")
-        plt.plot(sx, sy, "^r")
-        plt.plot(gx, gy, "^c")
-        plt.grid(True)
-        plt.axis("equal")
-
-    rx, ry = PRM_planning(sx, sy, gx, gy, ox, oy, robot_size)
-
-    assert rx, 'Cannot found path'
-
-    if show_animation:
-        plt.plot(rx, ry, "-r")
-        plt.show()
-
-
-if __name__ == '__main__':
-    main()

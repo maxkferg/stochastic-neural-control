@@ -14,25 +14,28 @@ seeker-apex-td3:
         policy_delay: 2
         smooth_target_policy: True
         target_noise: 0.2
+        target_noise_clip: 0.5
         horizon: 100
 
         # === Model ===
         eager: False
         n_step: 3
         gamma: 0.99
+        use_state_preprocessor: True
         model:
+            use_lstm: true
             custom_model: "fusion_model"
             custom_options: {}
 
         # === Eval ===
-        evaluation_interval: 5
-        evaluation_num_episodes: 10
+        #evaluation_interval: 5
+        #evaluation_num_episodes: 10
 
         # === Exploration ===
         schedule_max_timesteps: 20000000 # 100 million
-        exploration_fraction: 0.5
-        target_network_update_freq: 50000
-        tau: 0.001 # 1
+        exploration_noise_type: "gaussian"
+        exploration_should_anneal: False
+        exploration_gaussian_sigma: 0.1
 
         # === Replay buffer ===
         buffer_size: 100000
@@ -45,20 +48,24 @@ seeker-apex-td3:
             num_replay_buffer_shards: 8
 
         # === Optimization ===
-        lr: 0.0002
-        use_huber: True
-        huber_threshold: 1.0
-        l2_reg: 0.0000001
-        learning_starts: 100000
+        l2_reg: 0.0
+        actor_lr: 1e-3,
+        critic_lr: 1e-3,
+        learning_starts: 50000
+        pure_exploration_steps: 50000
+        per_worker_exploration: False
         sample_batch_size: 20
         train_batch_size: 512
         min_iter_time_s: 30
-        timesteps_per_iteration: 5000
+
+        # === Target Network ===
+        target_network_update_freq: 0
+        tau: 0.005 # 1
 
         # === Parallelism ===
         num_gpus: 1
-        num_workers: 4
+        num_workers: 8
         num_cpus_per_worker: 4
         batch_mode: "truncate_episodes"
-        num_envs_per_worker: 4
+        num_envs_per_worker: 8
         remote_worker_envs: True

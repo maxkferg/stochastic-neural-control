@@ -15,7 +15,7 @@ import numpy as np
 from scipy.spatial import distance
 from kafka import KafkaProducer, KafkaConsumer
 from graphqlclient import GraphQLClient
-from .prm.planner import Roadmap, PRM_planning
+from .prm.planner import PRM
 from .rrt.rrt.rrt import RRT
 from .rrt.rrt.rrt_star_bid_h import RRTStarBidirectionalHeuristic
 from .rrt.search_space.search_space import SearchSpace
@@ -74,6 +74,7 @@ class RoadmapPlanner():
 
     def __init__(self, cfg, turtlebot_radius=0.15):
         self.cache = None
+        self.planner = PRM()
         self.turtlebot_radius = turtlebot_radius
 
 
@@ -83,9 +84,6 @@ class RoadmapPlanner():
         """
         self.building_map = self._correct_map(building_map)
         self.obstacles = self._map_to_circles(self.building_map)
-        ox = [o[0] for o in self.obstacles]
-        oy = [o[1] for o in self.obstacles]
-        self.roadmap = Roadmap(ox, oy, self.turtlebot_radius)
 
 
     def solve(self, start_point, end_point):
@@ -93,20 +91,11 @@ class RoadmapPlanner():
         sy = start_point[1]
         tx = end_point[0]
         ty = end_point[1]
-        self.obstacles = self._map_to_circles(self.building_map)
         ox = [o[0] for o in self.obstacles]
         oy = [o[1] for o in self.obstacles]
         rr = self.turtlebot_radius
-        self.roadmap.render(sx,sy,tx,ty)
-        rx,ry,cache = PRM_planning(sx, sy, tx, ty, ox, oy, rr, self.cache)
-        #self.cache = cache
-        return rx,ry
-
-        rx, ry = self.roadmap.solve(sx,sy,tx,ty)
-        if len(rx)==0:
-            print("Rebuilding PRM map")
-            self.set_map(self.building_map)
-            rx, ry = self.roadmap.solve(sx,sy,tx,ty)
+        #self.planner.render(sx, sy, tx, ty, ox, oy, rr)
+        rx,ry = self.planner.solve(sx, sy, tx, ty, ox, oy, rr)
         return rx,ry
 
 
@@ -184,7 +173,7 @@ class RoadmapPlanner():
 
 
 
-class TrajectoryBuilder():
+class RRTPlanner():
     """
     Build a 2D map from 3D object mesh
     Publishes updates to the 2D map as the 3D map changes

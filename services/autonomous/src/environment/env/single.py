@@ -34,6 +34,8 @@ BATTERY_WEIGHT = -0.005
 ROTATION_COST = -0.002
 CRASHED_PENALTY = -1
 MAP_GRID_SCALE = 0.2
+NUM_CHECKPOINTS = 10
+STATE_BUFFER_SIZE = 100
 TARGET_DISTANCE_THRESHOLD = 0.6 # Max distance to the target
 HOST, PORT = "localhost", 9999
 COUNT = 0
@@ -188,17 +190,17 @@ class SingleEnvironment():
         self.envStepCounter = 0
 
         # Restores this setup from cache for speed
-        if len(self.state_cache_buffer)>5 and random.random()<0.98:
-            self._restore_cache(random.choice(self.state_cache_buffer))
-        else:
-            self.reset_robot_position()
-            self.reset_target_position()
-            self.reset_checkpoints()
-            self.state_cache_buffer.append(self._get_cache())
-        
+        #if len(self.state_cache_buffer)>5 and random.random() < 0.999:
+        #    self._restore_cache(random.choice(self.state_cache_buffer))
+        #else:
+        self.reset_robot_position()
+        self.reset_target_position()
+        self.reset_checkpoints()
+        #self.state_cache_buffer.append(self._get_cache())
+    
         # Limit the buffer size
-        if len(self.state_cache_buffer)>500:
-            self.state_cache_buffer.pop(0)
+        #if len(self.state_cache_buffer) > STATE_BUFFER_SIZE:
+        #    self.state_cache_buffer.pop(0)
 
         # Allow all the objects to reach equilibrium
         for i in range(10):
@@ -270,9 +272,8 @@ class SingleEnvironment():
     def reset_checkpoints(self):
         """Create new checkpoints at [(vx,yy)...] locations"""
 
-        # Remove old checkpoints
-        for ckpt in self.checkpoints:
-            self.remove_checkpoint(ckpt)
+        for checkpoints in reversed(self.checkpoints):
+            self.dead_checkpoints.append(self.checkpoints.pop())
 
         # Use motion planner to find checkpoint locations
         base_pos, carorn = self.physics.getBasePositionAndOrientation(self.robot.racecarUniqueId)
@@ -282,13 +283,15 @@ class SingleEnvironment():
         nodes = self.base.get_path_to_goal(goal_pos, start_pos)
 
         # Create new checkpoints
-        if nodes is None:
+        if nodes is None or len(nodes)==0:
             if self.verbosity>0:
                 logging.info("RRT failed to find trajectory")
             nodes = []
         else:
-            for i,node in enumerate(nodes):
-                #if i>0 and i%3 == 0:
+            last_checkpoint = len(nodes)-1
+            indicies = np.linspace(0, last_checkpoint, NUM_CHECKPOINTS)
+            for i in indicies:
+                node = nodes[int(i)]
                 position = (node[0], node[1], 0.2)
                 self.create_checkpoint(position)
 
@@ -529,7 +532,9 @@ class SingleEnvironment():
 
 
     def is_crashed(self):
-        for obj in self.base.walls + self.base.objects + self.base.robot_ids:
+        objects = self.base.walls + self.base.objects + self.base.robot_ids
+        objects.remove(self.robot.racecarUniqueId)
+        for obj in objects:
             contact = self.physics.getContactPoints(self.robot.racecarUniqueId, obj)
             if len(contact):
                 return True

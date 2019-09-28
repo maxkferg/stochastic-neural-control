@@ -110,6 +110,8 @@ def test_reset(config):
             if done:
                 break
         env.reset()
+        print("Env reset. Waiting to start...")
+        time.sleep(2)
     print("REST TEST PASSED")
 
 
@@ -169,11 +171,11 @@ if __name__=="__main__":
         config = yaml.load(cfg, Loader=yaml.Loader)
     #test_startup(config)
     #test_actions(config)
-    test_state(config)
+    #test_state(config)
     #test_state_shape(config)
     #test_state_bounds(config)
     #test_state_image(config)
-    #test_reset(config)
+    test_reset(config)
     #test_kafka_sync(config)
     #test_multi(config)
     

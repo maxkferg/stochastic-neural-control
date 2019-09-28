@@ -176,7 +176,7 @@ class BaseEnvironment():
             robot.set_pose(pose['position'], pose['orientation'])
 
 
-    def _sample_point(self):
+    def _sample_floor_point(self, start, ntries=10):
       """
       Return a point that is reachable from the start point.
       Works by finding what map polygon the point lays within. Creates a
@@ -185,11 +185,14 @@ class BaseEnvironment():
       @start: The point to start at
       @threshold(depreciated): The minimum distance between the output and the polygon edge
       """
-      sample_x = self.roadmap.cache.sample_x
-      sample_y = self.roadmap.cache.sample_y
-      i = randrange(len(sample_x))
-      return [sample_x[i]+0.01, sample_y[i]+0.01]
-
+      planner = self.roadmap.planner
+      points = list(zip(planner.sample_x, planner.sample_y))
+      if len(points):
+        for i in range(ntries):
+          pnt = random.choice(points)
+          rx, _ = self.roadmap.solve(start, pnt)
+          if len(rx):
+            return list(pnt)
 
     def get_reachable_point(self, start, threshold=0.3):
       """
@@ -204,15 +207,10 @@ class BaseEnvironment():
       building_map = self.loader.map.cached()
       external_polygons = []
 
-      # Try a quick hack
-      #if self.roadmap.cache is not None:
-      #  pnt = self._sample_point()
-      #  rx, _ = self.roadmap.solve(start, pnt)
-      #  if len(rx)>0:
-      ##    print(rx)
-      #    print("P")
-      #    return pnt
-      #  print("F")
+      # Try a quick hack. Uses the motion planner points
+      point = self._sample_floor_point(start, ntries=20)
+      if point:
+        return point
 
       for obj in building_map:
         for polygon in obj['external_polygons']:

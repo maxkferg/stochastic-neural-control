@@ -20,9 +20,10 @@ seeker-test:
         eager: False
         n_step: 4
         gamma: 0.99
+        use_state_preprocessor: True
         model:
-            custom_preprocessor: "debug_prep"
-            custom_model: "fusion_model"
+            use_lstm: False
+            custom_model: "mink"
 
         # === Exploration ===
         schedule_max_timesteps: 100000000 # 100 million

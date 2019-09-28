@@ -14,7 +14,6 @@ import numpy as np
 import gym
 import logging
 import argparse
-import learning.model
 import colored_traceback
 from random import choice
 from pprint import pprint
@@ -27,6 +26,7 @@ from ray.tune import run_experiments
 from ray.tune.registry import register_env
 from ray.rllib.models import ModelCatalog
 from learning.fusion import FusionModel
+from learning.mink import MinkModel
 from learning.preprocessing import DictFlatteningPreprocessor
 from environment.loaders.geometry import GeometryLoader
 from environment.env.base import BaseEnvironment # Env type
@@ -45,11 +45,6 @@ with open('environment/configs/test.yaml') as cfg:
     api_config = yaml.load(cfg, Loader=yaml.Loader)
 
 
-# Register Model
-ModelCatalog.register_custom_preprocessor("debug_prep", DictFlatteningPreprocessor)
-ModelCatalog.register_custom_model("fusion_model", FusionModel)
-
-
 def train_env_creator(cfg):
     """
     Create an environment that is linked to the communication platform
@@ -65,9 +60,6 @@ def train_env_creator(cfg):
     loader = GeometryLoader(api_config) # Handles HTTP
     base = BaseEnvironment(loader, headless=cfg["headless"])
     return MultiEnvironment(base, verbosity=0, env_config=defaults)
-
-
-register_env(ENVIRONMENT, train_env_creator)
 
 
 def create_parser():
@@ -92,6 +84,9 @@ def create_parser():
 
 
 def run(args):
+    ModelCatalog.register_custom_preprocessor("debug_prep", DictFlatteningPreprocessor)
+    ModelCatalog.register_custom_model("fusion", FusionModel)
+    ModelCatalog.register_custom_model("mink", MinkModel)
     register_env(ENVIRONMENT, lambda cfg: train_env_creator(cfg))
 
     with open(args.config, 'r') as stream:
@@ -105,7 +100,6 @@ def run(args):
             stop=settings['stop'],
             config=settings['config'],
             queue_trials=True,
-            reuse_actors=True,
         )
 
 

@@ -164,6 +164,11 @@ class BaseEnvironment():
         return bid
 
 
+    def get_robot_positions(self):
+      return [self.physics.getBasePositionAndOrientation(i)
+          for i in self.robot_ids]
+
+
     def sync_robot_position(self):
         """
         Sync the robot position to Kafka

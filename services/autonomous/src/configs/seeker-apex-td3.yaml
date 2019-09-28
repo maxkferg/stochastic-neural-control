@@ -23,8 +23,8 @@ seeker-apex-td3:
         gamma: 0.99
         use_state_preprocessor: True
         model:
-            use_lstm: true
-            custom_model: "fusion_model"
+            use_lstm: False
+            custom_model: "mink"
             custom_options: {}
 
         # === Eval ===

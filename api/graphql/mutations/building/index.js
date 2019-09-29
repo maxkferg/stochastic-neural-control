@@ -1,5 +1,5 @@
-const buildingCreate = require('./BuildingCreateMutation');
+const createBuilding = require('./BuildingCreateMutation');
 
 module.exports = {
-    buildingCreate,
+    createBuilding,
 };

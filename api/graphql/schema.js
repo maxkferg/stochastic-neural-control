@@ -46,6 +46,7 @@ const Query = new GraphQLObjectType({
         mapGeometry: new resolvers.MapGeometry.getMapGeometry(new GraphQLList(MapGeometry), "Get all Map Geometry", false),
         trajectory: new resolvers.Trajectory.getTrajectory(Trajectory, "Get a single trajectory", false),
         trajectories: new resolvers.Trajectory.getTrajectoryList(new GraphQLList(Trajectory), "Get a list of trajectories", false),
+        building: new resolvers.Building.getBuilding(new GraphQLList(Building), "Get all building", false)
     })
 });
 
@@ -65,7 +66,7 @@ const Mutation = new GraphQLObjectType({
         updateTrajectory: new mutations.TrajectoryMutations.updateTrajectory(Trajectory, "Update a trajectory", true),
         removeTrajectory: new mutations.TrajectoryMutations.removeTrajectory(Trajectory, "Remove a trajectory", true),
         followTrajectory: new mutations.RobotMutations.followTrajectory(Trajectory, "Instruct a robot to follow a trajectory", true),
-        createBuilding: new mutations.BuildingMutation.buildingCreate(Building, "Creates a building object", false),
+        createBuilding: new mutations.BuildingMutation.createBuilding(Building, "Creates a building object", false),
     })
 });
 

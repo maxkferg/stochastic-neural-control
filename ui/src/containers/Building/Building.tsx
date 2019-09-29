@@ -4,7 +4,7 @@ import Button from '@material-ui/core/Button';
 import { createBuilding } from '../../services/BuildingServices';
 
 
-
+const OWNER_ID = '5d8487f33a0cab41cb414652'
 interface State {
     buildingName: any
   }
@@ -19,6 +19,9 @@ class Building extends React.Component<any, State> {
         this.handleCreateBuilding = this.handleCreateBuilding.bind(this);
     }
     
+    componentDidMount() {
+        console.log(OWNER_ID);
+    }
     handleChangeBuildingName = (e) => {
         if (this.time) {
             //@ts-ignore
@@ -30,11 +33,12 @@ class Building extends React.Component<any, State> {
             buildingName: value
         }), 500);
     }
+
     async handleCreateBuilding() {
         const { buildingName } = this.state;
         const variables = {
             buildingName,
-            ownerId: '5d8487f33a0cab41cb414652'
+            ownerId: OWNER_ID
         }
         const building = await createBuilding(variables);
         const { data } = building;
@@ -42,6 +46,7 @@ class Building extends React.Component<any, State> {
             alert('Create building success');
         }
     }
+
     render() {
         return <React.Fragment>
          <TextField

@@ -1,7 +1,6 @@
 const {
     GraphQLObjectType,
     GraphQLString,
-    // GraphQLInt
 } = require('graphql');
 
 
@@ -10,6 +9,12 @@ const Building = new GraphQLObjectType({
     description: 'Building entity',
     fields: () => ({
         id: {
+            type: GraphQLString
+        },
+        name: {
+            type: GraphQLString
+        },
+        owner_id: {
             type: GraphQLString
         }
     })

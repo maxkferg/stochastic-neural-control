@@ -15,9 +15,11 @@ class BuildingResolver extends BaseResolver {
     async resolve(parentValue, args, ctx) {
         //calling super method to check authentication if applicable
         super.resolve(parentValue, args, ctx);
-
+        console.log(args);
         try {
-            // return await ctx.db.User.findOne({_id: args.id}).lean();
+            const buildings = await ctx.db.Building.find({owner_id: args.ownerId});
+            console.log(buildings)
+            return buildings;
         } catch (e) {
             throw new Error(e);
         }

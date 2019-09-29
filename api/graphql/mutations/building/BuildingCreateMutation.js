@@ -9,15 +9,21 @@ class BuildingCreateMutation extends BaseResolver {
             ownerId: {
                 type: new GraphQLNonNull(GraphQLString),
                 description: 'id for the user.'
+            },
+            buildingName: {
+                type: new GraphQLNonNull(GraphQLString),
+                description: 'name for the building.'
             }
         };
     }
 
     async resolve(_, args, ctx) {
         try {
-            const { ownerId } = args;
+            const { ownerId, buildingName } = args;
+            console.log(args);
              const buildingData = {
-                owner_id: ownerId
+                owner_id: ownerId,
+                name: buildingName,
             }
             const newBuilding = new ctx.db.Building(buildingData);
             const building = await newBuilding.save();

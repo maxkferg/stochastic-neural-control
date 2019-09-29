@@ -1,5 +1,7 @@
-mutation getBuilding($ownerId: String!) {
-  getBuilding(ownerId: $ownerId) {
+query building($ownerId: String!) {
+  building(ownerId: $ownerId) {
     id
+    name
+    owner_id
   }
 }

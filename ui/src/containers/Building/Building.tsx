@@ -1,12 +1,15 @@
 import React from 'react';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
-import { createBuilding } from '../../services/BuildingServices';
-
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemText from '@material-ui/core/ListItemText';
+import { createBuilding, getBuildings } from '../../services/BuildingServices';
 
 const OWNER_ID = '5d8487f33a0cab41cb414652'
 interface State {
-    buildingName: any
+    buildingName: any,
+    buildings: any[]
   }
   
 class Building extends React.Component<any, State> {
@@ -14,14 +17,25 @@ class Building extends React.Component<any, State> {
     constructor(props) {
         super(props);
         this.state = {
-            buildingName: ''
+            buildingName: '',
+            buildings: []
         };
         this.handleCreateBuilding = this.handleCreateBuilding.bind(this);
     }
     
-    componentDidMount() {
-        console.log(OWNER_ID);
+    async componentDidMount() {
+        if (OWNER_ID) {
+            const responseApollo = await getBuildings({ ownerId: OWNER_ID });
+
+            const { data } = responseApollo;
+            if (data.building.length) {
+                this.setState({
+                    buildings: data.building
+                })
+            }
+        }
     }
+
     handleChangeBuildingName = (e) => {
         if (this.time) {
             //@ts-ignore
@@ -47,6 +61,20 @@ class Building extends React.Component<any, State> {
         }
     }
 
+
+    generateListBuilding() {
+        const { buildings } = this.state;
+        return buildings.map(value =>{
+            return <ListItem key={value.id}>
+                <ListItemText
+                primary={value.id}
+                secondary={value.name}
+                />
+                </ListItem>
+        }
+        );
+    }
+
     render() {
         return <React.Fragment>
          <TextField
@@ -68,6 +96,9 @@ class Building extends React.Component<any, State> {
             color="primary"
             onClick={this.handleCreateBuilding}
           >Button</Button>
+        <List>
+            {this.generateListBuilding()}
+        </List>
     </React.Fragment>
     }
 }

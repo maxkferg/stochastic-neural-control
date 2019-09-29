@@ -17,7 +17,6 @@ seeker-test:
         horizon: 100
 
         # === Model ===
-        eager: False
         n_step: 4
         gamma: 0.99
         model:
@@ -26,10 +25,10 @@ seeker-test:
             custom_options: {}
 
         # === Exploration ===
-        schedule_max_timesteps: 100000000 # 100 million
+        schedule_max_timesteps: 100 # 100 million
         exploration_fraction: 0.5
-        target_network_update_freq: 50000
-        tau: 0.001 # 1
+        target_network_update_freq: 0
+        tau: 0.01 # 1
 
         # === Replay buffer ===
         buffer_size: 24000
@@ -43,18 +42,15 @@ seeker-test:
 
         # === Optimization ===
         lr: 0.001
-        use_huber: True
-        huber_threshold: 1.0
         l2_reg: 0.0000001
-        learning_starts: 1000000
+        learning_starts: 10000
         sample_batch_size: 20
-        train_batch_size: 512
-        min_iter_time_s: 30
+        train_batch_size: 256
+        min_iter_time_s: 10
 
         # === Parallelism ===
         num_gpus: 0
-        num_workers: 2
+        num_workers: 4
         num_cpus_per_worker: 0.5
-        batch_mode: "truncate_episodes"
         num_envs_per_worker: 2
         remote_worker_envs: True

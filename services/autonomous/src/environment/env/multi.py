@@ -1,5 +1,6 @@
 import os
 import gym
+import time
 import math
 import random
 import numpy as np
@@ -12,10 +13,15 @@ from PIL import Image, ImageDraw, ImageColor
 
 class MultiEnvironment(MultiAgentEnv):
 
-    def __init__(self, base_env, verbosity=1, env_config={}):
+    def __init__(self, base_env, creation_delay=1, verbosity=1, env_config={}):
         self.dones = set()
         self.base_env = base_env
         self.env = {}
+
+        delay = creation_delay*random.random()
+        print("Waiting for %.3f seconds before creating this env"%delay)
+        time.sleep(delay)
+
         for i,robot in enumerate(self.base_env.robots):
             self.env[i] = SingleEnvironment(base_env, robot=robot, verbosity=verbosity)
 
@@ -31,9 +37,7 @@ class MultiEnvironment(MultiAgentEnv):
         for key, action in actions.items():
             self.env[key].act(action)
 
-        self.default_env.base.step()
-        is_crashed = any(e.is_crashed() for e in self.env.values())
-        is_target = any(e.is_at_target() for e in self.env.values())
+        self.default_env.step()
 
         obs, rew, done, info = {}, {}, {}, {}
         for i in actions.keys():

@@ -165,6 +165,28 @@ def test_multi(config):
         env.reset()
 
 
+def test_multi_stationary(config):
+    cfg = {'debug': True}
+    loader = GeometryLoader(config) # Handles HTTP
+    base = BaseEnvironment(loader, headless=False) # Makes geometry changes
+    env = MultiEnvironment(base, env_config=cfg)
+   
+    a = [0, 0]
+    
+    for i in range(100):
+        env_reward = 0
+        done = {i:False for i in range(len(base.robots))}
+        for j in range(100):
+            action = {i:a for i,d in done.items() if not d and i!='__all__'}
+            obs, reward, done, _ = env.step(action)
+            for r in reward.values():
+                env_reward += r
+            if done['__all__']:
+                break
+        print("Reward:",env_reward)
+        env.reset()
+
+
 
 if __name__=="__main__":
     with open('configs/test.yaml') as cfg:
@@ -175,7 +197,8 @@ if __name__=="__main__":
     #test_state_shape(config)
     #test_state_bounds(config)
     #test_state_image(config)
-    test_reset(config)
+    #test_reset(config)
     #test_kafka_sync(config)
     #test_multi(config)
+    test_multi_stationary(config)
     

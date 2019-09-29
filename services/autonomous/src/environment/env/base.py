@@ -32,7 +32,7 @@ class BaseEnvironment():
           self.physics = BulletClient(pybullet.GUI)
         self.planner = planner
         self.physics.setPhysicsEngineParameter(numSubSteps=10)
-        self.physics.setTimeStep(timeStep=0.040)
+        self.physics.setTimeStep(timeStep=0.020)
         self.loader = loader
         self.robots = []
         self.robot_ids = []

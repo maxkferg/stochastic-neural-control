@@ -50,11 +50,11 @@ docker build -f Dockerfile-gpu -t digitalpoints/trainer:$TAG .
 Starting the training process:
 ```
 # Development
-docker run -it -d digitalpoints/trainer:$TAG \
-	python train.py configs/seeker-test-vector.yaml --dev=True
+docker run -it digitalpoints/trainer:latest \
+	python train.py configs/seeker-test-vector.yaml --dev
 
 # Large-scale
-docker run -it -d digitalpoints/trainer:$TAG \
+docker run -it digitalpoints/trainer:$TAG \
 	python train.py configs/seeker-apex-td3.yaml
 ```
 

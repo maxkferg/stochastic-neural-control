@@ -6,6 +6,9 @@ python train.py configs/seeker-test.yaml --dev
 
 # For a GPU driven large test
 python train.py configs/seeker-apex-td3.yaml
+
+# Population based training
+python train.py configs/seeker-apex-pbt.yaml --pbt
 """
 import io
 import ray
@@ -14,6 +17,7 @@ import numpy as np
 import gym
 import logging
 import argparse
+import tensorflow as tf
 import colored_traceback
 from random import choice
 from pprint import pprint
@@ -25,7 +29,7 @@ from ray.tune.schedulers import PopulationBasedTraining
 from ray.tune import run_experiments
 from ray.tune.registry import register_env
 from ray.rllib.models import ModelCatalog
-from learning.fusion import FusionModel
+#from learning.fusion import FusionModel
 from learning.mink import MinkModel
 from learning.preprocessing import DictFlatteningPreprocessor
 from environment.loaders.geometry import GeometryLoader
@@ -38,6 +42,11 @@ ENVIRONMENT = "MultiRobot-v0"
 
 # Only show errors and warnings
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.WARN)
+
+
+# Print available tensorflow devices
+with tf.Session() as sess:
+    print("Tensorflow devices:", sess.list_devices())
 
 
 # Load API Config
@@ -59,7 +68,7 @@ def train_env_creator(cfg):
     logging.warn(defaults)
     loader = GeometryLoader(api_config) # Handles HTTP
     base = BaseEnvironment(loader, headless=cfg["headless"])
-    return MultiEnvironment(base, verbosity=0, env_config=defaults)
+    return MultiEnvironment(base, verbosity=0, creation_delay=10, env_config=defaults)
 
 
 def create_parser():
@@ -73,24 +82,28 @@ def create_parser():
     parser.add_argument(
         "--pbt",
         default=False,
-        type=bool,
+        action="store_true",
         help="Run population based training.")
     parser.add_argument(
         "--dev",
         action="store_true",
         help="Use development cluster with local redis server")
+    parser.add_argument(
+        "--headless",
+        action="store_true",
+        help="Hide any GUI windows")
     return parser
 
 
 
 def run(args):
     ModelCatalog.register_custom_preprocessor("debug_prep", DictFlatteningPreprocessor)
-    ModelCatalog.register_custom_model("fusion", FusionModel)
+    #ModelCatalog.register_custom_model("fusion", FusionModel)
     ModelCatalog.register_custom_model("mink", MinkModel)
     register_env(ENVIRONMENT, lambda cfg: train_env_creator(cfg))
 
     with open(args.config, 'r') as stream:
-        experiments = yaml.load(stream)
+        experiments = yaml.load(stream, Loader=yaml.Loader)
 
     for experiment_name, settings in experiments.items():
         print("Running %s"%experiment_name)
@@ -104,22 +117,27 @@ def run(args):
 
 
 def run_pbt(args):
+    ModelCatalog.register_custom_model("mink", MinkModel)
+    register_env(ENVIRONMENT, lambda cfg: train_env_creator(cfg))
+
     pbt_scheduler = PopulationBasedTraining(
         time_attr='time_total_s',
         reward_attr='episode_reward_mean',
-        perturbation_interval=4*3600.0,
+        perturbation_interval=60.0,
         hyperparam_mutations={
-            "lr": [1e-3, 5e-4, 1e-4, 5e-5, 1e-5],
+            "actor_lr": [1e-3, 5e-4, 1e-4, 5e-5, 1e-5],
+            "critic_lr": [1e-3, 5e-4, 1e-4, 5e-5, 1e-5],
             "tau": [0.005, 0.001],
             "target_noise": [0.01, 0.1, 0.2],
             "noise_scale": [0.01, 0.1, 0.2],
-            "train_batch_size": [2048, 4096, 8192],
+            "train_batch_size": [512, 1024, 2048],
+            "buffer_size": [24000, 100000, 400000], 
             "l2_reg": [1e-5, 1e-6, 1e-7],
         })
 
     # Prepare the default settings
     with open(args.config, 'r') as stream:
-        experiments = yaml.load(stream)
+        experiments = yaml.load(stream, Loader=yaml.Loader)
 
     for experiment, settings in experiments.items():
         settings["env"] = ENVIRONMENT

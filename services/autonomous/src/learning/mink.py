@@ -1,6 +1,5 @@
 import tensorflow as tf
 from ray.rllib.models import Model
-from ray.rllib.models.tf.misc import get_activation_fn, flatten, normc_initializer
 
 
 class MinkModel(Model):
@@ -37,7 +36,9 @@ class MinkModel(Model):
         obs = input_dict["obs"]
 
         # Convolutional block
+        scale = 128
         x = tf.expand_dims(obs['maps'], -1)
+        x = tf.dtypes.cast(x, tf.float32) / scale
         x = tf.keras.layers.Conv2D(
             16,
             (3,3),
@@ -81,7 +82,21 @@ class MinkModel(Model):
             obs['ckpts']
         ])
 
-        last_layer = tf.keras.layers.Dense(256, activation="relu", name="mink_last")(x)
+        last_layer = x#tf.keras.layers.Dense(256, activation="relu", name="mink_last")(x)
         output_layer = tf.keras.layers.Dense(num_outputs, activation=None, name="mink_out")(last_layer)
 
         return output_layer, last_layer
+
+
+    def custom_stats(self):
+        stats = {
+            "action_min": tf.reduce_min(self.output_actions),
+            "action_max": tf.reduce_max(self.output_actions),
+            "action_norm": tf.norm(self.output_actions),
+            "critic_loss": tf.reduce_mean(self.critic_loss),
+            "actor_loss": tf.reduce_mean(self.actor_loss),
+            "td_error": tf.reduce_mean(self.td_error)
+        }
+        print("custom stats",stats)
+        return stats
+

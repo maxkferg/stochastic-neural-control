@@ -36,17 +36,20 @@ seeker-test:
             num_replay_buffer_shards: 4
 
         # === Optimization ===
-        lr: 0.001
+        actor_lr: 0.001
+        critic_lr: 0.001
         use_huber: True
         huber_threshold: 1.0
         l2_reg: 0.0000001
-        learning_starts: 1000
+        learning_starts: 10000
         sample_batch_size: 20
         train_batch_size: 128
         min_iter_time_s: 10
-        timesteps_per_iteration: 1000
+        timesteps_per_iteration: 10000
 
         # === Parallelism ===
-        num_gpus: 0
-        num_workers: 2
-        num_envs_per_worker: 1
+        num_gpus: 0.15
+        num_workers: 8
+        num_cpus_per_worker: 4
+        num_envs_per_worker: 4
+        remote_worker_envs: True

@@ -347,7 +347,7 @@ class SingleEnvironment():
         # Delete any checkpoints close to the robot, and the subsequent checkpoints
         ckpt_positions = []
         is_at_checkpoint = False
-        for ckpt in reversed(self.checkpoints):
+        for ckpt in self.checkpoints:
             pos, _ = self.physics.getBasePositionAndOrientation(ckpt)
             rel_pos = np.array(pos) - np.array(robot_pos)
             rel_distance = np.linalg.norm(rel_pos)
@@ -374,6 +374,7 @@ class SingleEnvironment():
             "robot_vx": 0,
             "robot_vy": 0,
             "robot_vt": 0,
+            "other_robots": [],
             "rel_ckpt_positions": ckpt_positions,
             "rel_target_orientation": math.atan2(tarPosInCar[1], tarPosInCar[0]),
             "rel_target_distance": math.sqrt(tarPosInCar[1]**2 + tarPosInCar[0]**2),
@@ -399,10 +400,10 @@ class SingleEnvironment():
             state["is_broken"] = True
 
         # Calculate the distance to other robots
-        state["other_robots"] = []
-        for i in self.collision_objects:
-            other_position, _ = self.physics.getBasePositionAndOrientation(i)
-            state["other_robots"].append(np.linalg.norm(np.array(robot_pos) - np.array(other_position)))
+        for robot_id in self.base.robot_ids:
+            if robot_id != self.robot.racecarUniqueId:
+                enemy_position, _ = self.physics.getBasePositionAndOrientation(robot_id)
+                state["other_robots"].append(np.linalg.norm(np.array(robot_pos) - np.array(enemy_position)))
 
         if np.any(np.less(state["other_robots"],[ROBOT_CRASH_DISTANCE])):
             state["is_crashed"] = True
@@ -528,8 +529,11 @@ class SingleEnvironment():
 
 
     def is_crashed(self):
-        objects = self.base.walls + self.base.objects + self.base.robot_ids
-        objects.remove(self.robot.racecarUniqueId)
+        """
+        Return true if the robots have crashed
+        Does not check robot-robot collision as this is done using distances
+        """
+        objects = self.base.walls + self.base.objects
         for obj in objects:
             contact = self.physics.getContactPoints(self.robot.racecarUniqueId, obj)
             if len(contact):

@@ -13,12 +13,11 @@ seeker-apex-td3:
         twin_q: True
         policy_delay: 2
         smooth_target_policy: True
-        target_noise: 0.2
-        target_noise_clip: 0.5
+        target_noise: 0.1
+        target_noise_clip: 0.4
         horizon: 100
 
         # === Model ===
-        eager: False
         n_step: 3
         gamma: 0.99
         use_state_preprocessor: True
@@ -32,30 +31,27 @@ seeker-apex-td3:
         #evaluation_num_episodes: 10
 
         # === Exploration ===
-        schedule_max_timesteps: 20000000 # 100 million
+        schedule_max_timesteps: 1000000 # 1 million
         exploration_noise_type: "gaussian"
-        exploration_should_anneal: False
+        exploration_should_anneal: True
         exploration_gaussian_sigma: 0.1
 
         # === Replay buffer ===
-        buffer_size: 100000
-        prioritized_replay: True
-        prioritized_replay_alpha: 0.6
-        prioritized_replay_beta: 0.4
-        prioritized_replay_eps: 0.000001
-        clip_rewards: False
+        buffer_size: 400000
+        clip_rewards: True
+        compress_observations: True
         optimizer:
-            num_replay_buffer_shards: 8
+            num_replay_buffer_shards: 4
 
         # === Optimization ===
         l2_reg: 0.0
-        actor_lr: 1e-3,
-        critic_lr: 1e-3,
+        actor_lr: 0.001
+        critic_lr: 0.001
         learning_starts: 50000
         pure_exploration_steps: 50000
         per_worker_exploration: False
         sample_batch_size: 20
-        train_batch_size: 512
+        train_batch_size: 1024
         min_iter_time_s: 30
 
         # === Target Network ===
@@ -65,7 +61,9 @@ seeker-apex-td3:
         # === Parallelism ===
         num_gpus: 1
         num_workers: 8
-        num_cpus_per_worker: 4
-        batch_mode: "truncate_episodes"
+        num_cpus_per_worker: 8
         num_envs_per_worker: 8
         remote_worker_envs: True
+
+        # === Resources ===
+        num_cpus_for_driver: 12

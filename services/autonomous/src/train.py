@@ -15,6 +15,7 @@ import ray
 import yaml
 import numpy as np
 import gym
+import random
 import logging
 import argparse
 import tensorflow as tf
@@ -123,14 +124,14 @@ def run_pbt(args):
     pbt_scheduler = PopulationBasedTraining(
         time_attr='time_total_s',
         reward_attr='episode_reward_mean',
-        perturbation_interval=60.0,
+        perturbation_interval=600.0,
         hyperparam_mutations={
             "actor_lr": [1e-3, 5e-4, 1e-4, 5e-5, 1e-5],
             "critic_lr": [1e-3, 5e-4, 1e-4, 5e-5, 1e-5],
-            "tau": [0.005, 0.001],
-            "target_noise": [0.01, 0.1, 0.2],
-            "noise_scale": [0.01, 0.1, 0.2],
-            "train_batch_size": [512, 1024, 2048],
+            "tau": lambda: random.uniform(0.001, 0.004),
+            "target_noise": lambda: random.uniform(0.01, 0.2),
+            "exploration_gaussian_sigma": lambda: random.uniform(0.01, 0.5),
+            "train_batch_size": lambda: random.randint(128, 5096),
             "buffer_size": [24000, 100000, 400000], 
             "l2_reg": [1e-5, 1e-6, 1e-7],
         })
@@ -139,11 +140,19 @@ def run_pbt(args):
     with open(args.config, 'r') as stream:
         experiments = yaml.load(stream, Loader=yaml.Loader)
 
-    for experiment, settings in experiments.items():
-        settings["env"] = ENVIRONMENT
+    for experiment_name, settings in experiments.items():
+        print("Running %s"%experiment_name)
 
-    run_experiments(experiments, scheduler=pbt_scheduler)
-
+        ray.tune.run(
+            settings['run'],
+            name=experiment_name,
+            scheduler=pbt_scheduler,
+            config=settings['config'],
+            checkpoint_freq=10,
+            max_failures=5,
+            num_samples=6,
+            resume=True
+        )
 
 
 if __name__ == "__main__":

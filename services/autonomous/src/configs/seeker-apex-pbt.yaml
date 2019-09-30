@@ -31,11 +31,12 @@ seeker-test:
         #evaluation_num_episodes: 10
 
         # === Exploration ===
-        schedule_max_timesteps: 1000000 # 1 Million
+        schedule_max_timesteps: 10000000 # 10 Million
         exploration_noise_type: "gaussian"
         exploration_should_anneal: True
         exploration_fraction: 0.5
         exploration_gaussian_sigma: 0.1
+        exploration_ou_noise_scale: 0.1
 
         # === Replay buffer ===
         buffer_size: 128000
@@ -44,21 +45,20 @@ seeker-test:
             num_replay_buffer_shards: 4
 
         # === Optimization ===
-        actor_lr: 0.0001
-        critic_lr: 0.0001
+        actor_lr: 0.001
+        critic_lr: 0.001
         use_huber: True
         huber_threshold: 1.0
         l2_reg: 0.0000001
         learning_starts: 60000
         sample_batch_size: 20
-        train_batch_size: 128
+        train_batch_size: 64
         min_iter_time_s: 60
         timesteps_per_iteration: 30000
-        batch_mode: 'complete_episodes'
         
         # === Target Network ===
         clip_rewards: True
-        target_network_update_freq: 100000
+        target_network_update_freq: 20000
         tau: 0.002 # 1
 
         # === Parallelism ===

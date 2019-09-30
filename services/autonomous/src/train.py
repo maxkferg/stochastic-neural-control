@@ -132,17 +132,23 @@ def run_pbt(args):
     ModelCatalog.register_custom_model("mink", MinkModel)
     register_env(ENVIRONMENT, lambda cfg: train_env_creator(cfg))
 
+    def explore(config):
+        if config['parameter_noise']:
+            config['batch_mode'] = 'complete_episodes'
+
     pbt_scheduler = PopulationBasedTraining(
         time_attr='time_total_s',
-        reward_attr='episode_reward_mean',
+        metric="episode_reward_mean",
+        mode="max",
         perturbation_interval=1200.0,
+        custom_explore_fn=explore,
         hyperparam_mutations={
-            "actor_lr": lambda: log_uniform(1e-4, 1e-6),
-            "critic_lr": lambda: log_uniform(1e-4, 1e-6),
-            "tau": lambda: random.uniform(0.001, 0.003),
+            "actor_lr": lambda: log_uniform(1e-3, 1e-5),
+            "critic_lr": lambda: log_uniform(1e-3, 1e-5),
+            "tau": lambda: random.uniform(0.001, 0.002),
             "target_noise": lambda: random.uniform(0.1, 0.3),
-            "exploration_gaussian_sigma": lambda: random.uniform(0.01, 0.3),
-            "exploration_ou_sigma": lambda: random.uniform(0.01, 0.3),
+            "exploration_gaussian_sigma": lambda: random.uniform(0.01, 0.2),
+            "exploration_ou_noise_scale": lambda: random.uniform(0.01, 0.2),
             "train_batch_size": lambda: random.randint(32, 512),
             "buffer_size": lambda: random.randint(64000, 420000), 
             "l2_reg": lambda: log_uniform(1e-5, 1e-8),
@@ -154,17 +160,13 @@ def run_pbt(args):
 
     for experiment_name, settings in experiments.items():
         print("Running %s"%experiment_name)
-        
         settings['config'].update({
             "parameter_noise": sample_from(
-                lambda spec: random.choice([True, False])
-            ),
+                lambda spec: random.choice([True, False])),
             "exploration_should_anneal": sample_from(
-                lambda spec: random.choice([True, False])
-            ),
+                lambda spec: random.choice([True, False])),
             "train_batch_size": sample_from( 
-                lambda: random.choice([32, 64, 128])
-            ),
+                lambda spec: random.choice([32, 64, 128])),
         })
 
         ray.tune.run(
@@ -172,7 +174,7 @@ def run_pbt(args):
             name=experiment_name,
             scheduler=pbt_scheduler,
             config=settings['config'],
-            checkpoint_freq=10,
+            checkpoint_freq=20,
             max_failures=5,
             num_samples=6
         )

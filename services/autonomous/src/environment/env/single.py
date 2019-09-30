@@ -36,6 +36,7 @@ CRASHED_PENALTY = -1
 MAP_GRID_SCALE = 0.2
 NUM_CHECKPOINTS = 10
 STATE_BUFFER_SIZE = 100
+MIN_EPISODE_REWARD = -1 # Terminate if the reward gets lower than this
 TARGET_DISTANCE_THRESHOLD = 0.6 # Max distance to the target
 HOST, PORT = "localhost", 9999
 COUNT = 0
@@ -138,6 +139,7 @@ class SingleEnvironment():
         self.building_map = self.base.loader.map.fetch()
         self.pixel_state = PixelState(self.building_map)
         self.state_cache_buffer = []
+        self.reward_so_far = 0
 
         # Camera observation
         self.width = 320                # The resolution of the sensor image (320x240)
@@ -188,6 +190,7 @@ class SingleEnvironment():
 
         self.startedTime = time.time()
         self.envStepCounter = 0
+        self.reward_so_far = 0
 
         self.reset_robot_position()
         self.reset_target_position()
@@ -512,10 +515,11 @@ class SingleEnvironment():
         state = self.get_state(robot_pos, robot_orn)
         observation = self.get_observation(state)
         reward = self.reward(state, action)
-        done = self.termination(state)
 
         self.envStepCounter += 1
         self.previous_state = state
+        self.reward_so_far += reward
+        done = self.termination(state)
 
         # Respawn the target and clear the isAtTarget flag
         if not self.resetOnTarget and state["is_at_target"]:
@@ -549,7 +553,7 @@ class SingleEnvironment():
 
     def termination(self, state):
         """Return True if the episode should end"""
-        return state["is_crashed"] or state["is_broken"] or (self.resetOnTarget and state["is_at_target"])
+        return state["is_crashed"] or state["is_broken"] or self.reward_so_far < MIN_EPISODE_REWARD or (self.resetOnTarget and state["is_at_target"])
 
 
     def reward(self, state, action):

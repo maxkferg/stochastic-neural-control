@@ -1,5 +1,5 @@
-query GetMeshesById($id: String!) {
-    meshes(id: $id) {
+query GetMeshesBuilding($buildingId: String!) {
+    meshesOfBuilding(buildingId: $buildingId) {
         id,
         x,
         y,

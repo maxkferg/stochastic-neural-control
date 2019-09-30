@@ -21,6 +21,7 @@ class Building extends React.Component<any, State> {
             buildings: []
         };
         this.handleCreateBuilding = this.handleCreateBuilding.bind(this);
+        this.handleNavigateBuilding = this.handleNavigateBuilding.bind(this);
     }
     
     async componentDidMount() {
@@ -61,11 +62,14 @@ class Building extends React.Component<any, State> {
         }
     }
 
+    handleNavigateBuilding(buildingId) {
+        this.props.history.push(`/${buildingId}/model`);
+    }
 
     generateListBuilding() {
         const { buildings } = this.state;
         return buildings.map(value =>{
-            return <ListItem key={value.id}>
+            return <ListItem onClick={() => this.handleNavigateBuilding(value.id)} key={value.id}>
                 <ListItemText
                 primary={value.id}
                 secondary={value.name}

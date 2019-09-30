@@ -6,9 +6,10 @@ import PropTypes from 'prop-types';
 import BabylonViewer from '../BabylonViewer/BabylonViewer';
 import { withStyles, WithStyles, Theme } from '@material-ui/core/styles';
 import apollo from '../../apollo';
+import { withRouter } from 'react-router-dom';
 import SubscriptionClient from '../../apollo/websocket';
 import { loader } from 'graphql.macro';
-
+import { getMeshesOfBuilding } from '../../services/MeshServices';
 const MESH_QUERY = loader('../../graphql/getMesh.gql');
 const SUBSCRIBE_MESH_POSITION = loader('../../graphql/subscribeMesh.gql');
 
@@ -24,7 +25,8 @@ const styles = (theme: Theme) => ({
 
 //@ts-ignore
 export interface Props extends WithStyles<typeof styles>{
-  onSelectedObject: Function
+  onSelectedObject: Function,
+  match: any
 }
 
 interface State {
@@ -50,7 +52,20 @@ class BuildingViewer extends React.Component<Props, State> {
       this.classes = props.classes;
     }
 
-    componentDidMount(){
+    async componentDidMount(){
+      console.log(this.props.match);
+      if (this.props.match) {
+        const { match } = this.props;
+        if (match.params.buildingId) {
+          const { 
+            buildingId
+          } = match.params;
+          const data = await getMeshesOfBuilding({
+            buildingId
+          })
+          console.log("TCL: BuildingViewer -> componentDidMount -> data", data)
+        }
+      }
       apollo.watchQuery({query: MESH_QUERY, pollInterval: 1000}).subscribe(data => {
         // @ts-ignore
         let self = this;
@@ -102,4 +117,4 @@ BuildingViewer.propTypes = {
 };
 
 //@ts-ignore
-export default withStyles(styles)(BuildingViewer);
+export default withStyles(styles)(withRouter(BuildingViewer));

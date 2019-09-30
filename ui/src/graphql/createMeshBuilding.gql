@@ -1,0 +1,61 @@
+mutation createMeshBuilding(
+    $name: String!
+    $type: String!
+    $x: Float!
+    $y: Float!
+    $z: Float!
+    $theta: Float!
+    $width: Float!
+    $height: Float!
+    $depth: Float!
+    $scale: Float!
+    $filetype: String!
+    $filename: String!
+    $directory: String!
+    $physicsCollision: Boolean!
+    $physicsStationary: Boolean!
+    $physicsSimulated: Boolean!
+    $buildingId: String!
+  ) {
+      createMeshBuilding(
+        name: $name
+        type: $type
+        x: $x
+        y: $y
+        z: $z
+        theta: $theta
+        width: $width
+        height: $height
+        depth: $depth
+        scale: $scale
+        buildingId: $buildingId
+        geometry: {
+          filetype: $filetype
+          filename: $filename
+          directory: $directory
+        }
+        physics: {
+          collision: $physicsCollision
+          stationary: $physicsStationary
+          simulated: $physicsSimulated
+        }
+      ) {
+          id,
+          name,
+          type,
+          width,
+          height,
+          depth,
+          scale
+          geometry {
+            filetype
+            filename
+            directory
+          }
+          physics {
+            collision
+            stationary
+            simulated
+          }
+  }
+}

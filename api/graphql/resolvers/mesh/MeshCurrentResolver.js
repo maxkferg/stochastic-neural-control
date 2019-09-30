@@ -28,7 +28,6 @@ class MeshCurrentResolver extends BaseResolver {
   async resolve(parentValue, args, ctx) {
     //calling super method to check authentication if applicable
     super.resolve(parentValue, args, ctx);
-    console.log('test');
     let query;
 
     if (args.type) {

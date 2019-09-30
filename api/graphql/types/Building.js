@@ -3,7 +3,7 @@ const {
     GraphQLString,
 } = require('graphql');
 
-
+const Mesh = require('./Mesh');
 const Building = new GraphQLObjectType({
     name: 'Building',
     description: 'Building entity',

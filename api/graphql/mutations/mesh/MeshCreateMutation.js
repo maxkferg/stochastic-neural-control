@@ -88,7 +88,6 @@ class MeshCreateMutation extends BaseResolver {
         let id = ObjectId();
 
         // Todo: id, geometry, and physics should be stored in mongo
-        console.log(id,args)
         let query = ctx.influx.writePoints([
           {
             measurement: 'mesh_position',

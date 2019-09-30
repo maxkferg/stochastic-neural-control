@@ -144,7 +144,9 @@ class MeshMutation extends BaseResolver {
                 height: chooseValid(args.height, mesh.height),
                 width: chooseValid(args.width, mesh.width),
                 depth: chooseValid(args.width, mesh.width),
+                building_id: chooseValid(args.buildingId, mesh.building_id),
             }
+            console.log("TCL: MeshMutation -> resolve -> newMeshFields", newMeshFields)
 
             if (args.geometry){
                 newMeshFields.geometry_filetype = chooseValid(args.geometry.filetype, mesh.geometry_filetype);

@@ -1,5 +1,6 @@
 import clsx from 'clsx';
 import React from 'react';
+import { withRouter } from 'react-router-dom';
 import { makeStyles, useTheme } from '@material-ui/core/styles';
 import Drawer from '@material-ui/core/Drawer';
 import List from '@material-ui/core/List';
@@ -83,7 +84,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 // @ts-ignore
-export default function NavDrawer(props) {
+function NavDrawer(props) {
     const classes = useStyles();
     const theme = useTheme();
     const [open, setOpen] = React.useState(props.open);
@@ -98,8 +99,9 @@ export default function NavDrawer(props) {
     }
 
     function handleIconClick(key){
-      const { history } = props;
-      history.push('/' + key);
+      const { history, match } = props; 
+      const { params } = match;
+      history.push(`/${params.buildingId}/` + key);
     }
 
     return (
@@ -149,3 +151,5 @@ export default function NavDrawer(props) {
       </Drawer>
     )
 }
+
+export default withRouter(NavDrawer)

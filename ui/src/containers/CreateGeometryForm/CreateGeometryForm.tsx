@@ -12,6 +12,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import classNames from 'classnames';
 // import apollo from '../../apollo';
 import { createMeshOfBuilding } from '../../services/MeshServices';
+import { withRouter } from 'react-router-dom';
 // import { loader } from 'graphql.macro';
 import GeometrySingleton from '../../services/GeometryFormServices';
 // const CREATE_MESH_QUERY = loader('../../graphql/createMesh.gql');
@@ -63,6 +64,7 @@ export interface Props extends WithStyles<typeof styles> {
   objectId: null | string
   onSuccess: Function
   onCancel: Function
+  math: any
 }
 
 interface State {
@@ -151,17 +153,14 @@ class CreateGeometryForm extends React.Component<Props, State> {
       physicsCollision: this.state.physicsCollision,
       physicsStationary: this.state.physicsStationary,
       physicsSimulated: this.state.physicsSimulated,
-      buildingId: '5d90cdec1eaefc67ff854068'
+      //@ts-ignore
+      buildingId: this.props.match.params.buildingId
     }
     const apolloResp = await createMeshOfBuilding(vars);
-    console.log("TCL: CreateGeometryForm -> handleSubmit -> apolloResp", apolloResp)
-    // apollo.mutate({mutation: CREATE_MESH_QUERY, variables:vars}).then((result) => {
-    //   this.props.onSuccess();
-    //   this.setState({currentStep: 0});
-    //   console.log("Mutation succeeded");
-    // }).catch((e) => {
-    //   console.log("Mutation failed", e);
-    // })
+    if (apolloResp) {
+      this.props.onSuccess();
+      this.setState({currentStep: 0});
+    }
   }
 
   handleChange = (event: any) => {
@@ -454,4 +453,4 @@ CreateGeometryForm.propTypes = {
   classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(CreateGeometryForm);
+export default withStyles(styles)(withRouter(CreateGeometryForm));

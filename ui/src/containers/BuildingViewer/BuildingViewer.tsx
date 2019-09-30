@@ -10,9 +10,9 @@ import { withRouter } from 'react-router-dom';
 import SubscriptionClient from '../../apollo/websocket';
 import { loader } from 'graphql.macro';
 import { getMeshesOfBuilding } from '../../services/MeshServices';
-const MESH_QUERY = loader('../../graphql/getMesh.gql');
+// const MESH_QUERY = loader('../../graphql/getMesh.gql');
 const SUBSCRIBE_MESH_POSITION = loader('../../graphql/subscribeMesh.gql');
-
+const GET_MESH_BUILDING_QUERY = loader('../../graphql/getMeshesBuilding.gql');
 
 const styles = (theme: Theme) => ({
   fab: {
@@ -63,20 +63,21 @@ class BuildingViewer extends React.Component<Props, State> {
           const data = await getMeshesOfBuilding({
             buildingId
           })
-          console.log("TCL: BuildingViewer -> componentDidMount -> data", data)
+          console.log("TCL: BuildingViewer -> componentDidMount -> data", data);
         }
       }
-      apollo.watchQuery({query: MESH_QUERY, pollInterval: 1000}).subscribe(data => {
+     
+      apollo.watchQuery({query: GET_MESH_BUILDING_QUERY, pollInterval: 1000, variables : { buildingId: this.props.match.params.buildingId }}).subscribe(data => {
         // @ts-ignore
         let self = this;
-        let meshesCurrent = data.data.meshesCurrent;
+        let meshesCurrent = data.data.meshesOfBuilding;
         const deleteMesh = this.state.meshesCurrent.filter(el => meshesCurrent.indexOf(el) === -1).map(el => el.id)
         this.setState({
           loading: false,
           meshesCurrent,
           deleteMesh
         });
-
+        
         for (let i=0; i<meshesCurrent.length; i++) {
           //let mesh = meshesCurrent[i];
           SubscriptionClient.subscribe({

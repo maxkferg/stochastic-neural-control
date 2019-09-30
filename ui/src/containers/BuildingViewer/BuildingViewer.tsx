@@ -9,8 +9,6 @@ import apollo from '../../apollo';
 import { withRouter } from 'react-router-dom';
 import SubscriptionClient from '../../apollo/websocket';
 import { loader } from 'graphql.macro';
-import { getMeshesOfBuilding } from '../../services/MeshServices';
-// const MESH_QUERY = loader('../../graphql/getMesh.gql');
 const SUBSCRIBE_MESH_POSITION = loader('../../graphql/subscribeMesh.gql');
 const GET_MESH_BUILDING_QUERY = loader('../../graphql/getMeshesBuilding.gql');
 
@@ -40,7 +38,7 @@ interface State {
 
 class BuildingViewer extends React.Component<Props, State> {
     classes: any
-
+    subScription: any
     constructor(props: any) {
       super(props);
       this.state = {
@@ -53,21 +51,7 @@ class BuildingViewer extends React.Component<Props, State> {
     }
 
     async componentDidMount(){
-      console.log(this.props.match);
-      if (this.props.match) {
-        const { match } = this.props;
-        if (match.params.buildingId) {
-          const { 
-            buildingId
-          } = match.params;
-          const data = await getMeshesOfBuilding({
-            buildingId
-          })
-          console.log("TCL: BuildingViewer -> componentDidMount -> data", data);
-        }
-      }
-     
-      apollo.watchQuery({query: GET_MESH_BUILDING_QUERY, pollInterval: 1000, variables : { buildingId: this.props.match.params.buildingId }}).subscribe(data => {
+      this.subScription = apollo.watchQuery({query: GET_MESH_BUILDING_QUERY, pollInterval: 1000, variables : { buildingId: this.props.match.params.buildingId }}).subscribe(data => {
         // @ts-ignore
         let self = this;
         let meshesCurrent = data.data.meshesOfBuilding;
@@ -103,7 +87,9 @@ class BuildingViewer extends React.Component<Props, State> {
         }
       })
      }
-    
+    componentWillUnmount() {
+      this.subScription.unsubscribe();
+    }
     public render() {
       if (this.state.loading) return 'Loading...';
       if (this.state.error) return `Error! ${this.state.error}`;

@@ -2,7 +2,7 @@
 Train an agent on SeekerSimEnv
 
 # For a lightweight test
-python train.py configs/seeker-test.yaml --dev
+conad 
 
 # For a GPU driven large test
 python train.py configs/seeker-apex-td3.yaml
@@ -132,16 +132,18 @@ def run_pbt(args):
     ModelCatalog.register_custom_model("mink", MinkModel)
     register_env(ENVIRONMENT, lambda cfg: train_env_creator(cfg))
 
-    def explore(config):
-        if config['parameter_noise']:
-            config['batch_mode'] = 'complete_episodes'
-
+    def get_batch_mode(spec):
+        print(spec)
+        if spec['config']['parameter_noise']:
+            return 'complete_episodes'
+        else:
+            return 'truncate_episodes'
+            
     pbt_scheduler = PopulationBasedTraining(
         time_attr='time_total_s',
         metric="episode_reward_mean",
         mode="max",
         perturbation_interval=1200.0,
-        custom_explore_fn=explore,
         hyperparam_mutations={
             "actor_lr": lambda: log_uniform(1e-3, 1e-5),
             "critic_lr": lambda: log_uniform(1e-3, 1e-5),
@@ -167,6 +169,8 @@ def run_pbt(args):
                 lambda spec: random.choice([True, False])),
             "train_batch_size": sample_from( 
                 lambda spec: random.choice([32, 64, 128])),
+            "batch_mode": sample_from(
+                lambda spec: get_batch_mode(spec)),
         })
 
         ray.tune.run(
@@ -176,7 +180,7 @@ def run_pbt(args):
             config=settings['config'],
             checkpoint_freq=20,
             max_failures=5,
-            num_samples=6
+            num_samples=4
         )
 
 

@@ -15,6 +15,7 @@ import ray
 import yaml
 import numpy as np
 import gym
+import math
 import random
 import logging
 import argparse
@@ -26,8 +27,8 @@ from gym.spaces import Discrete, Box
 from gym.envs.registration import EnvSpec
 from gym.envs.registration import registry
 from ray import tune
+from ray.tune import run, sample_from, run_experiments
 from ray.tune.schedulers import PopulationBasedTraining
-from ray.tune import run_experiments
 from ray.tune.registry import register_env
 from ray.rllib.models import ModelCatalog
 #from learning.fusion import FusionModel
@@ -116,6 +117,16 @@ def run(args):
             queue_trials=True,
         )
 
+def log_uniform(max, min):
+    """
+    log_uniform(1e-2, 1e-5)
+    """
+    min_exp = math.log10(min)
+    max_exp = math.log10(max)
+    exp = random.uniform(min_exp, max_exp)
+    return 10**exp
+
+
 
 def run_pbt(args):
     ModelCatalog.register_custom_model("mink", MinkModel)
@@ -124,16 +135,17 @@ def run_pbt(args):
     pbt_scheduler = PopulationBasedTraining(
         time_attr='time_total_s',
         reward_attr='episode_reward_mean',
-        perturbation_interval=600.0,
+        perturbation_interval=1200.0,
         hyperparam_mutations={
-            "actor_lr": [1e-3, 5e-4, 1e-4, 5e-5, 1e-5],
-            "critic_lr": [1e-3, 5e-4, 1e-4, 5e-5, 1e-5],
-            "tau": lambda: random.uniform(0.001, 0.004),
-            "target_noise": lambda: random.uniform(0.01, 0.2),
-            "exploration_gaussian_sigma": lambda: random.uniform(0.01, 0.5),
-            "train_batch_size": lambda: random.randint(128, 5096),
-            "buffer_size": [24000, 100000, 400000], 
-            "l2_reg": [1e-5, 1e-6, 1e-7],
+            "actor_lr": lambda: log_uniform(1e-4, 1e-6),
+            "critic_lr": lambda: log_uniform(1e-4, 1e-6),
+            "tau": lambda: random.uniform(0.001, 0.003),
+            "target_noise": lambda: random.uniform(0.1, 0.3),
+            "exploration_gaussian_sigma": lambda: random.uniform(0.01, 0.3),
+            "exploration_ou_sigma": lambda: random.uniform(0.01, 0.3),
+            "train_batch_size": lambda: random.randint(32, 512),
+            "buffer_size": lambda: random.randint(64000, 420000), 
+            "l2_reg": lambda: log_uniform(1e-5, 1e-8),
         })
 
     # Prepare the default settings
@@ -142,6 +154,18 @@ def run_pbt(args):
 
     for experiment_name, settings in experiments.items():
         print("Running %s"%experiment_name)
+        
+        settings['config'].update({
+            "parameter_noise": sample_from(
+                lambda spec: random.choice([True, False])
+            ),
+            "exploration_should_anneal": sample_from(
+                lambda spec: random.choice([True, False])
+            ),
+            "train_batch_size": sample_from( 
+                lambda: random.choice([32, 64, 128])
+            ),
+        })
 
         ray.tune.run(
             settings['run'],
@@ -150,8 +174,7 @@ def run_pbt(args):
             config=settings['config'],
             checkpoint_freq=10,
             max_failures=5,
-            num_samples=6,
-            resume=True
+            num_samples=6
         )
 
 

@@ -27,30 +27,32 @@ seeker-test:
         # === Exploration ===
         schedule_max_timesteps: 100 # 100 million
         exploration_fraction: 0.5
-        target_network_update_freq: 0
-        tau: 0.01 # 1
+        target_network_update_freq: 5000
+        tau: 0.002 # 1
 
         # === Replay buffer ===
-        buffer_size: 24000
+        buffer_size: 48000
         prioritized_replay: True
         prioritized_replay_alpha: 0.6
         prioritized_replay_beta: 0.4
         prioritized_replay_eps: 0.000001
         clip_rewards: False
         optimizer:
-            num_replay_buffer_shards: 6
+            num_replay_buffer_shards: 4
 
         # === Optimization ===
-        lr: 0.001
+        actor_lr: 0.0005
+        critic_lr: 0.001
         l2_reg: 0.0000001
         learning_starts: 10000
         sample_batch_size: 20
-        train_batch_size: 256
-        min_iter_time_s: 10
+        train_batch_size: 64
+        min_iter_time_s: 30
+        timesteps_per_iteration: 1000
 
         # === Parallelism ===
         num_gpus: 0
         num_workers: 4
-        num_cpus_per_worker: 0.5
+        num_cpus_per_worker: 2
         num_envs_per_worker: 2
         remote_worker_envs: True

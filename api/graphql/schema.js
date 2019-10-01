@@ -63,6 +63,7 @@ const Mutation = new GraphQLObjectType({
         createMesh: new mutations.MeshMutations.meshCreate(Mesh, "Creates a mesh object", false),
         createMeshBuilding: new mutations.MeshMutations.meshBuildingCreate(Mesh, "Creates a mesh building object", false),
         mesh: new mutations.MeshMutations.mesh(Mesh, "Updates current mesh object", true),
+        mapGeometry: new mutations.MapGeometryMutations.mapGeometry(MapGeometry, "Update Map Geometry object", false),
         moveRobot: new mutations.RobotMutations.moveRobot(VelocityHistory, "Send a sequence of smooth controls to the robot", true),
         createTrajectory: new mutations.TrajectoryMutations.createTrajectory(Trajectory, "Create a new trajectory for the robot", true),
         updateTrajectory: new mutations.TrajectoryMutations.updateTrajectory(Trajectory, "Update a trajectory", true),

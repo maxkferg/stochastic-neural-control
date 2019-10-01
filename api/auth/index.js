@@ -32,5 +32,5 @@ exports.verifyGoogleToken = async function (idToken) {
         audience: process.env.CLIENT_ID
     });
     const payload = ticket.getPayload();
-    return payload;    
+    return payload;
 }

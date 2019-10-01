@@ -29,18 +29,18 @@ class Environment():
 
     def load_geometry(self, filename, position, scale=1, stationary=False):
         meshScale = [scale, scale, scale]
-        visualShapeId = pybullet.createVisualShape(shapeType=pybullet.GEOM_MESH,
-                                            fileName=filename,
-                                            rgbaColor=[1, 1, 1, 1],
-                                            specularColor=[0.4, .4, 0],
-                                            visualFramePosition=position,
-                                            meshScale=meshScale)
+        visualShapeId = pybullet.createVisualShape(
+          shapeType=pybullet.GEOM_MESH,
+          fileName=filename,
+          rgbaColor=[1, 1, 1, 1],
+          specularColor=[0.4, .4, 0],
+          meshScale=meshScale)
 
-        collisionShapeId = pybullet.createCollisionShape(shapeType=pybullet.GEOM_MESH,
-                                                  flags=pybullet.GEOM_FORCE_CONCAVE_TRIMESH,
-                                                  fileName=filename,
-                                                  collisionFramePosition=position,
-                                                  meshScale=meshScale)
+        collisionShapeId = pybullet.createCollisionShape(
+          shapeType=pybullet.GEOM_MESH,
+          flags=pybullet.GEOM_FORCE_CONCAVE_TRIMESH,
+          fileName=filename,
+          meshScale=meshScale)
         
         if stationary:
             baseMass = 0
@@ -48,12 +48,12 @@ class Environment():
             baseMass = 1
 
         mb = pybullet.createMultiBody(baseMass=baseMass,
-                      baseOrientation=[1,0,0,1],
-                      baseInertialFramePosition=[0, 0, 0],
-                      baseCollisionShapeIndex=collisionShapeId,
-                      baseVisualShapeIndex=visualShapeId,
-                      basePosition=position,
-                      useMaximalCoordinates=True)
+          baseOrientation=[1,0,0,1],
+          baseInertialFramePosition=[0, 0, 0],
+          baseCollisionShapeIndex=collisionShapeId,
+          baseVisualShapeIndex=visualShapeId,
+          basePosition=position,
+          useMaximalCoordinates=True)
 
 
 

@@ -29,9 +29,9 @@ from gym.envs.registration import EnvSpec
 from gym.envs.registration import registry
 from ray.rllib.agents.registry import get_agent_class
 from ray.rllib.models.preprocessors import get_preprocessor
-#from simulation.RealEnv import MultiRobot # Env type
-from simulation.BuildingEnv import MultiRobot # Env type
-from simulation.Worlds.worlds import Y2E2, Building, Playground, Maze, House
+from environment.loaders.geometry import GeometryLoader
+from environment.env.base import BaseEnvironment # Env type
+from environment.env.multi import MultiEnvironment # Env type
 from learning.custom_policy_graph import CustomDDPGPolicyGraph
 from ray.tune.registry import register_env
 colored_traceback.add_hook()
@@ -66,14 +66,25 @@ viridis = cm.get_cmap('viridis')
 
 
 def building_env_creator(env_config):
-    return MultiRobot({
+    """
+    Create an environment that is linked to the communication platform
+    """
+    cfg = {
+        'debug': True,
         "monitor": True,
-        "debug": 0,
         "renders": True,
-        "num_robots": 3,
-        "reset_on_target": False,
-        "world": House(timestep=EVAL_TIMESTEP)
-    })
+        "reset_on_target": False
+    }
+    loader = GeometryLoader(config) # Handles HTTP
+    base = BaseEnvironment(
+        loader, 
+        headless=False, 
+        geometry_policy="subscribe",
+    )
+    return MultiEnvironment(base, cfg)
+
+
+
 
 register_env(ENVIRONMENT, building_env_creator)
 

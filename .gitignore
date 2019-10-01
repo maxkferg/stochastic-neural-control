@@ -2,5 +2,8 @@
 .DS_Store
 volumes
 zk-single-kafka-single
-services/simulator/tmp/
 services/maps/tmp/
+services/simulator/tmp/
+services/autonomous/src/tmp/
+services/autonomous/src/environment/tmp/geometry_cache.json
+services/autonomous/src/state.png

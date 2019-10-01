@@ -1,3 +1,10 @@
+"""
+Copy map data from 3D to 2D
+Removes old map data
+
+python main.py --config=config/dev.yaml
+python main.py --config=config/prod.yaml
+"""
 import os
 import math
 import time
@@ -13,7 +20,7 @@ import numpy as np
 import transforms3d
 import plotly.graph_objs as go
 from graphqlclient import GraphQLClient
-from graphql import getCurrentGeometry
+from graphql import getCurrentGeometry, getDeletedGeometry, getMapGeometry
 from kafka import KafkaProducer
 
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
@@ -21,6 +28,7 @@ logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:
 parser = argparse.ArgumentParser(description='Convert 3D geometry to 2D geometry.')
 parser.add_argument('--headless', action='store_true', help='run without GUI components')
 parser.add_argument('--height', type=float, default=0.1, help='height to generate map')
+parser.add_argument('--config', type=str, default='config/dev.yaml', help='path to config file')
 
 
 class MapBuilder():
@@ -53,13 +61,44 @@ class MapBuilder():
         return result['data']['meshesCurrent']
 
 
+    def _get_deleted_mesh(self):
+        result = self.graphql_client.execute(getDeletedGeometry)
+        result = json.loads(result)
+        return result['data']['meshesCurrent']
+
+
+    def _get_map_geometry(self):
+        result = self.graphql_client.execute(getMapGeometry)
+        result = json.loads(result)
+        return result['data']['mapGeometry']
+
+
+    def delete_stale_map_geometry(self):
+        """
+        Delete any map data that does not appear in the building
+        """
+        deleted_mesh = self._get_deleted_mesh()
+        map_geometry = self._get_map_geometry()
+        map_geometry_hash = { m["mesh_id"]:m for m in map_geometry }
+        for mesh in deleted_mesh:
+            mesh_id = mesh["id"]
+            if not mesh["deleted"]:
+                continue
+            if mesh_id not in map_geometry_hash:
+                logging.warn("Could not find map geometry for %s"%mesh_id)
+                continue
+            if not map_geometry_hash[mesh_id]["is_deleted"]:
+                logging.info("Deleting map geometry for %s"%mesh_id)
+                self.graphql_client.execute(deleteMapGeometry,
+                    params = {"id": map_geometry_hash[mesh_id]["id"]}
+                )
+
+
     def _convert_to_polygons(self, mesh, furniture_height):
         """
         Convert a 3D object to a 2D polygon
         Slices the mesh at self.furniture_height and then returns all polygons on this plane
         """
-        #print(mesh.vertices)
-        #print(mesh.aces)
         plane_origin = np.array([0, furniture_height, 0])
         plane_normal = np.array([0, 1, 0])
 
@@ -69,7 +108,6 @@ class MapBuilder():
         transform = np.array([[1,0,0,0],[0,0,1,0],[0,1,0,0],[0,0,0,1]])
         planar, _ = lines.to_planar(transform)
         polygons = planar.polygons_closed
-        print("*", [list(p.exterior.coords) for p in polygons])
         return [list(p.exterior.coords) for p in polygons]
 
 
@@ -212,6 +250,13 @@ class MapBuilder():
                 self.kafka_producer.send('debug', message)
             #self.canvas.show()
             logging.info("\n\n --- Published map data --- \n")
+
+            # Delete any extra map geometry
+            try:
+                self.delete_stale_map_geometry()
+            except Exception as e:
+                logging.error("Error while deleting geometry: %s"%e)
+
             time.sleep(20)
 
 
@@ -220,7 +265,7 @@ class MapBuilder():
 
 if __name__=="__main__":
     args = parser.parse_args()
-    with open('config.yaml') as cfg:
+    with open(args.config) as cfg:
         config = yaml.load(cfg, Loader=yaml.Loader)
     builder = MapBuilder(args.height, config)
     builder.run()

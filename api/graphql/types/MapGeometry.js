@@ -22,6 +22,7 @@ const MapGeometry = new GraphQLObjectType({
         id: { type: GraphQLString},
         name: {type: GraphQLString},
         mesh_id: {type: GraphQLString},
+        building_id: {type: GraphQLString},
         is_deleted: {type: GraphQLString},
         is_traversable: {type: GraphQLString},
         internal_polygons: {type: GraphQLList(MapPolygon)},

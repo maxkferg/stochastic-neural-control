@@ -14,6 +14,7 @@ const client = new kafka.KafkaClient({kafkaHost: kafkaHost});
 const producer = new kafka.HighLevelProducer(client);
 
 
+
 /**
  * Convert an array of polygons arrays to polygon type
  */
@@ -24,50 +25,53 @@ function toPolygonType(polygons){
 }
 
 /**
- * MapGeometryMutation
- * Update a map object
+ * Convert an GraphQL polygon to Mongo database form
+ */
+function toMongoPolygonType(polygons){
+  return polygons.map((polygon) => polygon.points);
+}
+
+/**
+ * MapGeometryCreate
+ * Create a map geometry object
  * - Write the new map object to MongoDB
  * - Post an event to the real-time system when the map is complete
  *
  */
-class MapGeometryMutation extends BaseResolver {
+class MapGeometryCreate extends BaseResolver {
 
   get args() {
     return {
-      id: {
-        type: GraphQLString,
-        description: 'Map Geometry Id.'
-      },
       name: {
-        type: GraphQLString,
+        type: new GraphQLNonNull(GraphQLString),
         description: 'The name of this geometry.'
       },
       mesh_id: {
-        type: GraphQLString,
+        type: new GraphQLNonNull(GraphQLString),
         description: 'The 3D mesh that this geometry belongs to.'
       },
       building_id: {
-        type: GraphQLString,
+        type: new GraphQLNonNull(GraphQLString),
         description: 'The building that this geometry belongs to.'
       },
       is_deleted: {
-        type: GraphQLBoolean,
+        type: new GraphQLNonNull(GraphQLBoolean),
         description: 'True if the geometry should appear deleted.'
       },
       is_traversable: {
-        type: GraphQLBoolean,
+        type: new GraphQLNonNull(GraphQLBoolean),
         description: 'True if a robot can cross this geometry.'
       },
       internal_polygons: {
-        type: new GraphQLList(PolygonInputType),
+        type: new GraphQLNonNull(GraphQLList(PolygonInputType)),
         description: 'The internal polygons of this object.'
       },
       external_polygons: {
-        type: new GraphQLList(PolygonInputType),
+        type: new GraphQLNonNull(GraphQLList(PolygonInputType)),
         description: 'The external polygons of this object.'
       },
       visual_polygons: {
-        type: new GraphQLList(PolygonInputType),
+        type: new GraphQLNonNull(GraphQLList(PolygonInputType)),
         description: 'The polygons that are shown to the user only.'
       },
       created_at: {
@@ -83,57 +87,25 @@ class MapGeometryMutation extends BaseResolver {
 
   async resolve(parentValue, args, ctx) {
 
-    if (!args.id){
-      throw new Error("Invalid robot id");
-    }
-
-    let mapgeometry = {}
-
-    if (typeof args.name !== 'undefined'){
-      mapgeometry.name = args.name
-    }
-    if (typeof args.mesh_id !== 'undefined'){
-      mapgeometry.mesh_id = args.mesh_id
-    }
-    if (typeof args.mesh_id !== 'undefined'){
-      mapgeometry.building_id = args.building_id
-    }
-    if (typeof args.is_deleted !== 'undefined'){
-      mapgeometry.isDeleted = args.is_deleted
-    }
-    if (typeof args.is_traversable !== 'undefined'){
-      mapgeometry.isTraversable = args.is_traversable
-    }
-    if (typeof args.internal_polygons !== 'undefined'){
-      mapgeometry.internalPolygons = args.internal_polygons
-    }
-    if (typeof args.external_polygons !== 'undefined'){
-      mapgeometry.externalPolygons = args.external_polygons
-    }
-    if (typeof args.visual_polygons !== 'undefined'){
-      mapgeometry.visualPolygons = args.visual_polygons
-    }
-    if (typeof args.created_at !== 'undefined'){
-      mapgeometry.createdAt = args.created_at
-    }
-    if (typeof args.updated_at !== 'undefined'){
-      mapgeometry.updatedAt = args.updated_at
-    }
-
-    let ob = await ctx.db.MapGeometry.findByIdAndUpdate(
-        {_id: args.id},
-        mapgeometry,
-        { new: true }
-    );
+    let ob = await ctx.db.MapGeometry.create({
+      name: args.name,
+      mesh_id: args.mesh_id,
+      building_id: args.building_id,
+      isDeleted: args.is_deleted,
+      isTraversable: args.is_traversable,
+      internalPolygons: toMongoPolygonType(args.internal_polygons),
+      externalPolygons: toMongoPolygonType(args.external_polygons),
+      visualPolygons: toMongoPolygonType(args.visual_polygons),
+    });
 
     let message = {
-      event: 'updated',
-      mapgeometry: mapgeometry
+      event: 'created',
+      mapgeometry: ob
     }
 
     // Notify consumers that the map geometry has changed
     let payload = [{
-      topic: 'maps.events.updated',
+      topic: 'maps.events.created',
       attributes: 1,
       timestamp: Date.now(),
       messages: [JSON.stringify(message)],
@@ -161,7 +133,7 @@ class MapGeometryMutation extends BaseResolver {
   }
 }
 
-module.exports = MapGeometryMutation;
+module.exports = MapGeometryCreate;
 
 
 

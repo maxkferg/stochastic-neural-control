@@ -49,7 +49,7 @@ const handleAuthenticationGoogle = async function (googleResponse, props) {
   const { data } = response;
   if (data.signInUserGoogle.authToken) {
     localStorage.setItem('token', data.signInUserGoogle.authToken);
-    props.history.push('/123132/model');
+    props.history.push('/buildings');
   }
 }
 
@@ -66,7 +66,7 @@ export default function SignIn(props) {
     const { data } = response;
     if (data.signInUser.authToken) {
       localStorage.setItem('token', data.signInUser.authToken);
-      props.history.push('/123132/model');
+      props.history.push('/buildings');
     }
   }
   return (

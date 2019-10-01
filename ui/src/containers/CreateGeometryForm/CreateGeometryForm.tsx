@@ -10,10 +10,12 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import MenuItem from '@material-ui/core/MenuItem';
 import classNames from 'classnames';
-import apollo from '../../apollo';
-import { loader } from 'graphql.macro';
+// import apollo from '../../apollo';
+import { createMeshOfBuilding } from '../../services/MeshServices';
+import { withRouter } from 'react-router-dom';
+// import { loader } from 'graphql.macro';
 import GeometrySingleton from '../../services/GeometryFormServices';
-const CREATE_MESH_QUERY = loader('../../graphql/createMesh.gql');
+// const CREATE_MESH_QUERY = loader('../../graphql/createMesh.gql');
 
 
 const styles = (theme: any) => ({
@@ -62,6 +64,7 @@ export interface Props extends WithStyles<typeof styles> {
   objectId: null | string
   onSuccess: Function
   onCancel: Function
+  math: any
 }
 
 interface State {
@@ -130,7 +133,7 @@ class CreateGeometryForm extends React.Component<Props, State> {
     this.setState({currentStep: this.state.currentStep+1});
   }
 
-  handleSubmit = (event: any) => {
+  handleSubmit = async (event: any) => {
     let vars = {
       id: this.state.id,
       name: this.state.name,
@@ -150,15 +153,14 @@ class CreateGeometryForm extends React.Component<Props, State> {
       physicsCollision: this.state.physicsCollision,
       physicsStationary: this.state.physicsStationary,
       physicsSimulated: this.state.physicsSimulated,
+      //@ts-ignore
+      buildingId: this.props.match.params.buildingId
     }
-    apollo.mutate({mutation: CREATE_MESH_QUERY, variables:vars}).then((result) => {
+    const apolloResp = await createMeshOfBuilding(vars);
+    if (apolloResp) {
       this.props.onSuccess();
       this.setState({currentStep: 0});
-      console.log("Mutation succeeded");
-    }).catch((e) => {
-      console.log("Mutation failed", e);
-    })
-
+    }
   }
 
   handleChange = (event: any) => {
@@ -451,4 +453,4 @@ CreateGeometryForm.propTypes = {
   classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(CreateGeometryForm);
+export default withStyles(styles)(withRouter(CreateGeometryForm));

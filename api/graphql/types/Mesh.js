@@ -1,7 +1,6 @@
 const {
     GraphQLObjectType,
     GraphQLString,
-    GraphQLInt,
     GraphQLFloat,
     GraphQLBoolean,
 } = require('graphql');
@@ -10,12 +9,12 @@ const MeshPhysics = require('./MeshPhysics');
 const MeshGeometry = require('./MeshGeometry');
 
 
-
 const Mesh = new GraphQLObjectType({
     name: 'Mesh',
     description: 'A 3D geometric object that exists a specific point in time',
     fields: () => ({
         id: { type: GraphQLString},
+        building_id: { type: GraphQLString},
         name: {type: GraphQLString},
         type: {type: GraphQLString},
         x: {type: GraphQLFloat},

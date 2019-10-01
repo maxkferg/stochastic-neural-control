@@ -1,56 +1,53 @@
 const Influx = require('influx');
 const BaseResolver = require('../../BaseResolver');
-const {GraphQLString, GraphQLInt, GraphQLBoolean} = require('graphql');
+const {GraphQLNonNull, GraphQLString, GraphQLBoolean} = require('graphql');
 
-class MeshCurrentResolver extends BaseResolver {
+/*
+ * Return the last visible instance of a particular
+ * ObjectId
+ */
+class MeshBuilding extends BaseResolver {
 
   get args() {
     return {
-      type: {
-          type: GraphQLString,
-          description: 'The mesh type (wall, floor, robot, object)'
+      buildingId: {
+        type: new GraphQLNonNull(GraphQLString),
+        description: 'Id for the building'
       },
       deleted: {
-          type: GraphQLBoolean,
-          description: 'Optionally filter by objects with deleted=$deleted'
-      },
-      simulated: {
-          type: GraphQLBoolean,
-          description: 'Optionally filter by objects with physics.simulated=$simulated'
-      },
-      limit: {
-          type: GraphQLInt,
-          description: 'The maximum number of results to return'
-      },
+        type: new GraphQLNonNull(GraphQLBoolean),
+        description: 'Id for the building'
+      }
     };
   }
 
   async resolve(parentValue, args, ctx) {
-    //calling super method to check authentication if applicable
     super.resolve(parentValue, args, ctx);
     let query;
-
     if (args.type) {
       query = `
         SHOW TAG VALUES from mesh_position
         WITH key = id
-        WHERE type = ${Influx.escape.stringLit(args.type)}`
+        WHERE type = ${Influx.escape.stringLit(args.type)} AND building_id = ${Influx.escape.stringLit(args.buildingId)} `
     } else {
       query = `
         SHOW TAG VALUES from mesh_position
-        WITH key = id`
+        WITH key = id
+        WHERE building_id = ${Influx.escape.stringLit(args.buildingId)} 
+        `
     }
 
     const objectIds = await ctx.influx.query(query);
     const results = objectIds.map((objectId) => {
       return ctx.influx.query(`
         select * from mesh_position
-        where id = ${Influx.escape.stringLit(objectId.value)}
+        where id = ${Influx.escape.stringLit(objectId.value)} and building_id = ${Influx.escape.stringLit(args.buildingId)} 
         order by time desc
         limit 1`
       ).then(rows => {
         if (rows.length==0) return;
         // Filtering rows
+        console.log(rows)
         if (args.deleted===true && rows[0].deleted!=="true") return;
         if (args.deleted===false && rows[0].deleted!=="false") return;
         if (args.simulated===true && rows[0].physics_simulated!=="true") return;
@@ -80,4 +77,4 @@ class MeshCurrentResolver extends BaseResolver {
   }
 }
 
-module.exports = MeshCurrentResolver;
+module.exports = MeshBuilding;

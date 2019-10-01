@@ -178,7 +178,6 @@ class PersistentDrawerRight extends React.Component {
           }>
         </AppBar>
         <NavDrawer 
-          history={history}
           open={this.state.navMenuOpen} 
           onClose={this.handleLeftDrawerClose} 
         />

@@ -32,7 +32,7 @@ const useStyles = makeStyles(theme => ({
     width: '100%', // Fix IE 11 issue.
     marginTop: theme.spacing(1),
   },
-  googgleBtn: {
+  googleBtn: {
     width: '100%',
     marginBottom: theme.spacing(1),
     justifyContent: 'center'
@@ -114,7 +114,7 @@ export default function SignIn(props) {
             Sign In
           </Button>
           <GoogleLogin
-            className={classes.googgleBtn}
+            className={classes.googleBtn}
             clientId="1028478244391-t9maukva74huv4hqm5sc12qalr9kc5vj.apps.googleusercontent.com"
             buttonText="Sign in with Google"
             onSuccess={e => handleAuthenticationGoogle(e, props)}

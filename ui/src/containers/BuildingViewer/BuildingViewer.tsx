@@ -6,12 +6,11 @@ import PropTypes from 'prop-types';
 import BabylonViewer from '../BabylonViewer/BabylonViewer';
 import { withStyles, WithStyles, Theme } from '@material-ui/core/styles';
 import apollo from '../../apollo';
+import { withRouter } from 'react-router-dom';
 import SubscriptionClient from '../../apollo/websocket';
 import { loader } from 'graphql.macro';
-
-const MESH_QUERY = loader('../../graphql/getMesh.gql');
 const SUBSCRIBE_MESH_POSITION = loader('../../graphql/subscribeMesh.gql');
-
+const GET_MESH_BUILDING_QUERY = loader('../../graphql/getMeshesBuilding.gql');
 
 const styles = (theme: Theme) => ({
   fab: {
@@ -24,7 +23,8 @@ const styles = (theme: Theme) => ({
 
 //@ts-ignore
 export interface Props extends WithStyles<typeof styles>{
-  onSelectedObject: Function
+  onSelectedObject: Function,
+  match: any
 }
 
 interface State {
@@ -38,7 +38,7 @@ interface State {
 
 class BuildingViewer extends React.Component<Props, State> {
     classes: any
-
+    subScription: any
     constructor(props: any) {
       super(props);
       this.state = {
@@ -50,18 +50,18 @@ class BuildingViewer extends React.Component<Props, State> {
       this.classes = props.classes;
     }
 
-    componentDidMount(){
-      apollo.watchQuery({query: MESH_QUERY, pollInterval: 500}).subscribe(data => {
+    async componentDidMount(){
+      this.subScription = apollo.watchQuery({query: GET_MESH_BUILDING_QUERY, pollInterval: 1000, variables : { buildingId: this.props.match.params.buildingId }}).subscribe(data => {
         // @ts-ignore
         let self = this;
-        let meshesCurrent = data.data.meshesCurrent;
+        let meshesCurrent = data.data.meshesOfBuilding;
         const deleteMesh = this.state.meshesCurrent.filter(el => meshesCurrent.indexOf(el) === -1).map(el => el.id)
         this.setState({
           loading: false,
           meshesCurrent,
           deleteMesh
         });
-
+        
         for (let i=0; i<meshesCurrent.length; i++) {
           //let mesh = meshesCurrent[i];
           SubscriptionClient.subscribe({
@@ -87,7 +87,9 @@ class BuildingViewer extends React.Component<Props, State> {
         }
       })
      }
-    
+    componentWillUnmount() {
+      this.subScription.unsubscribe();
+    }
     public render() {
       if (this.state.loading) return 'Loading...';
       if (this.state.error) return `Error! ${this.state.error}`;
@@ -102,4 +104,4 @@ BuildingViewer.propTypes = {
 };
 
 //@ts-ignore
-export default withStyles(styles)(BuildingViewer);
+export default withStyles(styles)(withRouter(BuildingViewer));

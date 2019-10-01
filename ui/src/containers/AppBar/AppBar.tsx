@@ -9,6 +9,7 @@ import InputBase from '@material-ui/core/InputBase';
 import Badge from '@material-ui/core/Badge';
 import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
+import { withRouter } from 'react-router-dom';
 import { fade } from '@material-ui/core/styles/colorManipulator';
 import { createStyles, Theme, withStyles, WithStyles } from '@material-ui/core/styles';
 import MenuIcon from '@material-ui/icons/Menu';
@@ -21,7 +22,8 @@ import MoreIcon from '@material-ui/icons/MoreVert';
 import apollo from '../../apollo';
 import { loader } from 'graphql.macro';
 
-const MESH_QUERY = loader('../../graphql/getMesh.gql');
+// const MESH_QUERY = loader('../../graphql/getMesh.gql');
+const GET_MESH_BUILDING_QUERY = loader('../../graphql/getMeshesBuilding.gql');
 const DELETE_QUERY = loader('../../graphql/deleteMesh.gql');
 
 const styles = (theme: Theme) =>
@@ -107,6 +109,8 @@ export interface Props extends WithStyles<typeof styles> {
   onNavMenuClick: Function,
   leftOpen: boolean,
   rightOpen: boolean,
+  match: any,
+  history: any
 }
 
 
@@ -128,10 +132,11 @@ class PrimaryAppBar extends React.Component<Props, State> {
 
   componentDidMount(){
     this.querySubscription = apollo.watchQuery<any>({
-      query: MESH_QUERY
+      query: GET_MESH_BUILDING_QUERY,
+      variables : { buildingId: this.props.match.params.buildingId }
     }).subscribe(({ data, loading }) => {
       this.setState({
-        meshes: data.meshesCurrent || [],
+        meshes: data.meshesOfBuilding || [],
         loading: loading,
       });
     });
@@ -276,7 +281,7 @@ class PrimaryAppBar extends React.Component<Props, State> {
             >
               <MenuIcon />
             </IconButton>
-            <Typography className={classes.title} variant="h6" color="inherit" noWrap>
+            <Typography onClick={() => this.props.history.push('/buildings')} className={classes.title} variant="h6" color="inherit" noWrap>
               Building Geometry Server
             </Typography>
             <div className={classes.search}>
@@ -328,6 +333,7 @@ class PrimaryAppBar extends React.Component<Props, State> {
   position: PropTypes.string.isRequired,
   leftOpen: PropTypes.bool,
   rightOpen: PropTypes.bool,
+  history: PropTypes.func.isRequired,
 } as any;
-
-export default withStyles(styles)(PrimaryAppBar);
+//@ts-ignore
+export default withStyles(styles)(withRouter(PrimaryAppBar));

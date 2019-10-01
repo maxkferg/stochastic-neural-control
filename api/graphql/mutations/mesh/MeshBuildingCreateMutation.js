@@ -4,8 +4,8 @@ const { GraphQLNonNull, GraphQLString, GraphQLBoolean, GraphQLFloat, GraphQLInpu
 const ObjectId = require('objectid');
 
 
-const MeshGeometryInput = new GraphQLInputObjectType({
-    name: 'MeshGeometryInput',
+const MeshGeometryCreateBuildingInput= new GraphQLInputObjectType({
+    name: 'MeshGeometryCreateBuildingInput',
     fields: () => ({
         filetype: {type: GraphQLNonNull(GraphQLString)},
         filename: {type: GraphQLNonNull(GraphQLString)},
@@ -14,8 +14,8 @@ const MeshGeometryInput = new GraphQLInputObjectType({
 });
 
 
-const MeshPhysicsInput = new GraphQLInputObjectType({
-    name: 'MeshPhysicsInput',
+const MeshPhysicsCreateBuildingInput = new GraphQLInputObjectType({
+    name: 'MeshPhysicsCreateBuildingInput',
     fields: () => ({
         stationary: {type: GraphQLNonNull(GraphQLBoolean)},
         collision: {type: GraphQLNonNull(GraphQLBoolean)},
@@ -32,6 +32,10 @@ class MeshCreateMutation extends BaseResolver {
             name: {
                 type: new GraphQLNonNull(GraphQLString),
                 description: 'Name for this mesh object.'
+            },
+            buildingId: {
+                type: new GraphQLNonNull(GraphQLString),
+                description: 'Id for building mesh object.'
             },
             type: {
                 type: new GraphQLNonNull(GraphQLString),
@@ -74,11 +78,11 @@ class MeshCreateMutation extends BaseResolver {
                 description: 'True if the object no longer exists.'
             },
             geometry: {
-                type: GraphQLNonNull(MeshGeometryInput),
+                type: GraphQLNonNull(MeshGeometryCreateBuildingInput),
                 description: 'A description of the mesh geometry',
             },
             physics: {
-                type: MeshPhysicsInput,
+                type: MeshPhysicsCreateBuildingInput,
                 description: 'A description of the mesh physics',
             }
         };
@@ -88,6 +92,7 @@ class MeshCreateMutation extends BaseResolver {
         let id = ObjectId();
 
         // Todo: id, geometry, and physics should be stored in mongo
+        console.log(id,args)
         let query = ctx.influx.writePoints([
           {
             measurement: 'mesh_position',
@@ -101,6 +106,7 @@ class MeshCreateMutation extends BaseResolver {
                 x: args.x,
                 y: args.y,
                 z: args.z,
+                building_id: args.buildingId,
                 theta: args.theta || 0,
                 scale: args.scale || 1,
                 height: args.height,

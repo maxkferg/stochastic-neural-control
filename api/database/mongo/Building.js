@@ -8,7 +8,7 @@ const ObjectId = mongoose.Schema.Types.ObjectId;
  *
  */
 exports.schema = {
-    name: {type: String, required: true, default: null},
+    name: {type: String, required: false, default: null},
     owner_id: {type: ObjectId, required: true},
     isDeleted: {type: Boolean, required: true, default: false},
 };

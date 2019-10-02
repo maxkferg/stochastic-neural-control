@@ -17,7 +17,8 @@ class BuildingCreateMutation extends BaseResolver {
         };
     }
 
-    async resolve(_, args, ctx) {
+    async resolve(parentValue, args, ctx) {
+        super.resolve(parentValue, args, ctx);
         try {
             const { ownerId, buildingName } = args;
              const buildingData = {

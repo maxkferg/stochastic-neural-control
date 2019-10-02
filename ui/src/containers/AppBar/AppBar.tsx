@@ -333,7 +333,7 @@ class PrimaryAppBar extends React.Component<Props, State> {
   position: PropTypes.string.isRequired,
   leftOpen: PropTypes.bool,
   rightOpen: PropTypes.bool,
-  history: PropTypes.func.isRequired,
+  history: PropTypes.object.isRequired,
 } as any;
 //@ts-ignore
 export default withStyles(styles)(withRouter(PrimaryAppBar));

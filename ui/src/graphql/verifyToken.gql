@@ -1,0 +1,6 @@
+query VerifyToken {
+    verifyToken {
+        id
+        email
+    }
+}

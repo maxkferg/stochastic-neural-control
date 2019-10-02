@@ -18,6 +18,9 @@ exports.generateToken = async function (data) {
     return jwt.sign(data, process.env.JWT_SECRET);
 };
 
+exports.verifyJwtToken = async function (token) {
+    return jwt.verify(token, process.env.JWT_SECRET)
+}
 exports.hashingPassword = async function (password, saltRounds = 10) {
     return bcrypt.hash(password, saltRounds);
 }

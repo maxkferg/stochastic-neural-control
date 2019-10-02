@@ -27,13 +27,13 @@ class BaseResolver {
     }
 
     subscribe(parentValue, args, ctx) {
-        if (this._isAuthRequired && !ctx.user) {
+        if (this._isAuthRequired && !ctx.user._id) {
             throw new Error("Authentication missing!");
         }
     }
 
     resolve(parentValue, args, ctx) {
-        if (this._isAuthRequired && !ctx.user) {
+        if (this._isAuthRequired && !ctx.user._id) {
             throw new Error("Authentication missing!");
         }
     }

@@ -20,7 +20,7 @@ import numpy as np
 import transforms3d
 import plotly.graph_objs as go
 from graphqlclient import GraphQLClient
-from graphql import getCurrentGeometry, getDeletedGeometry, getMapGeometry
+from graphql import getCurrentGeometry, getDeletedGeometry, getMapGeometry, updateMapGeometry, deleteMapGeometry
 from kafka import KafkaProducer
 
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
@@ -78,20 +78,33 @@ class MapBuilder():
         Delete any map data that does not appear in the building
         """
         deleted_mesh = self._get_deleted_mesh()
+        print(deleted_mesh)
         map_geometry = self._get_map_geometry()
         map_geometry_hash = { m["mesh_id"]:m for m in map_geometry }
         for mesh in deleted_mesh:
             mesh_id = mesh["id"]
             if not mesh["deleted"]:
+                logging.warn("Mesh was not deleted %s"%mesh["name"])
                 continue
             if mesh_id not in map_geometry_hash:
-                logging.warn("Could not find map geometry for %s"%mesh_id)
+                logging.warn("Could not find map geometry for %s"%mesh["name"])
                 continue
-            if not map_geometry_hash[mesh_id]["is_deleted"]:
-                logging.info("Deleting map geometry for %s"%mesh_id)
+            if map_geometry_hash[mesh_id]["is_deleted"]:
+                logging.info("Deleting map geometry for %s"%mesh["name"])
                 self.graphql_client.execute(deleteMapGeometry,
-                    params = {"id": map_geometry_hash[mesh_id]["id"]}
+                    {"id": map_geometry_hash[mesh_id]["id"]}
                 )
+
+
+    def update_map_object(self, map_object):
+        """
+        Update the polygons in the database
+        Creates new polygons if they do not exist
+        """
+        logging.info("Writing updated map to GraphQL: %s"%map_object["mesh_id"])
+        params = map_object.copy()
+        params["upsert"] = True
+        self.graphql_client.execute(updateMapGeometry, params)
 
 
     def _convert_to_polygons(self, mesh, furniture_height):
@@ -170,18 +183,21 @@ class MapBuilder():
         return mesh
 
 
-    def _create_map_message(self, geometry_object, polygons):
-        message = {
+    def _create_map_object(self, geometry_object, polygons):
+        external_polygons = [{'points': p} for p in polygons]
+        building_id = geometry_object['building_id']
+        if building_id is None:
+            building_id = ""
+        return {
             "name": geometry_object["name"],
             "mesh_id": geometry_object["id"],
-            "isTraversable": True,
-            "isDeleted": False,
-            "internalPolygons":[],
-            "visualPolygons":[],
-            "externalPolygons": polygons,
+            "building_id": building_id,
+            "is_deleted": geometry_object["deleted"],
+            "is_traversable": True,
+            "internal_polygons":[],
+            "visual_polygons":[],
+            "external_polygons": external_polygons,
         }
-        message = json.dumps(message).encode('utf-8')
-        return message
 
 
     def draw(self, mesh):
@@ -245,9 +261,12 @@ class MapBuilder():
                 offset = np.array([ob['x'], ob['y'], ob['z']])
                 mesh = self._transform_mesh(mesh, offset, ob["theta"], ob["scale"])
                 polygons = self._convert_to_polygons(mesh, self.furniture_height)
-                [self.draw_floorplan(p, name) for p in polygons]
-                message = self._create_map_message(ob, polygons)
-                self.kafka_producer.send('debug', message)
+                map_object = self._create_map_object(ob, polygons)
+                self.update_map_object(map_object)
+                time.sleep(0.1)
+                #[self.draw_floorplan(p, name) for p in polygons]
+                #message = self._create_map_message(ob, polygons)
+                #self.kafka_producer.send('debug', message)
             #self.canvas.show()
             logging.info("\n\n --- Published map data --- \n")
 

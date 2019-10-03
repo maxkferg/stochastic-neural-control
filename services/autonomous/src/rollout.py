@@ -7,47 +7,52 @@ gcloud compute --project "stanford-projects" scp --zone "us-west1-b" --recurse "
 ray rsync-down cluster.yaml ray_results ~/
 
 
-python rollout.py --run APEX_DDPG --env MultiRobot-v0 --steps 10000 --no-render
+python rollout.py --steps 1000 \
+    --checkpoint=checkpoints/October2c/checkpoint_120/checkpoint-120
 
 """
 import io
 import os
 import cv2
+import yaml
 import json
 import time
+import pickle
 import datetime
 import numpy as np
 import gym
 import ray
+import logging
 import argparse
-import learning.model
+import collections
 import colored_traceback
 from matplotlib import cm
 from pprint import pprint
 from gym.spaces import Discrete, Box
 from gym.envs.registration import EnvSpec
 from gym.envs.registration import registry
+from ray.rllib.env import MultiAgentEnv
+from ray.tune.registry import register_env
+from ray.rllib.models import ModelCatalog
+from ray.rllib.evaluation.episode import _flatten_action
 from ray.rllib.agents.registry import get_agent_class
 from ray.rllib.models.preprocessors import get_preprocessor
+from ray.rllib.policy.sample_batch import DEFAULT_POLICY_ID
+from learning.mink import MinkModel
+from learning.preprocessing import DictFlatteningPreprocessor
 from environment.loaders.geometry import GeometryLoader
 from environment.env.base import BaseEnvironment # Env type
 from environment.env.multi import MultiEnvironment # Env type
-from learning.custom_policy_graph import CustomDDPGPolicyGraph
-from ray.tune.registry import register_env
 colored_traceback.add_hook()
 
 EXAMPLE_USAGE = """
 Example Usage via RLlib CLI:
-    python rollout.py --run APEX_DDPG --env MultiRobot-v0 --steps 1000
+
+python rollout.py --steps 1000 \
+    --checkpoint=checkpoints/October2c/checkpoint_120/checkpoint-120
 """
 
-CHECKPOINT = "~/ray_results/seeker-apex-td3/APEX_DDPG_MultiRobot-v0_0_2019-02-23_01-54-076wuy8g2a/checkpoint_2200/checkpoint-2200"
-CHECKPOINT = "~/ray_results/seeker-apex-td3/APEX_DDPG_MultiRobot-v0_0_2019-02-27_11-39-53d4m4cbl2/checkpoint_1350/checkpoint-1350"
-CHECKPOINT = "~/ray_results/saved/mapper/checkpoint_1350/checkpoint-1350"
-
-CHECKPOINT = os.path.expanduser(CHECKPOINT)
 ENVIRONMENT = "MultiRobot-v0"
-
 RESET_ON_TARGET = True
 DEFAULT_TIMESTEP = 0.1
 FRAME_MULTIPLIER = 1
@@ -65,28 +70,26 @@ video = cv2.VideoWriter(filename, video_FourCC, fps=20, frameSize=(RENDER_WIDTH,
 viridis = cm.get_cmap('viridis')
 
 
-def building_env_creator(env_config):
+# Load API Config
+with open('environment/configs/test.yaml') as cfg:
+    api_config = yaml.load(cfg, Loader=yaml.Loader)
+
+
+def train_env_creator(cfg):
     """
     Create an environment that is linked to the communication platform
     """
-    cfg = {
-        'debug': True,
+    defaults = {
+        "debug": True,
         "monitor": True,
-        "renders": True,
-        "reset_on_target": False
+        "headless": False,
+        "reset_on_target": True
     }
-    loader = GeometryLoader(config) # Handles HTTP
-    base = BaseEnvironment(
-        loader, 
-        headless=False, 
-        geometry_policy="subscribe",
-    )
-    return MultiEnvironment(base, cfg)
-
-
-
-
-register_env(ENVIRONMENT, building_env_creator)
+    defaults.update(cfg)
+    logging.warn(defaults)
+    loader = GeometryLoader(api_config) # Handles HTTP
+    base = BaseEnvironment(loader, headless=False)
+    return MultiEnvironment(base, verbosity=0, creation_delay=0, env_config=defaults)
 
 
 
@@ -101,21 +104,25 @@ def create_parser(parser_creator=None):
     parser.add_argument(
         "--checkpoint",
         type=str,
-        required=False,
-        default=CHECKPOINT,
+        required=True,
         help="Checkpoint from which to roll out.")
 
     required_named = parser.add_argument_group("required named arguments")
     required_named.add_argument(
         "--run",
         type=str,
-        required=True,
+        required=False,
+        default="APEX_DDPG",
         help="The algorithm or model to train. This may refer to the name "
         "of a built-on algorithm (e.g. RLLib's DQN or PPO), or a "
         "user-defined trainable function or class registered in the "
         "tune registry.")
     required_named.add_argument(
-        "--env", type=str, help="The gym environment to use.")
+        "--env",
+        type=str,
+        default=ENVIRONMENT,
+        help="The gym environment to use."
+    )
     parser.add_argument(
         "--no-render",
         default=False,
@@ -180,122 +187,188 @@ def render_q_function(env, agent):
     return q_img
 
 
+class DefaultMapping(collections.defaultdict):
+    """default_factory now takes as an argument the missing key."""
+
+    def __missing__(self, key):
+        self[key] = value = self.default_factory(key)
+        return value
+
+
+class PID():
+    """
+    Creates a 2-d trajectory of a robot.
+    Arguments:
+        tau_p: Float, controls importance of proportionality
+        tau_d: Float, controls importance of derivative
+        tau_i: Float, controls importance of integral
+        n: Integer, number of steps the robot should take.
+        speed: Float, how many seconds pass per timestep.
+    Returns:
+        x_trajectory, y_trajectory: A 2d list containing the
+        path taken by the robot.
+    """
+    def __init__(self, tau_p=0.02, tau_d=0.3, tau_i=0.0001, speed=0.3):
+        self.tau_p = tau_p
+        self.tau_d = tau_d
+        self.tau_i = tau_i
+        self.speed = speed
+        self.integral = 0.0
+        self.cte = 0
+
+    def eval(self, theta, dist):
+        diff = (theta - self.cte) / self.speed
+        self.cte = theta
+        self.integral += self.cte
+        steer = (-self.tau_p * self.cte) - (self.tau_d * diff) - (self.tau_i * self.integral)
+        return steer, self.speed
+
+
+def default_policy_agent_mapping(unused_agent_id):
+    return DEFAULT_POLICY_ID
+
+
 def rollout(agent, env_name, num_steps, out=None, no_render=True, render_q=False, save_q=False):
-    if hasattr(agent, "local_evaluator"):
-        env = agent.local_evaluator.env
+    pid = PID()
+    policy_agent_mapping = default_policy_agent_mapping
+    if hasattr(agent, "workers"):
+        env = agent.workers.local_worker().env
+        multiagent = isinstance(env, MultiAgentEnv)
+        if agent.workers.local_worker().multiagent:
+            policy_agent_mapping = agent.config["multiagent"][
+                "policy_mapping_fn"]
+
+        policy_map = agent.workers.local_worker().policy_map
+        state_init = {p: m.get_initial_state() for p, m in policy_map.items()}
+        use_lstm = {p: len(s) > 0 for p, s in state_init.items()}
+        action_init = {
+            p: _flatten_action(m.action_space.sample())
+            for p, m in policy_map.items()
+        }
     else:
         env = gym.make(env_name)
-
-    if hasattr(agent, "local_evaluator"):
-        state_init = agent.local_evaluator.policy_map[
-            "default"].get_initial_state()
-    else:
-        state_init = []
-    if state_init:
-        use_lstm = True
-    else:
-        use_lstm = False
+        multiagent = False
+        use_lstm = {DEFAULT_POLICY_ID: False}
 
     if out is not None:
         rollouts = []
+
     steps = 0
-    print("Rolling out the policy:")
     while steps < (num_steps or steps + 1):
+        mapping_cache = {}  # in case policy_agent_mapping is stochastic
         if out is not None:
             rollout = []
-        state = env.reset()
+        obs = env.reset()
+        agent_states = DefaultMapping(
+            lambda agent_id: state_init[mapping_cache[agent_id]])
+        prev_actions = DefaultMapping(
+            lambda agent_id: action_init[mapping_cache[agent_id]])
+        prev_rewards = collections.defaultdict(lambda: 0.)
         done = False
         reward_total = 0.0
         while not done and steps < (num_steps or steps + 1):
-            if use_lstm:
-                action, state_init, logits = agent.compute_action(
-                    state, state=state_init)
-            else:
-                action = {}
-                for key,value in state.items():
-                    action[key] = agent.compute_action(value)
-                    # Compute the value of this default actor
+            multi_obs = obs if multiagent else {_DUMMY_AGENT_ID: obs}
+            action_dict = {}
+            for agent_id, a_obs in multi_obs.items():
+                if a_obs is not None:
+                    policy_id = mapping_cache.setdefault(
+                        agent_id, policy_agent_mapping(agent_id))
+                    p_use_lstm = use_lstm[policy_id]
+                    if p_use_lstm:
+                        a_action, p_state, _ = agent.compute_action(
+                            a_obs,
+                            state=agent_states[agent_id],
+                            prev_action=prev_actions[agent_id],
+                            prev_reward=prev_rewards[agent_id],
+                            policy_id=policy_id)
+                        agent_states[agent_id] = p_state
+                    else:
+                        a_action = agent.compute_action(
+                            a_obs,
+                            prev_action=prev_actions[agent_id],
+                            prev_reward=prev_rewards[agent_id],
+                            policy_id=policy_id)
+                    a_action = _flatten_action(a_action)  # tuple actions
+                    action_dict[agent_id] = a_action
+                    if agent_id==0:
+                        theta, dist = a_obs["target"][0], a_obs["target"][1]
+                        action_dict[agent_id] = pid.eval(theta, dist) # PID
+                    prev_actions[agent_id] = a_action
+            action = action_dict
 
-            # Repeat this action n times, rendering each time
-            for i in range(FRAME_MULTIPLIER):
-                next_state, reward, dones, _ = env.step(action)
-                reward_total += np.sum(list(reward.values()))
-                done = dones['__all__']
-                if not no_render:
-                    frame = env.render(width=RENDER_WIDTH, height=RENDER_HEIGHT)
-                    #if render_q or save_q:
-                    #    q = render_q_function(env, agent)
-                    #if save_q:
-                    #    cv2.imwrite('q.png',q)
-                    #if render_q:
-                    #    frame[0:q.shape[0], (frame.shape[1]-q.shape[1]):frame.shape[1], :3] = q
-                    #from matplotlib import pyplot as plt
-                    #plt.imshow(frame, interpolation = 'bicubic')
-                    #plt.show()
-                    video.write(frame)
-                if done:
-                    break
+            action = action if multiagent else action[_DUMMY_AGENT_ID]
+            print(action)
+
+            #action = {
+            #    0: np.array([0.1, 0.1], dtype=np.float32),
+            #    1: np.array([0.1, 0], dtype=np.float32)
+            #}
+
+            next_obs, reward, done, _ = env.step(action)
+            if multiagent:
+                for agent_id, r in reward.items():
+                    prev_rewards[agent_id] = r
+            else:
+                prev_rewards[_DUMMY_AGENT_ID] = reward
+
+            if multiagent:
+                done = done["__all__"]
+                reward_total += sum(reward.values())
+            else:
+                reward_total += reward
+            if not no_render:
+                env.render()
             if out is not None:
-                rollout.append([state, action, next_state, reward, done])
+                rollout.append([obs, action, next_obs, reward, done])
             steps += 1
-            state = next_state
-            print(".", end="", flush=True)
+            obs = next_obs
         if out is not None:
             rollouts.append(rollout)
-        print("\nEpisode reward", reward_total)
-    if out is not None:
-        pickle.dump(rollouts, open(out, "wb"))
+        print("Episode reward", reward_total)
 
 
 def run(args, parser):
     config = args.config
-    if not config:
-        # Load configuration from file
-        checkpoint = os.path.expanduser(args.checkpoint)
-        config_dir = os.path.dirname(checkpoint)
-        config_path = os.path.join(config_dir, "params.json")
-        if not os.path.exists(config_path):
-            print("Could not find checkpoint in ", config_path)
-            config_path = os.path.join(config_dir, "../params.json")
-        if not os.path.exists(config_path):
-            print("Could not find checkpoint in ", config_path)
-            raise ValueError(
-                "Could not find params.json in either the checkpoint dir or "
-                "its parent directory.")
-        with open(config_path) as f:
-            config = json.load(f)
-        if "num_workers" in config:
-            config["num_workers"] = min(1, config["num_workers"])
-        if "horizon" in config:
-            del config["horizon"]
+    ModelCatalog.register_custom_model("mink", MinkModel)
+    register_env(ENVIRONMENT, lambda cfg: train_env_creator(cfg))
+    print("Registered ", ENVIRONMENT)
 
-    if not args.env:
-        if not config.get("env"):
-            parser.error("the following arguments are required: --env")
-        args.env = config.get("env")
+    config_dir = os.path.dirname(args.checkpoint)
+    config_path = os.path.join(config_dir, "params.pkl")
+    if not os.path.exists(config_path):
+        config_path = os.path.join(config_dir, "../params.pkl")
+    if not os.path.exists(config_path):
+        if not args.config:
+            raise ValueError(
+                "Could not find params.pkl in either the checkpoint dir or "
+                "its parent directory.")
+
+    with open(config_path, "rb") as f:
+        config = pickle.load(f)
+
+    if "num_workers" in config:
+        config["num_workers"] = min(1, config["num_workers"])
+    if "horizon" in config:
+        del config["horizon"]
 
     # Stop all the actor noise
-    config['noise_scale'] = 0
+    config['exploration_ou_noise_scale'] = 0
+    config['exploration_gaussian_sigma'] = 0
+    config['parameter_noise'] = True
     config['per_worker_exploration'] = False
     config['schedule_max_timesteps'] = 0
     config['num_workers'] = 0
-
-    if not args.env:
-        raise("No environment")
 
     ray.init()
 
     if not args.no_render:
         config["monitor"] = True
 
-    config["exploration_final_eps"] = 0
-
+    pprint(config)
     cls = get_agent_class(args.run)
-    cls._policy_graph = CustomDDPGPolicyGraph
     agent = cls(env=args.env, config=config)
     agent.restore(args.checkpoint)
     num_steps = int(args.steps)
-    pprint(config)
     rollout(agent, args.env, num_steps, args.out, args.no_render, args.render_q, args.save_q)
     cv2.destroyAllWindows()
     video.release()

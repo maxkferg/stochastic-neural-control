@@ -1,18 +1,18 @@
-query GetMapGeometry {
-  mapGeometry {
+query GetMapGeometry($buildingId: String) {
+  mapGeometry(building_id: $buildingId) {
     id
     name
     mesh_id
     is_deleted
     is_traversable
-    internal_polygons { 
-      points 
+    internal_polygons {
+      points
     }
-    external_polygons { 
-      points 
+    external_polygons {
+      points
     }
-    visual_polygons { 
-      points 
+    visual_polygons {
+      points
     }
     created_at
     updated_at

@@ -137,7 +137,7 @@ def run_pbt(args):
             return 'complete_episodes'
         else:
             return 'truncate_episodes'
-            
+
     pbt_scheduler = PopulationBasedTraining(
         time_attr='time_total_s',
         metric="episode_reward_mean",

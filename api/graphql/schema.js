@@ -37,6 +37,7 @@ const Query = new GraphQLObjectType({
                 return 'Hello from GraphiQL';
             }
         },
+        verifyToken: new resolvers.User.verifyToken(User, "Verify Token", true),
         users: new resolvers.User.getAllUsers(new GraphQLList(User), "Get all users", true),
         user: new resolvers.User.getUser(User, "Get user by id", true),
         meshesCurrent: new resolvers.Mesh.getCurrentMeshes(new GraphQLList(Mesh), "Get current meshes", false),

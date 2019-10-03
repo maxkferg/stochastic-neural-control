@@ -3,6 +3,7 @@ import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import TextField from '@material-ui/core/TextField';
+import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
 import Grid from '@material-ui/core/Grid';
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
@@ -11,7 +12,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 import { signIn, signInWithGoogle } from '../../services/AuthServices';
 import GoogleLogin from 'react-google-login'; 
-
+import { setCurrentUser } from '../../redux/actions/currentUser';
 const useStyles = makeStyles(theme => ({
   '@global': {
     body: {
@@ -48,12 +49,13 @@ const handleAuthenticationGoogle = async function (googleResponse, props) {
   const response = await signInWithGoogle(tokenId);
   const { data } = response;
   if (data.signInUserGoogle.authToken) {
+    props.setCurrentUser(data.signInUserGoogle);
     localStorage.setItem('token', data.signInUserGoogle.authToken);
     props.history.push('/buildings');
   }
 }
 
-export default function SignIn(props) {
+function SignIn(props) {
   const classes = useStyles();
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
@@ -65,6 +67,7 @@ export default function SignIn(props) {
     const response = await signIn(signInPayload);
     const { data } = response;
     if (data.signInUser.authToken) {
+      props.setCurrentUser(data.signInUser);
       localStorage.setItem('token', data.signInUser.authToken);
       props.history.push('/buildings');
     }
@@ -132,3 +135,9 @@ export default function SignIn(props) {
     </Container>
   );
 }
+
+
+const mapDispatchToProps = (dispatch) => ({
+  setCurrentUser : (payload) => dispatch(setCurrentUser(payload))
+})
+export default connect(null, mapDispatchToProps)(SignIn);

@@ -94,7 +94,6 @@ class RoadmapPlanner():
         ox = [o[0] for o in self.obstacles]
         oy = [o[1] for o in self.obstacles]
         rr = self.turtlebot_radius
-        #self.planner.render(sx, sy, tx, ty, ox, oy, rr)
         rx,ry = self.planner.solve(sx, sy, tx, ty, ox, oy, rr)
         return rx,ry
 

@@ -16,6 +16,7 @@ const app = new Koa();
 const router = new Router();
 const PORT = config.get('Webserver.port');
 require('dotenv').config()
+
 async function init() {
     const database_schema = __dirname + '/database/mongo';
     const database_uri = config.get("Mongo.host");

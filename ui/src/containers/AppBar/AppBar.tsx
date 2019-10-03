@@ -5,7 +5,7 @@ import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
-import InputBase from '@material-ui/core/InputBase';
+import Select from '@material-ui/core/Select';
 import Badge from '@material-ui/core/Badge';
 import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
@@ -13,7 +13,6 @@ import { withRouter } from 'react-router-dom';
 import { fade } from '@material-ui/core/styles/colorManipulator';
 import { createStyles, Theme, withStyles, WithStyles } from '@material-ui/core/styles';
 import MenuIcon from '@material-ui/icons/Menu';
-import SearchIcon from '@material-ui/icons/Search';
 import AccountCircle from '@material-ui/icons/AccountCircle';
 import DeleteIcon from '@material-ui/icons/Delete';
 import InfoIcon from '@material-ui/icons/Info';
@@ -22,7 +21,6 @@ import MoreIcon from '@material-ui/icons/MoreVert';
 import apollo from '../../apollo';
 import { loader } from 'graphql.macro';
 
-// const MESH_QUERY = loader('../../graphql/getMesh.gql');
 const GET_MESH_BUILDING_QUERY = loader('../../graphql/getMeshesBuilding.gql');
 const DELETE_QUERY = loader('../../graphql/deleteMesh.gql');
 
@@ -284,18 +282,9 @@ class PrimaryAppBar extends React.Component<Props, State> {
             <Typography onClick={() => this.props.history.push('/buildings')} className={classes.title} variant="h6" color="inherit" noWrap>
               Building Geometry Server
             </Typography>
-            <div className={classes.search}>
-              <div className={classes.searchIcon}>
-                <SearchIcon />
-              </div>
-              <InputBase
-                placeholder="Search…"
-                classes={{
-                  root: classes.inputRoot,
-                  input: classes.inputInput,
-                }}
-              />
-            </div>
+            <Select>
+              <MenuItem>kaka</MenuItem>
+            </Select>
             <div className={classes.grow} />
             <div className={classes.sectionDesktop}>
               <IconButton

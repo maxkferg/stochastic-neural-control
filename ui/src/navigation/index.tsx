@@ -9,7 +9,7 @@ import SignIn from '../containers/SignIn';
 import Landing from '../containers/Landing';
 import Building from '../containers/Building';
 import { verifyToken } from '../services/AuthServices';
-import { customHistory } from '../index';
+// import { customHistory } from '../index';
 import { connect } from 'react-redux';
 import { setCurrentUser } from '../redux/actions/currentUser';
 class Routers extends React.Component {
@@ -24,7 +24,7 @@ class Routers extends React.Component {
 				//@ts-ignore
 				this.props.setCurrentUser(verifyTokenResp.data.verifyToken);
 				//@ts-ignore
-				customHistory.push('/buildings');
+				// customHistory.push('/buildings');
 			}
 		} catch {
 			localStorage.removeItem('token');

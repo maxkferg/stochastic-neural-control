@@ -26,6 +26,8 @@ function toPolygonType(polygons){
 /**
  * MapGeometryMutation
  * Update a map object
+ * If @upsert is true, then the a new mesh object will be created if no mathc is found
+ *
  * - Write the new map object to MongoDB
  * - Post an event to the real-time system when the map is complete
  *
@@ -38,17 +40,22 @@ class MapGeometryMutation extends BaseResolver {
         type: GraphQLString,
         description: 'Map Geometry Id.'
       },
-      name: {
-        type: GraphQLString,
-        description: 'The name of this geometry.'
+      upsert: {
+        type: GraphQLBoolean,
+        default: false,
+        description: 'Insert a object if no match is found'
       },
       mesh_id: {
         type: GraphQLString,
-        description: 'The 3D mesh that this geometry belongs to.'
+        description: 'The 3D mesh that this geometry belongs to. Used as the upsert selector'
       },
       building_id: {
         type: GraphQLString,
         description: 'The building that this geometry belongs to.'
+      },
+      name: {
+        type: GraphQLString,
+        description: 'The name of this geometry.'
       },
       is_deleted: {
         type: GraphQLBoolean,
@@ -83,10 +90,6 @@ class MapGeometryMutation extends BaseResolver {
 
   async resolve(parentValue, args, ctx) {
 
-    if (!args.id){
-      throw new Error("Invalid robot id");
-    }
-
     let mapgeometry = {}
 
     if (typeof args.name !== 'undefined'){
@@ -120,10 +123,19 @@ class MapGeometryMutation extends BaseResolver {
       mapgeometry.updatedAt = args.updated_at
     }
 
-    let ob = await ctx.db.MapGeometry.findByIdAndUpdate(
-        {_id: args.id},
+    let selector;
+    if (args.id){
+      selector = {_id: args.id}
+    } else if (args.mesh_id){
+      selector = {mesh_id: args.mesh_id}
+    } else {
+      throw new Error("Must provide map id or mesh_id")
+    }
+
+    let ob = await ctx.db.MapGeometry.findOneAndUpdate(
+        selector,
         mapgeometry,
-        { new: true }
+        { new: true, upsert: true}
     );
 
     let message = {

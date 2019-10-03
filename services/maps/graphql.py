@@ -4,6 +4,7 @@ getCurrentGeometry = '''
 {
   meshesCurrent(deleted: false) {
     id
+    building_id
     name
     x
     y
@@ -22,6 +23,7 @@ getCurrentGeometry = '''
       simulated
       stationary
     }
+    deleted
   }
 }
 '''
@@ -34,6 +36,7 @@ getDeletedGeometry = '''
     id
     name
     deleted
+    building_id
   }
 }
 '''
@@ -46,6 +49,7 @@ query GetMapGeometry {
     id
     name
     mesh_id
+    building_id
     is_deleted
     is_traversable
     internal_polygons {
@@ -62,6 +66,38 @@ query GetMapGeometry {
   }
 }
 '''
+
+updateMapGeometry = '''
+mutation CreateMapGeometry(
+    $name: String!
+    $mesh_id: String!
+    $building_id: String!
+    $internal_polygons: [MapPolygonInput]!
+    $external_polygons: [MapPolygonInput]!
+    $visual_polygons: [MapPolygonInput]!
+    $is_deleted: Boolean!
+    $is_traversable: Boolean!
+) {
+  createMapGeometry(
+    name: $name
+    mesh_id: $mesh_id
+    building_id: $building_id
+    internal_polygons: $internal_polygons
+    external_polygons: $external_polygons
+    visual_polygons: $visual_polygons
+    is_deleted: $is_deleted
+    is_traversable: $is_traversable
+  ) {
+    id,
+    mesh_id,
+    building_id,
+    is_deleted,
+    external_polygons {points}
+    internal_polygons {points}
+  }
+}
+'''
+
 
 deleteMapGeometry = '''
 mutation CreateMapGeometry {

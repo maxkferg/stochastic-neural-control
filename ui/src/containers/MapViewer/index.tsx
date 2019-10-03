@@ -1,5 +1,6 @@
 //import clsx from 'clsx';
 import React, { useState, useEffect } from 'react';
+import { withRouter } from 'react-router-dom';
 import { makeStyles } from '@material-ui/core/styles';
 import { Stage, Layer, Group, Line, Circle } from 'react-konva';
 import { useQuery } from 'react-apollo-hooks';
@@ -241,7 +242,7 @@ function Target(props) {
   }
 
   return (
-    <Group 
+    <Group
       draggable
       x={scaled[0][0]}
       y={scaled[0][1]}
@@ -312,9 +313,16 @@ function MapTrajectory(props) {
   )
 }
 
-
-export default function MapViewer() {
-    const options = { pollInterval: 1000 }
+/**
+ * MapViewer
+ * Draw a map
+ *
+ */
+function MapViewer(props) {
+    const options = {
+      pollInterval: 1000,
+      variables: { buildingId: props.match.params.buildingId }
+    }
     const { data, error, loading } = useQuery(MAP_GEOMETRY_QUERY, options);
     const { data: trajData, error: trajError} = useQuery(TRAJECTORY_QUERY, options);
     const { data: robotData, error: robotError} = useQuery(GET_ROBOT_QUERY, options);
@@ -401,3 +409,7 @@ export default function MapViewer() {
       </div>
     );
 }
+
+
+export default withRouter(MapViewer);
+

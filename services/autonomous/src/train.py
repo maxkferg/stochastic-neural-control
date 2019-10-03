@@ -138,7 +138,7 @@ def run_pbt(args):
             return 'complete_episodes'
         else:
             return 'truncate_episodes'
-            
+
     pbt_scheduler = PopulationBasedTraining(
         time_attr='time_total_s',
         metric="episode_reward_mean",
@@ -167,7 +167,7 @@ def run_pbt(args):
                 lambda spec: random.choice([True, False])),
             "exploration_should_anneal": sample_from(
                 lambda spec: random.choice([True, False])),
-            "train_batch_size": sample_from( 
+            "train_batch_size": sample_from(
                 lambda spec: random.choice([32, 64, 128])),
             "batch_mode": sample_from(
                 lambda spec: get_batch_mode(spec)),

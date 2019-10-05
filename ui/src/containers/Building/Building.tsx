@@ -5,8 +5,8 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import { createBuilding, getBuildings } from '../../services/BuildingServices';
-
-const OWNER_ID = '5d8487f33a0cab41cb414652'
+import { connect } from 'react-redux';
+import { getCurrentUser } from '../../redux/selectors/currentUser'
 interface State {
     buildingName: any,
     buildings: any[]
@@ -23,11 +23,9 @@ class Building extends React.Component<any, State> {
         this.handleCreateBuilding = this.handleCreateBuilding.bind(this);
         this.handleNavigateBuilding = this.handleNavigateBuilding.bind(this);
     }
-    
     async componentDidMount() {
-        if (OWNER_ID) {
-            const responseApollo = await getBuildings({ ownerId: OWNER_ID });
-
+        if (this.props.currentUser.id) {
+            const responseApollo = await getBuildings({ ownerId: this.props.currentUser.id });
             const { data } = responseApollo;
             if (data.building.length) {
                 this.setState({
@@ -35,6 +33,19 @@ class Building extends React.Component<any, State> {
                 })
             }
         }
+    }
+    // @ts-ignore
+    async shouldComponentUpdate(nextProps) {
+        if (!this.props.currentUser.id && nextProps.currentUser.id) {
+            const responseApollo = await getBuildings({ ownerId: nextProps.currentUser.id });
+            const { data } = responseApollo;
+            if (data.building.length) {
+                this.setState({
+                    buildings: data.building
+                })
+            }
+        }
+        return true;
     }
 
     handleChangeBuildingName = (e) => {
@@ -51,9 +62,10 @@ class Building extends React.Component<any, State> {
 
     async handleCreateBuilding() {
         const { buildingName } = this.state;
+        const { currentUser } = this.props;
         const variables = {
             buildingName,
-            ownerId: OWNER_ID
+            ownerId: currentUser.id
         }
         const building = await createBuilding(variables);
         const { data } = building;
@@ -107,4 +119,10 @@ class Building extends React.Component<any, State> {
     }
 }
 
-export default Building;
+
+const mapStateToProps = state => ({
+    currentUser: getCurrentUser(state)
+})
+
+//@ts-ignore
+export default connect(mapStateToProps)(Building);

@@ -28,12 +28,14 @@ class MapLoader():
     A 2D Map of the building
     """
     def __init__(self, config):
+        self.building_id = config["building_id"]
         self.client = GraphQLClient(config["API"]["host"])
         self._cache = None
 
 
     def fetch(self):
-        result = self.client.execute(getMapGeometry)
+        params = {"building_id": self.building_id}
+        result = self.client.execute(getMapGeometry, params)
         result = json.loads(result)
         self._cache = result['data']['mapGeometry']
         return self._cache

@@ -52,6 +52,7 @@ class TrajectoryLoader():
     """
     def __init__(self, config, verbosity=1):
         self.verbosity = verbosity
+        self.building_id = config["building_id"]
         self.client = GraphQLClient(config["API"]["host"])
 
     def fetch(self, trajectoryId):

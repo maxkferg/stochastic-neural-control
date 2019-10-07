@@ -2,7 +2,7 @@
 Train an agent on SeekerSimEnv
 
 # For a lightweight test
-conad 
+python train.py configs/seeker-test.yaml --dev
 
 # For a GPU driven large test
 python train.py configs/seeker-apex-td3.yaml
@@ -52,8 +52,9 @@ with tf.Session() as sess:
 
 
 # Load API Config
-with open('environment/configs/test.yaml') as cfg:
+with open('environment/configs/dev.yaml') as cfg:
     api_config = yaml.load(cfg, Loader=yaml.Loader)
+    api_config['building_id'] = '5d97b0967f4ec6d405ab7e50'
 
 
 def train_env_creator(cfg):
@@ -64,12 +65,12 @@ def train_env_creator(cfg):
         "debug": True,
         "monitor": True,
         "headless": False,
-        "reset_on_target": True
+        "reset_on_target": True,
     }
-    defaults.update(cfg)
+    cfg.update(defaults)
     logging.warn(defaults)
     loader = GeometryLoader(api_config) # Handles HTTP
-    base = BaseEnvironment(loader, headless=cfg["headless"])
+    base = BaseEnvironment(loader, headless=defaults["headless"])
     return MultiEnvironment(base, verbosity=0, creation_delay=10, env_config=defaults)
 
 

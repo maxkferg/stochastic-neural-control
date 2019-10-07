@@ -17,12 +17,13 @@ class BaseEnvironment():
     def __init__(self,
       loader,
       headless=False,
-      planner="prm"
+      planner="prm",
     ):
         """
         A environment for simulating robot movement
         @headless: Does not show a GUI if headless is True
         @planner: The planner used for checkpointing. Either "rrt" or "prm"
+        @building_id: The building geometry to use
         """
 
         #choose connection method: GUI, DIRECT, SHARED_MEMORY

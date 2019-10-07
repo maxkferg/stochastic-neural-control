@@ -1,6 +1,6 @@
 getCurrentGeometry = '''
-{
-  meshesCurrent(deleted: false) {
+query ($building_id: String!) {
+  meshesOfBuilding(deleted: false, buildingId: $building_id) {
     id
     name
     x
@@ -72,8 +72,8 @@ mutation UpdateTrajectory(
 
 
 getMapGeometry = '''
-query GetMapGeometry {
-  mapGeometry {
+query GetMapGeometry($building_id: String!) {
+  mapGeometry(building_id: $building_id) {
     id
     name
     mesh_id

@@ -26,8 +26,10 @@ class MeshLoader():
     def __init__(self, config):
         self.robots = {}
         self.subscription_ids = []
+        self.building_id = config["building_id"]
         self.geometry_endpoint = config["Geometry"]["host"]
         self.graphql_client = GraphQLClient(config["API"]["host"])
+        self.token = config["API"]["token"]
         self.kafka_endpoint = config["Kafka"]["host"]
         self.kafka_client = None
         self.robot_positions = {}
@@ -45,9 +47,9 @@ class MeshLoader():
         result = self._get_current_geometry(backoff=10, nfailures=5)
         result = json.loads(result)
         geometry = []
-        if result['data']['meshesCurrent'] is None:
+        if result['data']['meshesOfBuilding'] is None:
             raise ValueError("Geometry API returned bad geometry data")
-        for mesh in result['data']['meshesCurrent']:
+        for mesh in result['data']['meshesOfBuilding']:
             logging.debug('Loading {}'.format(mesh['name']))
             directory = mesh['geometry']['directory']
             filename = mesh['geometry']['filename']
@@ -60,13 +62,18 @@ class MeshLoader():
                 raise ValueError("Could not load {}: Directory was invalid".format(name))
             if filename is None:
                 raise ValueError("Could not load {}: Filename was invalid".format(name))
+            # PyBullet can not load GLTF
+            if mesh['geometry']['filetype'] in ['gltf', 'glb']:
+                filename = filename.replace('.glb','.dae')
+                filename = filename.replace('.gltf','.dae')
             relative_url = os.path.join(directory, filename)
             relative_url = relative_url.strip('./')
             position = self._convert_position(mesh)
             name = mesh['name']
             url = os.path.join(self.geometry_endpoint, relative_url)
-            fp = os.path.join('tmp/', relative_url)
+            fp = os.path.join('/tmp/', relative_url)
             try:
+                print("Downloading",url,fp)
                 self._download_geometry_resource(url, fp)
             except HTTPError as e:
                 logging.error("Could not load {}:\n{}".format(name, e))
@@ -74,6 +81,8 @@ class MeshLoader():
             except InvalidURL as e:
                 logging.error("Could not load {}:\n{}".format(name, e))
                 continue
+            except Exception as e:
+                print(e)
             geometry.append({
                 'id': mesh['id'],
                 'name': name,
@@ -94,7 +103,7 @@ class MeshLoader():
         Return the cached (potentially old) geometry data
         @max_age: The maximum age to cache this data (in seconds)
         """
-        pathname = 'tmp/geometry_cache.json'
+        pathname = '/tmp/geometry_cache.json'
         if os.path.exists(pathname):
             age = time.time() - os.stat(pathname)[stat.ST_MTIME]
             if age < max_age:
@@ -132,7 +141,8 @@ class MeshLoader():
         """
         for i in range(nfailures):
             try:
-                return self.graphql_client.execute(getCurrentGeometry)
+                params = {"building_id": self.building_id}
+                return self.graphql_client.execute(getCurrentGeometry, params)
             except HTTPError:
                 wait = backoff*1.5**i + backoff*random.random()
                 logging.warning("Geometry request failed. Trying again in %i seconds"%wait)
@@ -150,6 +160,7 @@ class MeshLoader():
             return
         logging.debug("{} -> {}".format(url, local_filepath))
         os.makedirs(os.path.dirname(local_filepath), exist_ok=True)
+        print("MADE:",os.path.dirname(local_filepath), "from", os.getcwd() )
         with urllib.request.urlopen(url) as response, open(local_filepath, 'wb') as out_file:
             shutil.copyfileobj(response, out_file)
 

@@ -31,7 +31,6 @@ from ray.tune import run, sample_from, run_experiments
 from ray.tune.schedulers import PopulationBasedTraining
 from ray.tune.registry import register_env
 from ray.rllib.models import ModelCatalog
-#from learning.fusion import FusionModel
 from learning.mink import MinkModel
 from learning.preprocessing import DictFlatteningPreprocessor
 from environment.loaders.geometry import GeometryLoader
@@ -100,7 +99,7 @@ def create_parser():
 
 
 def run(args):
-    ModelCatalog.register_custom_preprocessor("debug_prep", DictFlatteningPreprocessor)
+    #ModelCatalog.register_custom_preprocessor("debug_prep", DictFlatteningPreprocessor)
     #ModelCatalog.register_custom_model("fusion", FusionModel)
     ModelCatalog.register_custom_model("mink", MinkModel)
     register_env(ENVIRONMENT, lambda cfg: train_env_creator(cfg))
@@ -146,14 +145,12 @@ def run_pbt(args):
         mode="max",
         perturbation_interval=1200.0,
         hyperparam_mutations={
-            "actor_lr": lambda: log_uniform(1e-3, 1e-5),
-            "critic_lr": lambda: log_uniform(1e-3, 1e-5),
+            "lr": lambda: log_uniform(1e-3, 1e-5),
             "tau": lambda: random.uniform(0.001, 0.002),
-            "target_noise": lambda: random.uniform(0.1, 0.3),
-            "exploration_gaussian_sigma": lambda: random.uniform(0.01, 0.2),
+            "target_network_update_freq": lambda: random.randint(50000, 200000),
             "exploration_ou_noise_scale": lambda: random.uniform(0.01, 0.2),
-            "train_batch_size": lambda: random.randint(32, 512),
-            "buffer_size": lambda: random.randint(64000, 420000), 
+            "train_batch_size": lambda: random.randint(128, 1024),
+            "buffer_size": lambda: random.randint(128000, 512000), 
             "l2_reg": lambda: log_uniform(1e-5, 1e-8),
         })
 
@@ -166,10 +163,10 @@ def run_pbt(args):
         settings['config'].update({
             "parameter_noise": sample_from(
                 lambda spec: random.choice([True, False])),
-            "exploration_should_anneal": sample_from(
-                lambda spec: random.choice([True, False])),
-            "train_batch_size": sample_from(
-                lambda spec: random.choice([32, 64, 128])),
+            "target_network_update_freq": sample_from(
+                lambda spec: random.randint(20000, 80000)),
+            "train_batch_size": sample_from( 
+                lambda spec: random.choice([64, 256, 512, 1024])),
             "batch_mode": sample_from(
                 lambda spec: get_batch_mode(spec)),
         })
@@ -181,7 +178,7 @@ def run_pbt(args):
             config=settings['config'],
             checkpoint_freq=20,
             max_failures=5,
-            num_samples=4
+            num_samples=6
         )
 
 

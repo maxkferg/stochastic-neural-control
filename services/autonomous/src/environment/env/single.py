@@ -18,7 +18,7 @@ from skimage.transform import rescale
 from PIL import Image, ImageDraw
 from .utils.color import random_color
 from .utils.vector import rotate_vector, normalize
-from .utils.math import positive_component, rotation_change
+from .utils.math import normalize_angle, positive_component, rotation_change
 
 
 COUNT = 0

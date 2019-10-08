@@ -44,13 +44,19 @@ class SimpleModel(Model):
             ckpts
         ])
 
-        last_layer = x#tf.keras.layers.Dense(256, activation="relu", name="mink_last")(x)
-        output_layer = tf.keras.layers.Dense(num_outputs, activation=None, name="mink_out")(last_layer)
+        last_layer = tf.keras.layers.LayerNormalization(epsilon=1e-6)(x)
+        #last_layer = x#tf.keras.layers.Dense(256, activation="relu", name="mink_last")(x)
+        output_layer = tf.keras.layers.Dense(
+            num_outputs, 
+            activation=None, 
+            name="simple_out"
+        )(last_layer)
 
         return output_layer, last_layer
 
 
     def custom_stats(self):
+        print("---------------------------------")
         stats = {
             "action_min": tf.reduce_min(self.output_actions),
             "action_max": tf.reduce_max(self.output_actions),

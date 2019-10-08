@@ -54,28 +54,27 @@ with tf.Session() as sess:
     print("Tensorflow devices:", sess.list_devices())
 
 
-# Load API Config
-with open('environment/configs/prod.yaml') as cfg:
-    api_config = yaml.load(cfg, Loader=yaml.Loader)
-    api_config['building_id'] = '5d984a7c6f1886dacf9c730d'
 
 
-
-def train_env_creator(cfg):
+def train_env_factory(args):
     """
     Create an environment that is linked to the communication platform
+    @env_config: Environment configuration from config file
+    @args: Command line arguments for overriding defaults
     """
-    defaults = {
-        "debug": True,
-        "monitor": True,
-        "headless": False,
-        "reset_on_target": True,
-    }
-    cfg.update(defaults)
-    logging.warn(defaults)
-    loader = GeometryLoader(api_config) # Handles HTTP
-    base = BaseEnvironment(loader, headless=defaults["headless"])
-    return MultiEnvironment(base, verbosity=0, creation_delay=10, env_config=defaults)
+    with open('environment/configs/prod.yaml') as cfg:
+        api_config = yaml.load(cfg, Loader=yaml.Loader)
+        api_config['building_id'] = '5d984a7c6f1886dacf9c730d'
+
+    def train_env(cfg):
+        if args.headless:
+            cfg.headless = True
+        loader = GeometryLoader(api_config) # Handles HTTP
+        base = BaseEnvironment(loader, headless=cfg["headless"])
+        return MultiEnvironment(base, verbosity=0, creation_delay=10, env_config=cfg)
+    
+    return train_env
+
 
 
 def create_parser():
@@ -106,7 +105,7 @@ def create_parser():
 def run(args):
     ModelCatalog.register_custom_model("mink", MinkModel)
     ModelCatalog.register_custom_model("simple", SimpleModel)
-    register_env(ENVIRONMENT, lambda cfg: train_env_creator(cfg))
+    register_env(ENVIRONMENT, train_env_factory(args))
 
     with open(args.config, 'r') as stream:
         experiments = yaml.load(stream, Loader=yaml.Loader)

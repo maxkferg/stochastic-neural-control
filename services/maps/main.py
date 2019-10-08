@@ -1,3 +1,10 @@
+"""
+Copy map data from 3D to 2D
+Removes old map data
+
+python main.py --config=config/dev.yaml
+python main.py --config=config/prod.yaml
+"""
 import os
 import math
 import time
@@ -14,7 +21,7 @@ import transforms3d
 import plotly.graph_objs as go
 from collections import defaultdict
 from graphqlclient import GraphQLClient
-from graphql import getCurrentGeometry
+from graphql import getCurrentGeometry, getDeletedGeometry, getMapGeometry, updateMapGeometry, deleteMapGeometry
 from kafka import KafkaProducer
 
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
@@ -22,6 +29,7 @@ logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:
 parser = argparse.ArgumentParser(description='Convert 3D geometry to 2D geometry.')
 parser.add_argument('--headless', action='store_true', help='run without GUI components')
 parser.add_argument('--height', type=float, default=0.1, help='height to generate map')
+parser.add_argument('--config', type=str, default='config/dev.yaml', help='path to config file')
 
 
 class MapBuilder():
@@ -100,8 +108,6 @@ class MapBuilder():
         Convert a 3D object to a 2D polygon
         Slices the mesh at self.furniture_height and then returns all polygons on this plane
         """
-        #print(mesh.vertices)
-        #print(mesh.aces)
         plane_origin = np.array([0, furniture_height, 0])
         plane_normal = np.array([0, 1, 0])
 
@@ -111,7 +117,6 @@ class MapBuilder():
         transform = np.array([[1,0,0,0],[0,0,1,0],[0,1,0,0],[0,0,0,1]])
         planar, _ = lines.to_planar(transform)
         polygons = planar.polygons_closed
-        print("*", [list(p.exterior.coords) for p in polygons])
         return [list(p.exterior.coords) for p in polygons]
 
 
@@ -174,18 +179,21 @@ class MapBuilder():
         return mesh
 
 
-    def _create_map_message(self, geometry_object, polygons):
-        message = {
+    def _create_map_object(self, geometry_object, polygons):
+        external_polygons = [{'points': p} for p in polygons]
+        building_id = geometry_object['building_id']
+        if building_id is None:
+            building_id = ""
+        return {
             "name": geometry_object["name"],
             "mesh_id": geometry_object["id"],
-            "isTraversable": True,
-            "isDeleted": False,
-            "internalPolygons":[],
-            "visualPolygons":[],
-            "externalPolygons": polygons,
+            "building_id": building_id,
+            "is_deleted": geometry_object["deleted"],
+            "is_traversable": True,
+            "internal_polygons":[],
+            "visual_polygons":[],
+            "external_polygons": external_polygons,
         }
-        message = json.dumps(message).encode('utf-8')
-        return message
 
 
     def draw(self, mesh):
@@ -249,11 +257,21 @@ class MapBuilder():
                 offset = np.array([ob['x'], ob['y'], ob['z']])
                 mesh = self._transform_mesh(mesh, offset, ob["theta"], ob["scale"])
                 polygons = self._convert_to_polygons(mesh, self.furniture_height)
-                [self.draw_floorplan(p, name) for p in polygons]
-                message = self._create_map_message(ob, polygons)
-                self.kafka_producer.send('debug', message)
+                map_object = self._create_map_object(ob, polygons)
+                self.update_map_object(map_object)
+                time.sleep(0.1)
+                #[self.draw_floorplan(p, name) for p in polygons]
+                #message = self._create_map_message(ob, polygons)
+                #self.kafka_producer.send('debug', message)
             #self.canvas.show()
             logging.info("\n\n --- Published map data --- \n")
+
+            # Delete any extra map geometry
+            try:
+                self.delete_stale_map_geometry()
+            except Exception as e:
+                logging.error("Error while deleting geometry: %s"%e)
+
             time.sleep(20)
 
 
@@ -262,7 +280,7 @@ class MapBuilder():
 
 if __name__=="__main__":
     args = parser.parse_args()
-    with open('config.yaml') as cfg:
+    with open(args.config) as cfg:
         config = yaml.load(cfg, Loader=yaml.Loader)
     builder = MapBuilder(args.height, config)
     builder.run()

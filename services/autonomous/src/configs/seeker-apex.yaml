@@ -11,4 +11,4 @@ pendulum-apex-ddpg:
         n_step: 1
         target_network_update_freq: 50000
         tau: 1.0
-        um_gpus: 1
+        num_gpus: 1

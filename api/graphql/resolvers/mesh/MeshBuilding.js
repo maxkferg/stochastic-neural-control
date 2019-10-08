@@ -17,7 +17,11 @@ class MeshBuilding extends BaseResolver {
       deleted: {
         type: new GraphQLNonNull(GraphQLBoolean),
         description: 'Id for the building'
-      }
+      },
+      simulated: {
+          type: GraphQLBoolean,
+          description: 'Optionally filter by objects with physics.simulated=$simulated'
+      },
     };
   }
 

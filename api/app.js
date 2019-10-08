@@ -16,6 +16,7 @@ const app = new Koa();
 const router = new Router();
 const PORT = config.get('Webserver.port');
 require('dotenv').config()
+
 async function init() {
     const database_schema = __dirname + '/database/mongo';
     const database_uri = config.get("Mongo.host");
@@ -27,11 +28,22 @@ async function init() {
         introspection: true,
         playground: true,
         cors: true,
-        context: {
-            db: db,
-            influx: influxdb,
-            pubSub: pubSub,
-        }
+        context: async (request) => {
+            const authenticationHeader = request.ctx.req.headers.authorization || '';
+            const jwtToken = authenticationHeader.split(" ")[1];
+            let user;
+            try { 
+                user = await auth.verifyJwtToken(jwtToken);
+            } catch {
+                user = {};
+            }
+            return ({
+                user,
+                db: db,
+                influx: influxdb,
+                pubSub: pubSub,
+            })
+        },
     });
 
     app.use(cors());
@@ -46,10 +58,10 @@ async function init() {
     //cookie option has been passed to make auth work with graphiql
     router.use(jwt({secret: config.get('JWT.secret'), passthrough: true, cookie: "token"}));
 
-    //custom method to use parsed token data to validate and populate user
+    // //custom method to use parsed token data to validate and populate user
     router.use(auth.validate);
 
-    //other protected url
+    // //other protected url
     router.get('/protected', (ctx, next) => {
         if (!ctx.user) {
             ctx.status = 401;
@@ -63,6 +75,7 @@ async function init() {
 
     //global error logging
     app.on("error", (err, ctx) => {
+        console.log('error', err);
         Logger.error(err);
     });
 

@@ -37,6 +37,7 @@ const Query = new GraphQLObjectType({
                 return 'Hello from GraphiQL';
             }
         },
+        verifyToken: new resolvers.User.verifyToken(User, "Verify Token", true),
         users: new resolvers.User.getAllUsers(new GraphQLList(User), "Get all users", true),
         user: new resolvers.User.getUser(User, "Get user by id", true),
         meshesCurrent: new resolvers.Mesh.getCurrentMeshes(new GraphQLList(Mesh), "Get current meshes", false),
@@ -47,7 +48,7 @@ const Query = new GraphQLObjectType({
         mapGeometry: new resolvers.MapGeometry.getMapGeometry(new GraphQLList(MapGeometry), "Get all Map Geometry", false),
         trajectory: new resolvers.Trajectory.getTrajectory(Trajectory, "Get a single trajectory", false),
         trajectories: new resolvers.Trajectory.getTrajectoryList(new GraphQLList(Trajectory), "Get a list of trajectories", false),
-        building: new resolvers.Building.getBuilding(new GraphQLList(Building), "Get all building", false)
+        building: new resolvers.Building.getBuilding(new GraphQLList(Building), "Get all building", true)
     })
 });
 
@@ -64,12 +65,13 @@ const Mutation = new GraphQLObjectType({
         createMeshBuilding: new mutations.MeshMutations.meshBuildingCreate(Mesh, "Creates a mesh building object", false),
         mesh: new mutations.MeshMutations.mesh(Mesh, "Updates current mesh object", true),
         mapGeometry: new mutations.MapGeometryMutations.mapGeometry(MapGeometry, "Update Map Geometry object", false),
+        createMapGeometry: new mutations.MapGeometryMutations.createMapGeometry(MapGeometry, "Create a Map Geometry object", false),
         moveRobot: new mutations.RobotMutations.moveRobot(VelocityHistory, "Send a sequence of smooth controls to the robot", true),
         createTrajectory: new mutations.TrajectoryMutations.createTrajectory(Trajectory, "Create a new trajectory for the robot", true),
         updateTrajectory: new mutations.TrajectoryMutations.updateTrajectory(Trajectory, "Update a trajectory", true),
         removeTrajectory: new mutations.TrajectoryMutations.removeTrajectory(Trajectory, "Remove a trajectory", true),
         followTrajectory: new mutations.RobotMutations.followTrajectory(Trajectory, "Instruct a robot to follow a trajectory", true),
-        createBuilding: new mutations.BuildingMutation.createBuilding(Building, "Creates a building object", false),
+        createBuilding: new mutations.BuildingMutation.createBuilding(Building, "Creates a building object", true),
     })
 });
 

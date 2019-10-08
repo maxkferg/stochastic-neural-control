@@ -101,12 +101,12 @@ class MeshCreateMutation extends BaseResolver {
                 name: args.name,
                 type: args.type,
                 deleted: args.deleted || false,
+                building_id: args.buildingId,
             },
             fields: {
                 x: args.x,
                 y: args.y,
                 z: args.z,
-                building_id: args.buildingId,
                 theta: args.theta || 0,
                 scale: args.scale || 1,
                 height: args.height,
@@ -129,7 +129,6 @@ class MeshCreateMutation extends BaseResolver {
           `)
         }).then(datas => {
           let data = datas[0];
-          console.log('DATAS:',datas)
           return {
             id: id,
             x: data.x,
@@ -142,6 +141,7 @@ class MeshCreateMutation extends BaseResolver {
             width: data.width,
             depth: data.depth,
             scale: data.scale,
+            buildingId: args.building_id,
             deleted: data.deleted == "true",
             geometry: {
                 filetype: data.geometry_filetype,

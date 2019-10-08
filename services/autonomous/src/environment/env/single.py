@@ -14,8 +14,10 @@ from collections import OrderedDict
 from gym import spaces
 from gym.utils import seeding
 from pprint import pprint
+from skimage.transform import rescale
 from PIL import Image, ImageDraw
 from .utils.color import random_color
+from .utils.vector import rotate_vector, normalize
 from .utils.math import positive_component, rotation_change
 
 
@@ -30,8 +32,8 @@ TARGET_REWARD = 1
 CHECKPOINT_REWARD = 0.1
 CHECKPOINT_DISTANCE = 0.5
 BATTERY_THRESHOLD = 0.5
-BATTERY_WEIGHT = -0.005
-ROTATION_COST = -0.002
+BATTERY_WEIGHT = -0.1
+ROTATION_COST = -0.005
 CRASHED_PENALTY = -1
 MAP_GRID_SCALE = 0.2
 NUM_CHECKPOINTS = 10
@@ -639,9 +641,10 @@ class SingleEnvironment():
 
         # Position the camera behind the car, slightly above
         dist = 1
+        world_up = [0,0,1]
         dir_vec = np.array(rotate_vector(carorn, [2*dist, 0, 0]))
-        cam_eye = np.subtract(np.array(base_pos), np.add(dir_vec, np.array([0, 0, -1*dist])))
-        cam_up = normalize(self.world.world_up - np.multiply(np.dot(self.world.world_up, dir_vec), dir_vec))
+        cam_eye = np.subtract(np.array(base_pos), np.add(dir_vec, np.array([0, 0, -2*dist])))
+        cam_up = normalize(world_up - np.multiply(np.dot(world_up, dir_vec), dir_vec))
 
         view_matrix = self.physics.computeViewMatrix(
             cameraEyePosition=cam_eye,
@@ -656,14 +659,21 @@ class SingleEnvironment():
         rgb_array = np.array(px, dtype=np.uint8)
         rgb_array = rgb_array.reshape((height, width, 4))
 
-        for i in range(state["map"].shape[2]):
-            xmin = 0
-            xmax = state["map"].shape[1]
-            ymin = i*state["map"].shape[0] + int(10*i)
-            ymax = (i+1)*state["map"].shape[0] + int(10*i)
-            rgb_array[ymin:ymax, xmin:xmax, :3] = state["map"][:,:,[i]]
-            rgb_array[int((ymin+ymax)/2), int((xmin+xmax)/2), :] = [255,0,0,255]
-
+        #for i in range(state["map"].shape[2]):
+        #    xmin = 0
+        #    xmax = state["map"].shape[1]
+        #    ymin = i*state["map"].shape[0] + int(10*i)
+        #    ymax = (i+1)*state["map"].shape[0] + int(10*i)
+        ##    rgb_array[ymin:ymax, xmin:xmax, :3] = state["map"][:,:,[i]]
+        #   rgb_array[int((ymin+ymax)/2), int((xmin+xmax)/2), :] = [255,0,0,255]
+        
+        offset = 10
+        pixel_map = rescale(state["map"], 2)
+        h,w = pixel_map.shape
+        map_image = pixel_map.astype(np.uint8)
+        map_image = np.expand_dims(map_image, axis=-1).repeat(4, axis=-1)
+        map_image[:,:,3] = 255
+        rgb_array[offset:(h+offset), offset:(w+offset), :] = map_image
         return rgb_array
 
 
@@ -717,15 +727,15 @@ class PixelState():
     @padding: The padding size to put around the map
     """
 
-    def __init__(self, map, gridsize=0.1, padding=50):
+    def __init__(self, map, gridsize=0.05, padding=100):
         xmin, xmax, ymin, ymax = self._get_map_size(map)
         self.scale = 1/gridsize
         self.padding = padding
         self.xmin = xmin
         self.ymin = ymin
         px, py = self._to_pixel_coords((xmax, 0, ymax))
-        self.nx = px+padding # Number of pixels in the x direction
-        self.ny = py+padding # Number of pixels in the y direction
+        self.nx = px + 2*padding # Number of pixels in the x direction
+        self.ny = py + 2*padding # Number of pixels in the y direction
         self.map = np.zeros((self.ny, self.nx), dtype=np.uint16)
         self.checkpoints = np.zeros((self.ny, self.nx), dtype=np.uint16)
         self.target = np.zeros((self.ny, self.nx), dtype=np.uint16)
@@ -733,49 +743,39 @@ class PixelState():
         self.set_map(map)
 
 
-    def observe(self, robot_pos, view_size=24, rotate=False):
+    def observe(self, robot_pos, robot_theta=0, view_size=24, rotate=True):
         """
         Return an observation of this state as a numpy array
         """
         stacked = self._stacked()
         robot_x, robot_y = self._to_pixel_coords(robot_pos)
 
-        # Pad the image and shift the coordinates
-        xmin = robot_x - view_size# + pad_size
-        xmax = robot_x + view_size# + pad_size
-        ymin = robot_y - view_size# + pad_size
-        ymax = robot_y + view_size# + pad_size
-        #padding = ((pad_size, pad_size), (pad_size, pad_size), (0,0))
-
-        #stacked = np.stack((
-        #    self.map,
-        #    self.target,
-        #    self.robot,
-        #    self.checkpoints
-        #), -1)
-
-
-        #padded = np.pad(
-        #    stacked,
-        #    pad_width=padding,
-        #    mode="constant")
-
-        # Crop out a large square around the center (x,y)
-        #cropped = padded[ymin:ymax, xmin:xmax, :]
-
         # Rotate the panel and crop a square section
         if rotate:
+            x1 = robot_x - 2*view_size
+            x2 = robot_x + 2*view_size
+            y1 = robot_y - 2*view_size
+            y2 = robot_y + 2*view_size
+
             stacked = scipy.ndimage.rotate(
-                padded,
-                axes=(1,0,0),
+                stacked[y1:y2, x1:x2],
                 order=0,
                 reshape=False,
-                angle=state["robot_theta"]*180/math.pi
-            )[ymin:ymax, xmin:xmax]
-        #eru 255*padded[ymin:ymax, xmin:xmax]
+                angle=robot_theta*180/math.pi
+            )
+            stacked = np.flip(stacked.transpose(), axis=0)
+            robot_y = int(stacked.shape[0]/2)
+            robot_x = int(stacked.shape[1]/2)
+            
+        # Crop so the robot is in the center
+        xmin = robot_x - view_size
+        xmax = robot_x + view_size
+        ymin = robot_y - view_size
+        ymax = robot_y + view_size
         cropped = stacked[ymin:ymax, xmin:xmax]
-        padded = pad(cropped, (48,48), (0,0,0))
-        return padded
+        
+        # Make sure the image is large enough
+        return pad(cropped, (48,48), (0,0,0))
 
 
     def _stacked(self):
@@ -791,7 +791,10 @@ class PixelState():
         return stacked
 
 
-    def save_image(self, robot_pos, filename=None, cropped=False):
+    def save_image(self, robot_pos, filename=None, cropped=True):
+        """
+        Save image to file
+        """
         if cropped:
             observation = self.observe(robot_pos)
         else:
@@ -815,7 +818,7 @@ class PixelState():
                 # Y axis is wrong.
                 points = [(p[0], -p[1], 0) for p in polygon['points']]
                 points = [self._to_pixel_coords(p) for p in points]
-                draw.polygon(points, outline=1, fill=0)
+                draw.polygon(points, outline=1, fill=None)
         self.map = np.array(img)
         return self.map
 

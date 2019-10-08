@@ -22,8 +22,14 @@ import * as CANNON from 'cannon';
 
 window.CANNON = CANNON;
 // @ts-ignore
-BABYLON.OBJFileLoader.MATERIAL_LOADING_FAILS_SILENTLY = false;
-BABYLON.OBJFileLoader.OPTIMIZE_WITH_UV = true;
+// @ts-ignore
+//BABYLON.OBJFileLoader.MATERIAL_LOADING_FAILS_SILENTLY = false;
+//debugger
+// @ts-ignore
+//BABYLON.OBJFileLoader.COMPUTE_NORMALS = true
+// @ts-ignore
+//BABYLON.OBJFileLoader.OPTIMIZE_WITH_UV = true;
+//BABYLON.OBJFileLoader.COMPUTE_NORMALS = true;
 //BABYLON.OBJFileLoader.INVERT_X = true;
 
 export type SceneEventArgs = {
@@ -39,7 +45,6 @@ export type SceneOptions = {
 };
 
 
-
 const styles = (theme: Theme) => ({
   fab: {
     margin: theme.spacing(),
@@ -52,7 +57,7 @@ const styles = (theme: Theme) => ({
 
 /**
  * setupFloors
- * Called once floor geometry has been loaded
+ * Called once floorx geometry has been loaded
  */
 function setupFloor(objectData: any, parentMesh: any,  floorMeshes: any, scene: BABYLON.Scene){
     let floorMesh = BABYLON.Mesh.MergeMeshes(floorMeshes);
@@ -61,16 +66,16 @@ function setupFloor(objectData: any, parentMesh: any,  floorMeshes: any, scene: 
     }
     floorMesh.physicsImpostor = new PhysicsImpostor(
         floorMesh,
-        PhysicsImpostor.MeshImpostor,
+        PhysicsImpostor.PlaneImpostor,
         {
             mass: 0,
             restitution: 0.9
         },
         scene
     );
-    let redMaterial = new StandardMaterial('Red', scene);
-    redMaterial.diffuseColor = Color3.FromInts(0, 255, 0);
-    floorMesh.material = redMaterial;
+    //let redMaterial = new StandardMaterial('Red', scene);
+    //redMaterial.diffuseColor = Color3.FromInts(0, 255, 0);
+    //floorMesh.material = redMaterial;
     floorMesh.receiveShadows = true;
     return floorMesh
 }
@@ -115,11 +120,19 @@ function setupObject(objectData: any, parentMesh: any,  scene: BABYLON.Scene){
  * Called to create lights
  */
 function setupLights(scene: any){
-    let light = new HemisphericLight('hemi', new Vector3(0, -1, 0), scene);
-    light.intensity = 0.7;
+    let ceiling = 2
+    let light = new HemisphericLight('hemi1', new Vector3(0, 1, 0), scene);
+    light.intensity = 0.8;
 
-    var lightbulb = new BABYLON.PointLight("pointLight", new BABYLON.Vector3(1, 10, 1), scene);
-    lightbulb.intensity = 0.8
+    var lightbulb1 = new BABYLON.PointLight("pointLight1", new BABYLON.Vector3(0, ceiling, 0), scene);
+    lightbulb1.intensity = 1.2
+
+    var lightbulb2 = new BABYLON.PointLight("pointLight2", new BABYLON.Vector3(3, ceiling, 3), scene);
+
+    lightbulb2.intensity = 1.4
+
+    var lightbulb3 = new BABYLON.PointLight("pointLight3", new BABYLON.Vector3(-3, ceiling, -3), scene);
+    lightbulb3.intensity = 1.2
 }
 
 
@@ -236,6 +249,13 @@ class BabylonViewer extends React.Component<Props, State> {
       };
       this.classes = props.classes;
       this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
+      // @ts-ignore
+      if ('OBJFileLoader' in BABYLON){
+          // @ts-ignore
+          BABYLON.OBJFileLoader.OPTIMIZE_WITH_UV = true;
+          // @ts-ignore
+          BABYLON.OBJFileLoader.COMPUTE_NORMALS = true;
+      }
     }
 
     componentDidMount() {
@@ -333,7 +353,7 @@ class BabylonViewer extends React.Component<Props, State> {
             renderedObjects: this.state.renderedObjects,
             renderedMeshes: this.state.renderedMeshes
         });
-       
+
         // Start loading the mesh
         //manager.load();
     }
@@ -492,10 +512,7 @@ class BabylonViewer extends React.Component<Props, State> {
                 {/*
                 // @ts-ignore */}
                 <Engine engineOptions={{ preserveDrawingBuffer: true}} width={this.state.width} height={this.state.height-64}>
-                    <Scene
-                        sceneOptions={{useGeometryIdsMap: true}}
-                        onSceneMount={this.onSceneMount}
-                    />
+                    <Scene onSceneMount={this.onSceneMount} sceneOptions={{}} />
                 </Engine>
             </div>
         );

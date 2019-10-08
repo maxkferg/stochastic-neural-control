@@ -18,7 +18,6 @@ import sys, gym, time
 import numpy as np
 import tkinter
 import argparse
-import learning.model
 import colored_traceback
 from PIL import Image, ImageTk
 from gym.envs.registration import registry
@@ -95,7 +94,7 @@ class BenchmarkWindow():
         action = {}
         for robot, obser in self.obs.items():
             steering = obser["robot_theta"]/math.pi / 4
-            throttle = 0.6
+            throttle = 0
             action[robot] = [steering, throttle]
         self.obs, r, done, info = self.env.step(action)
         self.times += 1
@@ -136,21 +135,20 @@ class ViewWindow():
         action = {}
         for robot, obser in self.obser.items():
             steering = obser["target"][0] / math.pi / 4
-            throttle = 0.6
+            throttle = 0.3
             action[robot] = [steering, throttle]
-        #self.obser, r, done, info = env.step(action)
+        obs, r, done, info = env.step(action)
         # Render current state
         self.render(env.render(mode="rgb_array", width=self.width, height=self.height))
-        self.map.render(env.render_map(mode="rgb_array", width=MAP_WIDTH, height=MAP_HEIGHT))
-        self.root.update()
+        #self.map.render(obs["map"])
         self.times += 1
         if self.times%33==0:
             print("%.02f FPS"%(self.times/(time.clock()-self.timestart)))
-        self.root.after(10, self.step)
+        self.root.after(500, self.step)
         #time.sleep(0.3)
-        #if done[0]:
-        #    print("--- Resetting ---")
-        #    env.reset()
+        if done['__all__']:
+            print("--- Resetting ---")
+            env.reset()
 
 
 

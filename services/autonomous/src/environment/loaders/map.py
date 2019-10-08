@@ -28,6 +28,7 @@ class MapLoader():
     A 2D Map of the building
     """
     def __init__(self, config):
+        self.building_id = config["building_id"]
         self.client = GraphQLClient(config["API"]["host"])
         self._cache = None
 

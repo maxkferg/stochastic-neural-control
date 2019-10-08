@@ -1,6 +1,6 @@
 getCurrentGeometry = '''
-{
-  meshesCurrent(deleted: false) {
+query ($building_id: String!) {
+  meshesOfBuilding(deleted: false, buildingId: $building_id) {
     id
     name
     x

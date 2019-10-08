@@ -20,7 +20,7 @@ Robot:
   id: '5d745809f5bb087745000001'
   name: 'robot-496'
 
-# JST Login secret
+# JWT Login secret
 JWT:
   secret: 'NotSoSecretAfterAll'
 

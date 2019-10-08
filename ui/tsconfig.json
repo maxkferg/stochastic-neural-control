@@ -36,6 +36,10 @@
     "jest",
     "src/setupTests.ts"
   ],
+  "types": [
+    "babylonjs",
+    "babylonjs-loaders",
+  ],
   "include": [
     "src"
   ]

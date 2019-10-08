@@ -133,6 +133,7 @@ class MeshMutation extends BaseResolver {
                 name: chooseValid(args.name, mesh.name),
                 type: chooseValid(args.type, mesh.type),
                 deleted: chooseValid(args.deleted, mesh.deleted),
+                building_id: chooseValid(args.buildingId, mesh.building_id),
             }
 
             let newMeshFields = {
@@ -144,7 +145,6 @@ class MeshMutation extends BaseResolver {
                 height: chooseValid(args.height, mesh.height),
                 width: chooseValid(args.width, mesh.width),
                 depth: chooseValid(args.width, mesh.width),
-                building_id: chooseValid(args.buildingId, mesh.building_id),
             }
             console.log("TCL: MeshMutation -> resolve -> newMeshFields", newMeshFields)
 

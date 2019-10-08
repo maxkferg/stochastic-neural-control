@@ -41,7 +41,7 @@ class Environment():
           flags=pybullet.GEOM_FORCE_CONCAVE_TRIMESH,
           fileName=filename,
           meshScale=meshScale)
-        
+
         if stationary:
             baseMass = 0
         else:

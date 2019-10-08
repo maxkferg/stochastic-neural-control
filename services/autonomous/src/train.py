@@ -73,7 +73,7 @@ def train_env_factory(args):
         loader = GeometryLoader(api_config) # Handles HTTP
         base = BaseEnvironment(loader, headless=cfg["headless"])
         return MultiEnvironment(base, verbosity=0, creation_delay=10, env_config=cfg)
-    
+
     return train_env
 
 
@@ -118,6 +118,7 @@ def run(args):
             name=experiment_name,
             stop=settings['stop'],
             config=settings['config'],
+            checkpoint_freq=settings['checkpoint_freq'],
             queue_trials=True,
         )
 

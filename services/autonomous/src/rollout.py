@@ -71,7 +71,7 @@ viridis = cm.get_cmap('viridis')
 
 
 # Load API Config
-with open('environment/configs/test.yaml') as cfg:
+with open('environment/configs/prod.yaml') as cfg:
     api_config = yaml.load(cfg, Loader=yaml.Loader)
 
 

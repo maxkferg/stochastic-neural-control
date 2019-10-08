@@ -1,6 +1,6 @@
 seeker-test:
     run: APEX_DDPG
-    checkpoint_freq: 50
+    checkpoint_freq: 20
     stop:
         episode_reward_mean: 1.2
     config:

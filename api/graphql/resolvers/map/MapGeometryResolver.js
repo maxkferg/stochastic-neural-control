@@ -1,5 +1,5 @@
 const BaseResolver = require('../../BaseResolver');
-const {GraphQLString, GraphQLInt} = require('graphql');
+const {GraphQLString, GraphQLInt, GraphQLBoolean} = require('graphql');
 
 
 
@@ -29,6 +29,14 @@ class MapGeometryResolver extends BaseResolver {
           type: GraphQLString,
           description: 'Optionally filter by building id'
       },
+      mesh_id: {
+          type: GraphQLString,
+          description: 'Optionally filter by mesh_id'    
+      },
+      is_deleted: {
+          type: GraphQLBoolean,
+          description: 'Optionally filter by is_deleted'    
+      }
     };
   }
 
@@ -45,6 +53,14 @@ class MapGeometryResolver extends BaseResolver {
 
     if (args.building_id){
       query.building_id = args.building_id
+    }
+
+    if (args.mesh_id){
+      query.mesh_id = args.mesh_id
+    }
+
+    if (typeof(args.is_deleted) !== "undefined"){
+      query.isDeleted = args.is_deleted
     }
 
     let results = await ctx.db.MapGeometry.find(query);

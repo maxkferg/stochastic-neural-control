@@ -15,7 +15,8 @@ const db = new Influx.InfluxDB({
           'id',
           'name',
           'type',
-          'deleted'
+          'deleted',
+          'building_id',
       ],
       fields: {
           x: Influx.FieldType.FLOAT,
@@ -26,7 +27,6 @@ const db = new Influx.InfluxDB({
           height: Influx.FieldType.FLOAT,
           width: Influx.FieldType.FLOAT,
           depth: Influx.FieldType.FLOAT,
-          building_id: Influx.FieldType.STRING,
           geometry_filetype: Influx.FieldType.STRING,
           geometry_filename: Influx.FieldType.STRING,
           geometry_directory: Influx.FieldType.STRING,

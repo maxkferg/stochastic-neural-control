@@ -98,7 +98,7 @@ class MapGeometryMutation extends BaseResolver {
     if (typeof args.mesh_id !== 'undefined'){
       mapgeometry.mesh_id = args.mesh_id
     }
-    if (typeof args.mesh_id !== 'undefined'){
+    if (typeof args.building_id !== 'undefined'){
       mapgeometry.building_id = args.building_id
     }
     if (typeof args.is_deleted !== 'undefined'){

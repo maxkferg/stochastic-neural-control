@@ -68,7 +68,7 @@ query GetMapGeometry {
 '''
 
 updateMapGeometry = '''
-mutation CreateMapGeometry(
+mutation UpdateMapGeometry(
     $name: String!
     $mesh_id: String!
     $building_id: String!
@@ -78,7 +78,8 @@ mutation CreateMapGeometry(
     $is_deleted: Boolean!
     $is_traversable: Boolean!
 ) {
-  createMapGeometry(
+  mapGeometry(
+    upsert: true
     name: $name
     mesh_id: $mesh_id
     building_id: $building_id

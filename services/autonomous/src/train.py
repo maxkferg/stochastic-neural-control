@@ -9,6 +9,7 @@ python train.py configs/seeker-td3.yaml --headless
 
 # For a GPU driven large test
 python train.py configs/seeker-apex-td3.yaml
+python train.py configs/simple/simple-td3.yaml --headless
 
 # Population based training
 python train.py configs/seeker-apex-pbt.yaml --pbt

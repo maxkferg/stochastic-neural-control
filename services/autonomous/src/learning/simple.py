@@ -44,8 +44,9 @@ class SimpleModel(Model):
             ckpts
         ])
 
-        last_layer = tf.keras.layers.LayerNormalization(epsilon=1e-6)(x)
+        #last_layer = tf.keras.layers.BatchNormalization()(x)
         #last_layer = x#tf.keras.layers.Dense(256, activation="relu", name="mink_last")(x)
+        last_layer = x
         output_layer = tf.keras.layers.Dense(
             num_outputs, 
             activation=None, 

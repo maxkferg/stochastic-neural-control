@@ -207,9 +207,53 @@ def rollout(agent, env_name, num_steps, out=None, no_render=True, render_q=False
         done = False
         reward_total = 0.0
         while not done and steps < (num_steps or steps + 1):
-            if use_lstm:
-                action, state_init, logits = agent.compute_action(
-                    state, state=state_init)
+            multi_obs = obs if multiagent else {_DUMMY_AGENT_ID: obs}
+            action_dict = {}
+            for agent_id, a_obs in multi_obs.items():
+                if a_obs is not None:
+                    policy_id = mapping_cache.setdefault(
+                        agent_id, policy_agent_mapping(agent_id))
+                    p_use_lstm = use_lstm[policy_id]
+                    if p_use_lstm:
+                        a_action, p_state, _ = agent.compute_action(
+                            a_obs,
+                            state=agent_states[agent_id],
+                            prev_action=prev_actions[agent_id],
+                            prev_reward=prev_rewards[agent_id],
+                            policy_id=policy_id)
+                        agent_states[agent_id] = p_state
+                    else:
+                        a_action = agent.compute_action(
+                            a_obs,
+                            prev_action=prev_actions[agent_id],
+                            prev_reward=prev_rewards[agent_id],
+                            policy_id=policy_id)
+                    a_action = _flatten_action(a_action)  # tuple actions
+                    action_dict[agent_id] = a_action
+                    #if agent_id==0:
+                    #    theta, dist = a_obs["target"][0], a_obs["target"][1]
+                    #    action_dict[agent_id] = pid.eval(theta, dist) # PID
+                    prev_actions[agent_id] = a_action
+            action = action_dict
+
+            action = action if multiagent else action[_DUMMY_AGENT_ID]
+            print(action)
+
+            #action = {
+            #    0: np.array([0.1, 0.1], dtype=np.float32),
+            #    1: np.array([0.1, 0], dtype=np.float32)
+            #}
+
+            next_obs, reward, done, _ = env.step(action)
+            if multiagent:
+                for agent_id, r in reward.items():
+                    prev_rewards[agent_id] = r
+            else:
+                prev_rewards[_DUMMY_AGENT_ID] = reward
+
+            if multiagent:
+                done = done["__all__"]
+                reward_total += sum(reward.values())
             else:
                 action = {}
                 for key,value in state.items():

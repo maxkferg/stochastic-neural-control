@@ -4,6 +4,9 @@ Train an agent on SeekerSimEnv
 # For a lightweight test
 conad 
 
+# For a development td3 test
+python train.py configs/seeker-td3.yaml --headless
+
 # For a GPU driven large test
 python train.py configs/seeker-apex-td3.yaml
 
@@ -52,8 +55,9 @@ with tf.Session() as sess:
 
 
 # Load API Config
-with open('environment/configs/test.yaml') as cfg:
+with open('environment/configs/prod.yaml') as cfg:
     api_config = yaml.load(cfg, Loader=yaml.Loader)
+    api_config['building_id'] = '5d984a7c6f1886dacf9c730d'
 
 
 def train_env_creator(cfg):

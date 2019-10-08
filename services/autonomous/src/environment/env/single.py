@@ -155,11 +155,11 @@ class SingleEnvironment():
 
         # Define the observation space a dict of simpler spaces
         self.observation_space = spaces.Dict({
-            'robot_theta': spaces.Box(low=-2*math.pi, high=2*math.pi, shape=(1,), dtype=np.float32),
+            'robot_theta': spaces.Box(low=-math.pi, high=math.pi, shape=(1,), dtype=np.float32),
             'robot_velocity': spaces.Box(low=-10, high=10, shape=(3,), dtype=np.float32),
             'target': spaces.Box(low=-20, high=20, shape=(2,), dtype=np.float32),
-            'ckpts': spaces.Box(low=-20, high=20, shape=(2*self.ckpt_count,), dtype=np.float32),
-            'maps': spaces.Box(low=0, high=255, shape=(48, 48), dtype=np.uint8),
+            'ckpts': spaces.Box(low=-20, high=20, shape=(self.ckpt_count,2), dtype=np.float32),
+            'maps': spaces.Box(low=0, high=255, shape=(48, 48), dtype=np.float32),
         })
 
         if self.geometry_policy=="subscribe":
@@ -363,7 +363,7 @@ class SingleEnvironment():
                 ckpt_positions.append(tuple(rel_pos[0:2]))
 
         # Sort checkpoints. Pad with zeros until length n_ckpt
-        ckpt_positions = list(reversed(ckpt_positions)) + [(0,0)]*self.ckpt_count
+        ckpt_positions = list(reversed(ckpt_positions)) + [(10,10)]*self.ckpt_count
         ckpt_positions = ckpt_positions[:self.ckpt_count]
 
         # Write robot positions to the map
@@ -381,7 +381,7 @@ class SingleEnvironment():
             "rel_ckpt_positions": ckpt_positions,
             "rel_target_orientation": math.atan2(tarPosInCar[1], tarPosInCar[0]),
             "rel_target_distance": math.sqrt(tarPosInCar[1]**2 + tarPosInCar[0]**2),
-            "map": self.pixel_state.observe(robot_pos),
+            "map": self.pixel_state.observe(robot_pos, robot_theta).astype(np.float32),
             #"lidar": lidar,
             "is_at_checkpoint": is_at_checkpoint,
             "is_crashed": self.is_crashed(),
@@ -426,6 +426,22 @@ class SingleEnvironment():
         """
         Return the observation that is passed to the learning algorithm
         """
+        def encode_checkpoints(ckpts, robot_orn):
+            """Encode checkpoints to [theta,r]"""
+            encoded = []
+            for c in ckpts:
+                orn = math.atan2(c[1], c[0]) - robot_orn
+                orn = normalize_angle(orn)
+                dist = math.sqrt(c[1]**2 + c[0]**2)
+                encoded.append([orn,dist])
+            return np.array(encoded, dtype=np.float32)
+
+        def encode_target(state):
+            """Encode target to [theta,r]"""
+            orn = normalize_angle(state["rel_target_orientation"])
+            dist = state["rel_target_distance"]
+            return np.array([orn, dist], dtype=np.float32)
+
         obs = {
             'robot_theta': np.array([state["robot_theta"]], dtype=np.float32),
             'robot_velocity': np.array([
@@ -433,11 +449,8 @@ class SingleEnvironment():
                 state["robot_vy"],
                 state["robot_vt"]
             ], dtype=np.float32),
-            'target': np.array([
-                state["rel_target_orientation"],
-                state["rel_target_distance"]
-            ], dtype=np.float32),
-            'ckpts': np.array(state["rel_ckpt_positions"]).flatten(),
+            'target': encode_target(state),
+            'ckpts': encode_checkpoints(state["rel_ckpt_positions"], state["robot_theta"]),
             'maps': state["map"]
         }
         # Important that the order is the same as observation space

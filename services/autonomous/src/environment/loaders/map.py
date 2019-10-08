@@ -33,7 +33,11 @@ class MapLoader():
 
 
     def fetch(self):
-        result = self.client.execute(getMapGeometry)
+        params = {
+            "is_deleted": False,
+            "building_id": self.building_id
+        }
+        result = self.client.execute(getMapGeometry, params)
         result = json.loads(result)
         self._cache = result['data']['mapGeometry']
         return self._cache

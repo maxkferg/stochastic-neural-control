@@ -12,6 +12,7 @@ import argparse
 import numpy as np
 import transforms3d
 import plotly.graph_objs as go
+from collections import defaultdict
 from graphqlclient import GraphQLClient
 from graphql import getCurrentGeometry
 from kafka import KafkaProducer
@@ -51,6 +52,47 @@ class MapBuilder():
         result = self.graphql_client.execute(getCurrentGeometry)
         result = json.loads(result)
         return result['data']['meshesCurrent']
+
+
+    def _get_deleted_mesh(self):
+        result = self.graphql_client.execute(getDeletedGeometry)
+        result = json.loads(result)
+        return result['data']['meshesCurrent']
+
+
+    def _get_map_geometry(self):
+        result = self.graphql_client.execute(getMapGeometry)
+        result = json.loads(result)
+        return result['data']['mapGeometry']
+
+
+    def delete_stale_map_geometry(self):
+        """
+        Delete any map data that does not appear in the building
+        """
+        logging.info("Deleting stale map geometry")
+        meshes = self._get_initial_geometry()
+        mesh_lookup = {mesh["id"]:mesh for mesh in meshes}
+        maps = self._get_map_geometry()
+        for map_object in maps:
+            mesh_id = map_object["mesh_id"]
+            if map_object["is_deleted"] == "true":
+                continue
+            if mesh_id not in mesh_lookup or mesh_lookup[mesh_id]["is_deleted"]:
+                print("Deleting map geometry for %s"%map_object["name"])
+                self.graphql_client.execute(deleteMapGeometry,
+                    {"id": map_object["id"]}
+                )
+
+
+    def update_map_object(self, map_object):
+        """
+        Update the polygons in the database
+        Creates new polygons if they do not exist
+        """
+        logging.info("Writing updated map to API: %s"%map_object["mesh_id"])
+        params = map_object.copy()
+        self.graphql_client.execute(updateMapGeometry, params)
 
 
     def _convert_to_polygons(self, mesh, furniture_height):

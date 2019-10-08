@@ -72,8 +72,8 @@ mutation UpdateTrajectory(
 
 
 getMapGeometry = '''
-query GetMapGeometry {
-  mapGeometry {
+query GetMapGeometry($building_id: String!, $is_deleted: Boolean) {
+  mapGeometry(building_id: $building_id, is_deleted: $is_deleted) {
     id
     name
     mesh_id

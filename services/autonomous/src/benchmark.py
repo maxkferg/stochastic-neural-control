@@ -13,6 +13,7 @@ Example usage:
 
 import math
 import yaml
+import random
 import sys, gym, time
 import numpy as np
 import tkinter
@@ -48,8 +49,9 @@ def train_env_creator():
         "headless": True,
         "reset_on_target": True
     }
-    with open('environment/configs/test.yaml') as fs:
+    with open('environment/configs/prod.yaml') as fs:
         api_config = yaml.load(fs, Loader=yaml.Loader)
+        api_config['building_id'] = '5d984a7c6f1886dacf9c730d'
     loader = GeometryLoader(api_config) # Handles HTTP
     base = BaseEnvironment(loader, headless=cfg["headless"])
     return MultiEnvironment(base, verbosity=0, env_config=cfg)

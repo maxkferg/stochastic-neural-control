@@ -36,9 +36,9 @@ class MinkModel(Model):
         obs = input_dict["obs"]
 
         # Convolutional block
-        scale = 128
+        scale = 255
+        x = x / scale
         x = tf.expand_dims(obs['maps'], -1)
-        x = tf.dtypes.cast(x, tf.float32) / scale
         x = tf.keras.layers.Conv2D(
             16,
             (3,3),
@@ -72,6 +72,7 @@ class MinkModel(Model):
             name="mink_conv4")(x)
 
         x = tf.keras.layers.Flatten(name="mink_flatten")(x)
+        ckpts = tf.keras.layers.Flatten(name="ckpts_flatten")(obs['ckpts'])
 
         # Concatenate all inputs together
         x = tf.keras.layers.Concatenate(axis=-1, name="mink_cat")([
@@ -79,7 +80,7 @@ class MinkModel(Model):
             obs['target'],
             obs['robot_theta'],
             obs['robot_velocity'],
-            obs['ckpts']
+            ckpts
         ])
 
         last_layer = x#tf.keras.layers.Dense(256, activation="relu", name="mink_last")(x)

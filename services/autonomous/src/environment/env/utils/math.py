@@ -2,6 +2,14 @@ import math
 import numpy as np
 
 
+def normalize_angle(angle):
+    """Convert angle to [-pi,pi] range"""
+    if angle < -math.pi:
+        return normalize_angle(angle + 2*math.pi)
+    if angle > math.pi:
+        return normalize_angle(angle - 2*math.pi)
+    return angle
+
 def positive_component(array):
     """Replace postive values with zero"""
     return (np.abs(array) + array)/2

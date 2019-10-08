@@ -12,17 +12,19 @@ from PIL import Image, ImageDraw, ImageColor
 
 
 class MultiEnvironment(MultiAgentEnv):
+    noop_action = (0,0)
 
     def __init__(self, base_env, creation_delay=1, verbosity=1, env_config={}):
         self.dones = set()
         self.base_env = base_env
+        self.robots = base_env.robots
         self.env = {}
 
         delay = creation_delay*random.random()
         print("Waiting for %.3f seconds before creating this env"%delay)
         time.sleep(delay)
 
-        for i,robot in enumerate(self.base_env.robots):
+        for i,robot in enumerate(self.robots):
             self.env[i] = SingleEnvironment(base_env, robot=robot, verbosity=verbosity)
 
         self.default_env = self.env[0]
@@ -34,9 +36,12 @@ class MultiEnvironment(MultiAgentEnv):
         """
         Step the simulation forward one timestep
         """
-        for key, action in actions.items():
-            self.env[key].act(action)
-
+        for i,env in self.env.items():
+            if i in actions:
+                env.act(actions[i])
+            else:
+                env.act(self.noop_action)
+            
         self.default_env.step()
 
         obs, rew, done, info = {}, {}, {}, {}

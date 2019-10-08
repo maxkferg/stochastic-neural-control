@@ -84,7 +84,7 @@ class RoadmapPlanner():
         """
         self.building_map = self._correct_map(building_map)
         self.obstacles = self._map_to_circles(self.building_map)
-
+        
 
     def solve(self, start_point, end_point):
         sx = start_point[0]

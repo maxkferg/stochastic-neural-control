@@ -41,9 +41,11 @@ class BaseEnvironment():
         self.objects = []
         self.build()
         # Setup the PRM planner. Used for target selection and checkpoints
+        # Solve a simple search problem to prebuild the roadmap
         self.building_map = self.loader.map.cached()
         self.roadmap = self.loader.roadmap_planner
         self.roadmap.set_map(self.building_map)
+        self.roadmap.solve((0,0),(1,1))
 
 
     def build(self):

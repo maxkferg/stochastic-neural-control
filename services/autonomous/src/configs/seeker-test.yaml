@@ -27,7 +27,7 @@ seeker-test:
         # === Exploration ===
         schedule_max_timesteps: 100000
         exploration_fraction: 0.5
-        target_network_update_freq: 5000
+        target_network_update_freq: 500000
         tau: 0.001 # 1
 
         # === Replay buffer ===

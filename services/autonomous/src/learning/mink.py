@@ -34,11 +34,12 @@ class MinkModel(Model):
                     ('velocity', <tf.Tensor shape=(?, 3) dtype=float32>)]))])}
         """
         obs = input_dict["obs"]
+        #self.summarize_observation(obs)
 
         # Convolutional block
         scale = 255
-        x = x / scale
         x = tf.expand_dims(obs['maps'], -1)
+        x = x/scale
         x = tf.keras.layers.Conv2D(
             16,
             (3,3),
@@ -47,6 +48,8 @@ class MinkModel(Model):
             padding="same",
             name="mink_conv1")(x)
 
+        x = tf.keras.layers.BatchNormalization(name="mink_bn1")(x)
+
         x = tf.keras.layers.Conv2D(
             32,
             (3,3),
@@ -54,6 +57,10 @@ class MinkModel(Model):
             activation="relu",
             padding="same",
             name="mink_conv2")(x)
+
+        x = tf.keras.layers.MaxPooling2D(
+            pool_size=(2, 2),
+            name="pooling")(x)
 
         x = tf.keras.layers.Conv2D(
             32,
@@ -71,6 +78,7 @@ class MinkModel(Model):
             padding="same",
             name="mink_conv4")(x)
 
+        x = tf.keras.layers.BatchNormalization(name="mink_bn2")(x)
         x = tf.keras.layers.Flatten(name="mink_flatten")(x)
         ckpts = tf.keras.layers.Flatten(name="ckpts_flatten")(obs['ckpts'])
 
@@ -83,10 +91,34 @@ class MinkModel(Model):
             ckpts
         ])
 
-        last_layer = x#tf.keras.layers.Dense(256, activation="relu", name="mink_last")(x)
+        x = tf.keras.layers.Dense(256, activation="relu", name="mink_last")(x)
+        last_layer = x#tf.keras.layers.BatchNormalization(name="mink_bn3")(x)
         output_layer = tf.keras.layers.Dense(num_outputs, activation=None, name="mink_out")(last_layer)
 
         return output_layer, last_layer
+
+
+    def summarize_observation(self, obs):
+        tf.summary.scalar("maps/max",
+            tf.reduce_max(obs["maps"]))
+
+        tf.summary.scalar("maps/min",
+            tf.reduce_min(obs["maps"]))
+
+        tf.summary.scalar("maps/mean",
+            tf.reduce_min(obs["maps"]))
+
+        tf.summary.scalar("robot_theta/mean",
+            tf.reduce_min(obs["robot_theta"]))
+
+        tf.summary.scalar("robot_velocity/mean",
+            tf.reduce_min(obs["robot_velocity"]))
+
+        tf.summary.scalar("target/mean",
+            tf.reduce_min(obs["target"]))
+
+        tf.summary.scalar("ckpts/mean",
+            tf.reduce_min(obs["ckpts"]))
 
 
     def custom_stats(self):

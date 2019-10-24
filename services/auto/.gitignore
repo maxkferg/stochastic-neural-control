@@ -1,0 +1,6 @@
+*.pyc
+*.DS_Store
+src/logdir/*
+src/videos/*
+src/visualise/*
+src/checkpoints

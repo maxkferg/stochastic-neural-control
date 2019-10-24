@@ -27,16 +27,24 @@ register(
 )
 
 def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
+    env_config = dict(
+        headless=True
+    )
+
+    eval_env_config = dict(
+        headless=True
+    )
+
     sampler = SerialSampler(
         EnvCls=gym_make,
-        env_kwargs=dict(id=env_id),
-        eval_env_kwargs=dict(id=env_id),
+        env_kwargs=dict(id=env_id, config=env_config),
+        eval_env_kwargs=dict(id=env_id, config=eval_env_config),
         batch_T=1,  # One time-step per sampler iteration.
         batch_B=1,  # One environment (i.e. sampler Batch dimension).
         max_decorrelation_steps=0,
-        eval_n_envs=10,
+        eval_n_envs=1,
         eval_max_steps=int(51e3),
-        eval_max_trajectories=50,
+        eval_max_trajectories=20,
     )
     algo = SAC()
     agent = SacAgent(

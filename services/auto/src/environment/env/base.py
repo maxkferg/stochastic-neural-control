@@ -121,7 +121,6 @@ class BaseEnvironment():
 
     def create_turtlebot(self, id, position, name):
         position[2] = max(0, position[2])
-        physics = {}
         config = {
             "is_discrete": False,
             "initial_pos": position,
@@ -132,7 +131,7 @@ class BaseEnvironment():
             "angular_power": float(os.environ.get('ANGULAR_SPEED', 10)),
         }
         logging.debug("Creating Turtlebot at: {}".format(position))
-        turtlebot = Turtlebot(physics, config)
+        turtlebot = Turtlebot(self.physics, config)
         turtlebot.id = id
         turtlebot.name = name
         turtlebot.set_position(position)
@@ -272,7 +271,7 @@ class BaseEnvironment():
 
 
 
-
     def __del__(self):
+      if hasattr(self, 'physics'):
         self.physics.resetSimulation()
         self.physics.disconnect()

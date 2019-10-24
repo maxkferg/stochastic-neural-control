@@ -535,6 +535,7 @@ class SingleEnvironment():
         self.previous_state = state
         self.reward_so_far += reward
         done = self.termination(state)
+        info = dict(timeout=False)
 
         # Respawn the target and clear the isAtTarget flag
         if not self.resetOnTarget and state["is_at_target"]:
@@ -544,7 +545,7 @@ class SingleEnvironment():
         if self.debug:
             self._validate_observation(observation)
 
-        return observation, reward, done, {}
+        return observation, reward, done, info
 
 
     def is_crashed(self):

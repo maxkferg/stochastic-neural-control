@@ -22,12 +22,15 @@ class PiMlpModel(torch.nn.Module):
         )
 
     def forward(self, observation, prev_action, prev_reward):
-        print(observation)
         observation = observation.ckpts
-        lead_dim, T, B, _ = infer_leading_dims(observation, self._obs_ndim)
+        #obs_ndim = self._obs_ndim
+        obs_ndim = len(observation.shape)
+        lead_dim, T, B, _ = infer_leading_dims(observation, obs_ndim)
         output = self.mlp(observation.view(T * B, -1))
         mu, log_std = output[:, :self._action_size], output[:, self._action_size:]
         mu, log_std = restore_leading_dims((mu, log_std), lead_dim, T, B)
+        mu = torch.unsqueeze(mu,dim=0)
+        log_std = torch.unsqueeze(log_std,dim=0)
         return mu, log_std
 
 
@@ -48,9 +51,10 @@ class QofMuMlpModel(torch.nn.Module):
         )
 
     def forward(self, observation, prev_action, prev_reward, action):
-        observation = observation["ckpts"]
+        observation = observation.ckpts
+        obs_ndim = len(observation.shape)
         lead_dim, T, B, _ = infer_leading_dims(observation,
-            self._obs_ndim)
+            obs_ndim)
         q_input = torch.cat(
             [observation.view(T * B, -1), action.view(T * B, -1)], dim=1)
         q = self.mlp(q_input).squeeze(-1)

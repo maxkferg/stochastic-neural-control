@@ -28,9 +28,10 @@ class WalkerBase(BaseRobot):
         scale = 1,
         resolution=512,
         control = 'torque',
+        physics = None,
         env = None
     ):
-        BaseRobot.__init__(self, filename, robot_name, scale, env)
+        BaseRobot.__init__(self, filename, robot_name, physics, scale, env=env)
         self.control = control
         self.resolution = resolution
         self.obs_dim = 0
@@ -437,10 +438,10 @@ class Humanoid(WalkerBase):
                 humanoidId = i
         ## Spherical radiance/glass shield to protect the robot's camera
         if self.glass_id is None:
-            glass_id = p.loadMJCF(os.path.join(self.physics_model_dir, "glass.xml"))[0]
+            glass_id = self.physics.loadMJCF(os.path.join(self.physics_model_dir, "glass.xml"))[0]
             #print("setting up glass", glass_id, humanoidId)
-            p.changeVisualShape(glass_id, -1, rgbaColor=[0, 0, 0, 0])
-            cid = p.createConstraint(humanoidId, -1, glass_id,-1,p.JOINT_FIXED,[0,0,0],[0,0,1.4],[0,0,1])
+            self.physics.changeVisualShape(glass_id, -1, rgbaColor=[0, 0, 0, 0])
+            cid = self.physics.createConstraint(humanoidId, -1, glass_id,-1,p.JOINT_FIXED,[0,0,0],[0,0,1.4],[0,0,1])
 
         self.motor_names  = ["abdomen_z", "abdomen_y", "abdomen_x"]
         self.motor_power  = [100, 100, 100]
@@ -621,8 +622,8 @@ class Quadrotor(WalkerBase):
         else:
             realaction = action
 
-        p.setGravity(0, 0, 0)
-        p.resetBaseVelocity(self.robot_ids[0], realaction[:3], realaction[3:])
+        self.physics.setGravity(0, 0, 0)
+        self.physics.resetBaseVelocity(self.robot_ids[0], realaction[:3], realaction[3:])
 
     def robot_specific_reset(self):
         WalkerBase.robot_specific_reset(self)
@@ -654,8 +655,10 @@ class Turtlebot(WalkerBase):
                             target_pos=config["target_pos"],
                             resolution=config["resolution"],
                             control = 'velocity',
+                            physics = physics,
                             env=env)
 
+        self.physics = physics
         self.is_discrete = config["is_discrete"]
         self.racecarUniqueId = self.robot_ids[0]
         self.linear_power = config['linear_power']
@@ -730,7 +733,7 @@ class Turtlebot(WalkerBase):
 
     def get_state(self):
         state = {}
-        pos, orn = p.getBasePositionAndOrientation(self.racecarUniqueId)
+        pos, orn = self.physics.getBasePositionAndOrientation(self.racecarUniqueId)
         return {
             "position": pos,
             "orientation": orn 

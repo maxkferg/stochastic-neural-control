@@ -72,7 +72,7 @@ class PiMlpModel(torch.nn.Module):
         self.obs_ndim = self.encoder.output_ndim
         self._action_size = action_size
         self.mlp = MlpModel(
-            input_size=526,
+            input_size=302,
             hidden_sizes=hidden_sizes,
             output_size=action_size * 2,
         )
@@ -99,7 +99,7 @@ class QofMuMlpModel(torch.nn.Module):
         self.encoder = StateEncoder()
         self.obs_ndim = self.encoder.output_ndim
         self.mlp = MlpModel(
-            input_size=526 + action_size,
+            input_size=302 + action_size,
             hidden_sizes=hidden_sizes,
             output_size=1,
         )

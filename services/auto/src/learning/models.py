@@ -19,10 +19,16 @@ class StateEncoder(torch.nn.Module):
     def __init__(self):
         super(StateEncoder, self).__init__()
         self.conv1 = nn.Conv2d(1, 6, kernel_size=3)
+        self.norm1 = nn.GroupNorm(num_groups=2, num_channels=6)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, kernel_size=3)
+        self.norm2 = nn.GroupNorm(num_groups=2, num_channels=16)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv3 = nn.Conv2d(16, 32, kernel_size=3)
+        self.norm3 = nn.GroupNorm(num_groups=2, num_channels=32)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv4 = nn.Conv2d(32, 32, kernel_size=3)
+        self.norm4 = nn.GroupNorm(num_groups=2, num_channels=32)
         #self.fc1 = nn.Linear(16 * 5 * 5, 120)
         #self.fc2 = nn.Linear(120, 84)
         #self.fc3 = nn.Linear(84, 10)
@@ -30,9 +36,14 @@ class StateEncoder(torch.nn.Module):
     def forward(self, observation, prev_action, prev_reward):
         lead_dim, T, B, _ = infer_leading_dims(observation.maps, self.map_ndim)
         x = observation.maps.view(B, 1, 48, 48)
+        x = (x - 20) / 200
         x = self.pool(F.relu(self.conv1(x)))
+        x = self.norm1(x)
         x = self.pool(F.relu(self.conv2(x)))
         x = self.pool(F.relu(self.conv3(x)))
+        x = self.norm3(x)
+        x = self.pool(F.relu(self.conv4(x)))
+        x = self.norm4(x)
         x = x.view(B, -1)
         
         sensors = torch.cat([

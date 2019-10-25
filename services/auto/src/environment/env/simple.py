@@ -20,6 +20,9 @@ class SimpleEnvironment(SingleEnvironment, gym.Env):
         with open('environment/configs/prod.yaml') as cfg:
             api_config = yaml.load(cfg, Loader=yaml.Loader)
             api_config['building_id'] = '5d984a7c6f1886dacf9c730d'
+        
+        self.nsteps = 0
+        self.horizon = 100
 
         loader = GeometryLoader(api_config) # Handles HTTP
         headless = config["headless"]
@@ -27,11 +30,18 @@ class SimpleEnvironment(SingleEnvironment, gym.Env):
         robot = base_env.robots[0]
         super().__init__(base_env, robot=robot, config=config)
 
+    def reset(self):
+        self.nsteps = 0
+        return super().reset()
+
     def step(self, actions):
         """
         Step the simulation forward one timestep
         """
         self.act(actions)
         self.base.step()
+        self.nsteps += 1
         obs, rew, done, info = self.observe()
+        if self.nsteps > self.horizon:
+            done = True
         return obs, rew, done, info

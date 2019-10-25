@@ -42,9 +42,9 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
         batch_T=1,  # One time-step per sampler iteration.
         batch_B=1,  # One environment (i.e. sampler Batch dimension).
         max_decorrelation_steps=0,
-        eval_n_envs=1,
-        eval_max_steps=int(51e3),
-        eval_max_trajectories=20,
+        eval_n_envs=4,
+        eval_max_steps=int(10e3),
+        eval_max_trajectories=10,
     )
     algo = SAC()
     agent = SacAgent(
@@ -55,8 +55,8 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
         algo=algo,
         agent=agent,
         sampler=sampler,
-        n_steps=1e6,
-        log_interval_steps=1e4,
+        n_steps=1e5,
+        log_interval_steps=1e3,
         affinity=dict(cuda_idx=cuda_idx),
     )
     config = dict(env_id=env_id)

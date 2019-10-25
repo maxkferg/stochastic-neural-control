@@ -5,16 +5,19 @@ Critic algorithm. Can use a GPU for the agent (applies to both sample and
 train). No parallelism employed, everything happens in one python process; can
 be easier to debug.
 
-Requires OpenAI gym (and maybe mujoco).  If not installed, move on to next
-example.
+Example Usage:
+
+python train.py --cuda_idx=0
 
 """
-
-from rlpyt.samplers.serial.sampler import SerialSampler
 from rlpyt.envs.gym import make as gym_make
+from rlpyt.utils.launching.affinity import encode_affinity
+from rlpyt.utils.launching.affinity import affinity_from_code
+from rlpyt.samplers.parallel.cpu.sampler import CpuSampler
 from rlpyt.algos.qpg.sac import SAC
 from rlpyt.agents.qpg.sac_agent import SacAgent
 from rlpyt.runners.minibatch_rl import MinibatchRlEval
+from rlpyt.runners.async_rl import AsyncRlEval
 from rlpyt.utils.logging.context import logger_context
 from gym.envs.registration import register
 from learning.models import PiMlpModel
@@ -34,8 +37,8 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
     eval_env_config = dict(
         headless=True
     )
-
-    sampler = SerialSampler(
+ 
+    sampler = CpuSampler(
         EnvCls=gym_make,
         env_kwargs=dict(id=env_id, config=env_config),
         eval_env_kwargs=dict(id=env_id, config=eval_env_config),
@@ -46,6 +49,7 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
         eval_max_steps=int(10e3),
         eval_max_trajectories=10,
     )
+
     algo = SAC()
     agent = SacAgent(
         ModelCls=PiMlpModel,
@@ -56,8 +60,8 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
         agent=agent,
         sampler=sampler,
         n_steps=1e5,
-        log_interval_steps=1e3,
-        affinity=dict(cuda_idx=cuda_idx),
+        affinity=dict(cuda_idx=cuda_idx, workers_cpus=[1,2,3,4]),
+        log_interval_steps=1e3
     )
     config = dict(env_id=env_id)
     name = "sac_" + env_id

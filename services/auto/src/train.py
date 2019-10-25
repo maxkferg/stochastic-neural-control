@@ -66,7 +66,7 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
 
     algo = SAC(
         reward_scale=1,
-        n_step_return=3,
+        n_step_return=1,
         learning_rate=1e-4,
         target_update_tau=0.002,
         target_entropy="auto",

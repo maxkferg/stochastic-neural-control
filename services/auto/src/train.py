@@ -43,9 +43,9 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
         env_kwargs=dict(id=env_id, config=env_config),
         eval_env_kwargs=dict(id=env_id, config=eval_env_config),
         batch_T=1,  # One time-step per sampler iteration.
-        batch_B=1,  # One environment (i.e. sampler Batch dimension).
+        batch_B=8,  # One environment (i.e. sampler Batch dimension).
         max_decorrelation_steps=0,
-        eval_n_envs=4,
+        eval_n_envs=8,
         eval_max_steps=int(10e3),
         eval_max_trajectories=10,
     )
@@ -61,7 +61,7 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
         sampler=sampler,
         n_steps=1e5,
         affinity=dict(cuda_idx=cuda_idx, workers_cpus=[1,2,3,4]),
-        log_interval_steps=1e3
+        log_interval_steps=5e3
     )
     config = dict(env_id=env_id)
     name = "sac_" + env_id

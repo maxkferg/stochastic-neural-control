@@ -35,6 +35,7 @@ dependencies:
     - plotly
     - pybullet
     - pyprind
+    - pyyaml
     - requests
     - scikit-image
     - scipy

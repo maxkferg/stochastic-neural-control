@@ -26,6 +26,7 @@ from learning.sac_agent import SacAgent
 register(
     id='Seeker-v0',
     entry_point='environment.env.simple:SimpleEnvironment',
+    max_episode_steps=500,
 )
 
 

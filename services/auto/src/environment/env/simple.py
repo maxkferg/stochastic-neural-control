@@ -28,11 +28,12 @@ class SimpleEnvironment(SingleEnvironment, gym.Env):
         robot = base_env.robots[0]
         self.nsteps = 0
         self.action_norm = 0
+        self.last_action = None
         super().__init__(base_env, robot=robot, config=config)
         
     def reset(self):
         if self.nsteps > 1000:
-            print("Action Norm:", self.action_norm/self.nsteps)
+            print("Action Norm:", self.action_norm/self.nsteps, self.last_action)
             self.action_norm = 0
             self.nsteps = 0
         return super().reset()
@@ -45,5 +46,6 @@ class SimpleEnvironment(SingleEnvironment, gym.Env):
         self.base.step()
         self.nsteps += 1
         self.action_norm += np.mean(np.abs(actions))
+        self.last_action = actions
         obs, rew, done, info = self.observe()
         return obs, rew, done, info

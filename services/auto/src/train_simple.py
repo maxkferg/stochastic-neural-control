@@ -13,7 +13,8 @@ python train.py --cuda_idx=0
 from rlpyt.envs.gym import make as gym_make
 from rlpyt.utils.launching.affinity import encode_affinity
 from rlpyt.utils.launching.affinity import prepend_run_slot, affinity_from_code
-from rlpyt.samplers.parallel.cpu.sampler import CpuSampler
+from rlpyt.samplers.serial.sampler import SerialSampler
+#from rlpyt.samplers.parallel.cpu.sampler import CpuSampler
 from rlpyt.algos.qpg.sac import SAC
 #from rlpyt.agents.qpg.sac_agent import SacAgent
 from rlpyt.runners.minibatch_rl import MinibatchRlEval
@@ -51,16 +52,16 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
         headless=True
     )
  
-    sampler = CpuSampler(
+    sampler = SerialSampler(
         EnvCls=gym_make,
         env_kwargs=dict(id=env_id, config=env_config),
         eval_env_kwargs=dict(id=env_id, config=eval_env_config),
         batch_T=1,  # Num time-step per sampler iteration.
-        batch_B=1,  # One environment (i.e. sampler Batch dimension).
+        batch_B=4,  # One environment (i.e. sampler Batch dimension).
         max_decorrelation_steps=0,
         eval_n_envs=4,
-        eval_max_steps=int(20e3),
-        eval_max_trajectories=50,
+        eval_max_steps=int(1e3),
+        eval_max_trajectories=2,
     )
 
     algo = SAC(

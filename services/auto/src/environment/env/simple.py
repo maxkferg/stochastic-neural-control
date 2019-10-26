@@ -3,6 +3,7 @@ Simple, single agent gym environment
 """
 import gym
 import yaml
+import numpy as np
 from .base import BaseEnvironment
 from .single import SingleEnvironment
 from ..loaders.geometry import GeometryLoader
@@ -25,8 +26,16 @@ class SimpleEnvironment(SingleEnvironment, gym.Env):
         headless = config["headless"]
         base_env = BaseEnvironment(loader, headless=headless)
         robot = base_env.robots[0]
+        self.nsteps = 0
+        self.action_norm = 0
         super().__init__(base_env, robot=robot, config=config)
-
+        
+    def reset(self):
+        if self.nsteps > 1000:
+            print("Action Norm:", self.action_norm/self.nsteps)
+            self.action_norm = 0
+            self.nsteps = 0
+        return super().reset()
 
     def step(self, actions):
         """
@@ -34,5 +43,7 @@ class SimpleEnvironment(SingleEnvironment, gym.Env):
         """
         self.act(actions)
         self.base.step()
+        self.nsteps += 1
+        self.action_norm += np.mean(np.abs(actions))
         obs, rew, done, info = self.observe()
         return obs, rew, done, info

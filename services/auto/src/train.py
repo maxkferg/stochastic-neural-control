@@ -13,7 +13,7 @@ python train.py --cuda_idx=0
 from rlpyt.envs.gym import make as gym_make
 from rlpyt.utils.launching.affinity import encode_affinity
 from rlpyt.utils.launching.affinity import prepend_run_slot, affinity_from_code
-#from rlpyt.samplers.async_.cpu_sampler import AsyncCpuSampler
+from rlpyt.samplers.async_.cpu_sampler import AsyncCpuSampler
 from rlpyt.samplers.async_.gpu_sampler import AsyncGpuSampler
 from rlpyt.algos.qpg.sac import SAC
 from rlpyt.runners.async_rl import AsyncRlEval
@@ -48,7 +48,7 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
         headless=True
     )
  
-    sampler = AsyncGpuSampler(
+    sampler = AsyncCpuSampler(
         EnvCls=gym_make,
         env_kwargs=dict(id=env_id, config=env_config),
         eval_env_kwargs=dict(id=env_id, config=eval_env_config),
@@ -70,8 +70,8 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
 
     agent = SacAgent(
         StateEncoderCls=StateEncoder,
-        ModelCls=PiMlpModel,
-        QModelCls=QofMuMlpModel,
+        ModelCls=PiModel,
+        QModelCls=QofMuModel,
     )
 
     runner = AsyncRlEval(

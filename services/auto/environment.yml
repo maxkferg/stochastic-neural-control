@@ -1,0 +1,52 @@
+name: sim
+channels:
+  - conda-forge
+  - defaults
+  - pytorch
+dependencies:
+  - pip
+  - python
+  - numpy
+  - pillow
+  - psutil
+  - pytorch
+  - readline
+  - rtree
+  - setuptools
+  - sqlite
+  - tk
+  - torchvision
+  - wheel
+  - x264
+  - xz
+  - yaml
+  - zlib
+  - pip:
+    - astar
+    - colored-traceback
+    - graphql-python
+    - graphqlclient
+    - gym
+    - jupyter
+    - kafka-python
+    - keras-applications
+    - numpy
+    - opencv-python-headless
+    - plotly
+    - pybullet
+    - pyprind
+    - requests
+    - scikit-image
+    - scipy
+    - setproctitle
+    - shapely
+    - tensorboard
+    - tensorflow
+    - tensorflow-estimator
+    - termcolor
+    - tqdm
+    - transforms3d
+    - trimesh
+    - git+https://github.com/astooke/rlpyt
+prefix: /usr/local/miniconda3/envs/sim
+

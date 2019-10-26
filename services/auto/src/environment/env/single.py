@@ -239,13 +239,16 @@ class SingleEnvironment():
             theta = 2*math.pi*random.random()
             orn = pybullet.getQuaternionFromEuler((0, 0, theta))
             self.robot.set_pose(start, orn)
+            # Overwrite the previous state so we do not get huge velocities
+            if self.previous_state is not None:
+                self.previous_state["robot_pos"] = start
+                self.previous_state["robot_theta"] = theta
         elif self.robot_policy=="api":
             raise NotImplimentedError("API Robot not implemented")
         elif self.robot_policy=="subscribe":
             self.base.sync_robot_position()
         else:
             raise ValueError("Invalid robot policy", self.robot_policy)
-
 
     def reset_target_position(self):
         """Move the target to a new position"""

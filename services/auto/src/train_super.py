@@ -17,7 +17,8 @@ from rlpyt.utils.launching.affinity import prepend_run_slot, affinity_from_code
 from rlpyt.samplers.parallel.cpu.sampler import CpuSampler
 from rlpyt.algos.qpg.sac import SAC
 #from rlpyt.agents.qpg.sac_agent import SacAgent
-from rlpyt.runners.minibatch_rl import MinibatchRlEval
+from rlpyt.runners.async_rl import AsyncRlEval
+#from rlpyt.runners.minibatch_rl import MinibatchRlEval
 from rlpyt.utils.logging.context import logger_context
 from learning.sac_agent import SacAgent
 
@@ -49,7 +50,7 @@ def build_and_train(env_id="Sensor-Robot-v0", run_ID=0, cuda_idx=None):
     affinity_code = encode_affinity(
         n_cpu_core=8,
         n_gpu=1,
-        async_sample=False,
+        async_sample=True,
     )
     slot_affinity_code = prepend_run_slot(0, affinity_code)
     affinity = affinity_from_code(slot_affinity_code)
@@ -92,7 +93,7 @@ def build_and_train(env_id="Sensor-Robot-v0", run_ID=0, cuda_idx=None):
         q_model_kwargs = dict(hidden_sizes=[256]),
     )
 
-    runner = MinibatchRlEval(
+    runner = AsyncRlEval(
         algo=algo,
         agent=agent,
         sampler=sampler,

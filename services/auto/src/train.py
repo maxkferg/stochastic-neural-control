@@ -54,7 +54,7 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
         env_kwargs=dict(id=env_id, config=env_config),
         eval_env_kwargs=dict(id=env_id, config=eval_env_config),
         batch_T=1,  # One time-step per sampler iteration.
-        batch_B=32,  # One environment (i.e. sampler Batch dimension).
+        batch_B=24,  # One environment (i.e. sampler Batch dimension).
         max_decorrelation_steps=0,
         eval_n_envs=4,
         eval_max_steps=int(20e3),
@@ -62,10 +62,11 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
     )
 
     algo = SAC(
-        reward_scale=2,
+        reward_scale=10,
         n_step_return=1,
-        learning_rate=3e-4,
-        target_update_tau=0.005,
+        learning_rate=1e-4,
+        clip_grad_norm=10,
+        target_update_tau=0.001,
         target_entropy="auto",
     )
 
@@ -73,9 +74,7 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
         StateEncoderCls=StateEncoder,
         ModelCls=PiModel,
         QModelCls=QofMuModel,
-        model_kwargs = dict(hidden_sizes=[256]),
-        q_model_kwargs = dict(hidden_sizes=[256]),
-        pretrain_std=0.4, # Start with noisy but reasonable policy
+        pretrain_std=0.1, # Start with noisy but reasonable policy
     )
 
     runner = AsyncRlEval(
@@ -84,7 +83,7 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
         sampler=sampler,
         n_steps=1e7,
         affinity=affinity,
-        log_interval_steps=10e3
+        log_interval_steps=20e3
     )
 
     config = dict(env_id=env_id)

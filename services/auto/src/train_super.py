@@ -77,7 +77,7 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
         QModelCls=QofMuModel,
         model_kwargs = dict(hidden_sizes=[128]),
         q_model_kwargs = dict(hidden_sizes=[128]),
-        pretrain_std=0.4, # Start with noisy but reasonable policy
+        pretrain_std=0.1, # Start with noisy but reasonable policy
     )
 
     runner = MinibatchRlEval(

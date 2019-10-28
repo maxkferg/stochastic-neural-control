@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import random
 from torch import nn
 from torch.nn import functional as F
 from rlpyt.utils.tensor import infer_leading_dims, restore_leading_dims
@@ -16,20 +17,20 @@ class StateEncoder(torch.nn.Module):
     # the state encoder excluding the time and batch dimensions
     map_ndim = 2
     output_ndim = 1
-    output_channels = 128
+    output_channels = 256
     input_sensor_channels = 14
 
     def __init__(self):
         super(StateEncoder, self).__init__()
         self.conv1 = nn.Conv2d(1, 8, kernel_size=3, padding=1)
-        self.norm1 = nn.BatchNorm2d(num_features=8, momentum=0.001)
+        self.norm1 = nn.BatchNorm2d(num_features=8)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(8, 16, kernel_size=3, stride=2, padding=2)
-        self.norm2 = nn.BatchNorm2d(num_features=16, momentum=0.001)
+        self.norm2 = nn.BatchNorm2d(num_features=16)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv3 = nn.Conv2d(16, 16, kernel_size=3, padding=1)
-        self.norm3 = nn.BatchNorm2d(num_features=16, momentum=0.001)
-        self.norm_state = nn.BatchNorm1d(num_features=158, momentum=0.001, affine=False)
+        self.norm3 = nn.BatchNorm2d(num_features=16)
+        #self.norm_state = nn.BatchNorm1d(num_features=158, momentum=0.001, affine=False)
         self.dense_state = nn.Linear(158, self.output_channels - self.input_sensor_channels)
 
     def normalize_observation(self, observation):
@@ -67,6 +68,10 @@ class StateEncoder(torch.nn.Module):
             observation.robot_velocity.view(T*B,-1)
         ], dim=1)
 
+        if random.random()<0.001:
+            print("Conv mean,std:", torch.abs(torch.mean(x)).item(), torch.std(x).item())
+            print("Sensor mean,std:", torch.abs(torch.mean(sensors)).item(), torch.std(sensors).item())
+
         x = torch.cat([x, sensors], dim=1)
         x = F.relu(self.dense_state(x))
         x = torch.cat([x, sensors], dim=1)
@@ -102,7 +107,7 @@ class PiModel(torch.nn.Module):
 
     def forward(self, observation, prev_action, prev_reward):
         observation = self.state_encoder(observation,  prev_action, prev_reward)
-        observation = observation.detach() # Disable encoder gradient
+        #observation = observation.detach() # Disable encoder gradient
         lead_dim, T, B, _ = infer_leading_dims(observation, self.obs_ndim)
         output = self.mlp(observation.view(T * B, -1))
         mu, log_std = output[:, :self._action_size], output[:, self._action_size:]

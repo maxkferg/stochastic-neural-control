@@ -101,7 +101,7 @@ class RobotModel(SACModel):
 
         x = tf.keras.layers.Concatenate(axis=-1, name="sensor_concat")(sensors+[x])
         x = tf.keras.layers.Dense(num_outputs-14)(x)
-        x = tf.keras.layers.BatchNormalization(center=False, scale=False, momentum=0.999)(x)
+        x = tf.keras.layers.LayerNorm(center=False, scale=False, momentum=0.999)(x)
         output_layer = tf.keras.layers.Concatenate(axis=-1, name="robot_concat")(sensors+[x])
 
         self.base_model = tf.keras.Model(inputs, [output_layer, metrics])

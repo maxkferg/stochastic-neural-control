@@ -13,8 +13,7 @@ python train.py --cuda_idx=0
 from rlpyt.envs.gym import make as gym_make
 from rlpyt.utils.launching.affinity import encode_affinity
 from rlpyt.utils.launching.affinity import prepend_run_slot, affinity_from_code
-from rlpyt.samplers.serial.sampler import SerialSampler
-#from rlpyt.samplers.parallel.cpu.sampler import CpuSampler
+from rlpyt.samplers.parallel.cpu.sampler import CpuSampler
 from rlpyt.algos.qpg.sac import SAC
 #from rlpyt.agents.qpg.sac_agent import SacAgent
 from rlpyt.runners.minibatch_rl import MinibatchRlEval
@@ -36,7 +35,7 @@ register(
 
 def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
     affinity_code = encode_affinity(
-        n_cpu_core=4,
+        n_cpu_core=6,
         n_gpu=0,
         async_sample=False,
     )
@@ -52,7 +51,7 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
         headless=True
     )
  
-    sampler = SerialSampler(
+    sampler = CpuSampler(
         EnvCls=gym_make,
         env_kwargs=dict(id=env_id, config=env_config),
         eval_env_kwargs=dict(id=env_id, config=eval_env_config),
@@ -70,7 +69,6 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
         learning_rate=3e-4,
         target_update_tau=0.005,
         clip_grad_norm=10,
-        action_prior="gaussian",
         target_entropy="auto",
     )
 
@@ -78,6 +76,9 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
         StateEncoderCls=StateEncoder,
         ModelCls=PiModel,
         QModelCls=QofMuModel,
+        model_kwargs = dict(hidden_sizes=[128]),
+        q_model_kwargs = dict(hidden_sizes=[128]),
+        pretrain_std=0.4, # Start with noisy but reasonable policy
     )
 
     runner = MinibatchRlEval(

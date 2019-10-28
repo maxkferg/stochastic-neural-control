@@ -10,15 +10,14 @@ import random
 import logging
 import pybullet
 import numpy as np
-from collections import OrderedDict
 from gym import spaces
 from gym.utils import seeding
 from pprint import pprint
 from skimage.transform import rescale
 from PIL import Image, ImageDraw
-from .utils.color import random_color
-from .utils.vector import rotate_vector, normalize
-from .utils.math import normalize_angle, positive_component, rotation_change
+from ..utils.color import random_color
+from ..utils.vector import rotate_vector, normalize
+from ..utils.math import normalize_angle, positive_component, rotation_change
 
 
 COUNT = 0
@@ -146,7 +145,6 @@ class SingleEnvironment():
 
         # Building Map
         self.building_map = self.base.loader.map.fetch()
-        self.pixel_state = PixelState(self.building_map)
         self.state_cache_buffer = []
         self.reward_so_far = 0
 
@@ -168,7 +166,6 @@ class SingleEnvironment():
             'robot_velocity': spaces.Box(low=-10, high=10, shape=(3,), dtype=np.float32),
             'target': spaces.Box(low=-20, high=20, shape=(2,), dtype=np.float32),
             'ckpts': spaces.Box(low=-20, high=20, shape=(self.ckpt_count,2), dtype=np.float32),
-            'maps': spaces.Box(low=0, high=255, shape=(48, 48), dtype=np.float32),
         })
 
         if self.geometry_policy=="subscribe":
@@ -233,8 +230,6 @@ class SingleEnvironment():
             self.remove_checkpoint(checkpoint)
         for checkpoint_pos in cache["checkpoint_pos"]:
             self.create_checkpoint(checkpoint_pos)
-        self.pixel_state.set_target(cache["target_pos"])
-        self.pixel_state.set_checkpoints(cache["checkpoint_pos"])
 
 
     def reset_robot_position(self):
@@ -272,7 +267,6 @@ class SingleEnvironment():
         position = position + [0.25]
         _, orn = self.physics.getBasePositionAndOrientation(self.targetUniqueId)
         self.physics.resetBasePositionAndOrientation(self.targetUniqueId, np.array(position), orn)
-        self.pixel_state.set_target(position)
 
 
     def reset_checkpoints(self):
@@ -300,9 +294,6 @@ class SingleEnvironment():
                 node = nodes[int(i)]
                 position = (node[0], node[1], 0.2)
                 self.create_checkpoint(position)
-
-        # Remap the position of the checkpoints
-        self.pixel_state.set_checkpoints(nodes)
 
 
     def create_checkpoint(self, position):
@@ -370,7 +361,6 @@ class SingleEnvironment():
                 is_at_checkpoint = True
             if is_at_checkpoint:
                 self.remove_checkpoint(ckpt)
-                self.pixel_state.set_checkpoints(self.get_checkpoint_positions())
             else:
                 ckpt_positions.append(tuple(rel_pos[0:2]))
 
@@ -380,7 +370,6 @@ class SingleEnvironment():
 
         # Write robot positions to the map
         robot_pose = self.base.get_robot_positions()
-        self.pixel_state.set_robots(robot_pose)
 
         state = {
             "robot_pos": robot_pos,
@@ -393,14 +382,11 @@ class SingleEnvironment():
             "rel_ckpt_positions": ckpt_positions,
             "rel_target_orientation": math.atan2(tarPosInCar[1], tarPosInCar[0]),
             "rel_target_distance": math.sqrt(tarPosInCar[1]**2 + tarPosInCar[0]**2),
-            "map": self.pixel_state.observe(robot_pos, robot_theta).astype(np.float32),
-            #"lidar": lidar,
             "is_at_checkpoint": is_at_checkpoint,
             "is_crashed": self.is_crashed(),
             "is_at_target": self.is_at_target(),
             "is_broken": False,
         }
-        #self.pixel_state.save_image(robot_pos, "state.png")
 
 
         if self.previous_state is not None:
@@ -463,10 +449,7 @@ class SingleEnvironment():
             ], dtype=np.float32),
             'target': encode_target(state),
             'ckpts': encode_checkpoints(state["rel_ckpt_positions"], state["robot_theta"]),
-            'maps': state["map"].astype(dtype=np.float32)
         }
-        # Important that the order is the same as observation space
-        obs = OrderedDict((k, obs[k]) for k in self.observation_space.spaces.keys())
         return obs
 
 
@@ -673,22 +656,6 @@ class SingleEnvironment():
             projectionMatrix=proj_matrix, renderer=pybullet.ER_BULLET_HARDWARE_OPENGL)
         rgb_array = np.array(px, dtype=np.uint8)
         rgb_array = rgb_array.reshape((height, width, 4))
-
-        #for i in range(state["map"].shape[2]):
-        #    xmin = 0
-        #    xmax = state["map"].shape[1]
-        #    ymin = i*state["map"].shape[0] + int(10*i)
-        #    ymax = (i+1)*state["map"].shape[0] + int(10*i)
-        ##    rgb_array[ymin:ymax, xmin:xmax, :3] = state["map"][:,:,[i]]
-        #   rgb_array[int((ymin+ymax)/2), int((xmin+xmax)/2), :] = [255,0,0,255]
-        
-        offset = 10
-        pixel_map = rescale(state["map"], 2)
-        h,w = pixel_map.shape
-        map_image = pixel_map.astype(np.uint8)
-        map_image = np.expand_dims(map_image, axis=-1).repeat(4, axis=-1)
-        map_image[:,:,3] = 255
-        rgb_array[offset:(h+offset), offset:(w+offset), :] = map_image
         return rgb_array
 
 
@@ -732,199 +699,5 @@ class SingleEnvironment():
                 raise ValueError("Box {} does not contain {}".format(box, state))
         # Test the whole space
         assert(self.observation_space.contains(obs))
-
-
-
-class PixelState():
-    """
-    State represented using pixel maps
-    @gridsize: The size of the grid in pixels
-    @padding: The padding size to put around the map
-    """
-
-    def __init__(self, map, gridsize=0.05, padding=100):
-        xmin, xmax, ymin, ymax = self._get_map_size(map)
-        self.scale = 1/gridsize
-        self.padding = padding
-        self.xmin = xmin
-        self.ymin = ymin
-        px, py = self._to_pixel_coords((xmax, 0, ymax))
-        self.nx = px + 2*padding # Number of pixels in the x direction
-        self.ny = py + 2*padding # Number of pixels in the y direction
-        self.map = np.zeros((self.ny, self.nx), dtype=np.uint16)
-        self.checkpoints = np.zeros((self.ny, self.nx), dtype=np.uint16)
-        self.target = np.zeros((self.ny, self.nx), dtype=np.uint16)
-        self.robots = np.zeros((self.ny, self.nx), dtype=np.uint16)
-        self.set_map(map)
-
-
-    def observe(self, robot_pos, robot_theta=0, view_size=24, rotate=True):
-        """
-        Return an observation of this state as a numpy array
-        """
-        stacked = self._stacked()
-        robot_x, robot_y = self._to_pixel_coords(robot_pos)
-
-        # Rotate the panel and crop a square section
-        if rotate:
-            x1 = robot_x - 2*view_size
-            x2 = robot_x + 2*view_size
-            y1 = robot_y - 2*view_size
-            y2 = robot_y + 2*view_size
-
-            stacked = scipy.ndimage.rotate(
-                stacked[y1:y2, x1:x2],
-                order=0,
-                reshape=False,
-                angle=robot_theta*180/math.pi
-            )
-            stacked = np.flip(stacked.transpose(), axis=0)
-            robot_y = int(stacked.shape[0]/2)
-            robot_x = int(stacked.shape[1]/2)
-            
-        # Crop so the robot is in the center
-        xmin = robot_x - view_size
-        xmax = robot_x + view_size
-        ymin = robot_y - view_size
-        ymax = robot_y + view_size
-        cropped = stacked[ymin:ymax, xmin:xmax]
-        
-        # Make sure the image is large enough
-        return pad(cropped, (48,48), (0,0,0))
-
-
-    def _stacked(self):
-        """
-        Return the stacked representation of the state
-        """
-        MAP = 40
-        ROBOTS = 70
-        TARGET = 200
-        CHECKPOINTS = 150
-        stacked = MAP*self.map + CHECKPOINTS*self.checkpoints + TARGET*self.target + ROBOTS*self.robots
-        stacked = stacked.clip(0, 255).astype(np.uint8)
-        return stacked
-
-
-    def save_image(self, robot_pos, filename=None, cropped=True):
-        """
-        Save image to file
-        """
-        if cropped:
-            observation = self.observe(robot_pos)
-        else:
-            observation = self._stacked()
-        observation = observation.astype(np.uint8)
-        if filename is not None:
-            skimage.io.imsave(filename, observation)
-        return observation
-
-
-    def set_map(self, building_map):
-        """
-        Return a full map of the environment floor
-        Usable floor space is colored 0. Walls are colored 1
-        """
-        height, width = self.map.shape
-        img = Image.new('L', (width, height), 0)
-        draw = ImageDraw.Draw(img)
-        for shape in building_map:
-            for polygon in shape['external_polygons']:
-                # Y axis is wrong.
-                points = [(p[0], -p[1], 0) for p in polygon['points']]
-                points = [self._to_pixel_coords(p) for p in points]
-                draw.polygon(points, outline=1, fill=None)
-        self.map = np.array(img)
-        return self.map
-
-
-    def set_target(self, target_pos):
-        """
-        Return a full map of the environment showing the target location
-        Floor space is colored 0. Targets are colored 1.
-        """
-        #target_pos, _ = self.physics.getBasePositionAndOrientation(self.targetUniqueId)
-        target_x, target_y = self._to_pixel_coords(target_pos)
-        # Pixels to color
-        xmin = target_x - 2
-        xmax = target_x + 3
-        ymin = target_y - 2
-        ymax = target_y + 3
-        # Clip
-        xmin = max(xmin, 0)
-        xmax = min(xmax, self.nx-1)
-        ymin = max(ymin, 0)
-        ymax = min(ymax, self.ny-1)
-        # Color
-        self.target.fill(0)
-        self.target[ymin:ymax, xmin:xmax] = 1
-        return self.target
-
-
-    def set_checkpoints(self, checkpoints):
-        """
-        Return a full map of the environment showing the checkpoint locations
-        Floor space is colored 0. Checkpoints are colored 1.
-        """
-        self.checkpoints.fill(0)
-        for ckpt in checkpoints:
-            ckpt_x, ckpt_y = self._to_pixel_coords(ckpt)
-            # Pixels to color
-            xmin = int(ckpt_x - 1)
-            xmax = int(ckpt_x + 2)
-            ymin = int(ckpt_y - 1)
-            ymax = int(ckpt_y + 2)
-            # Clip
-            xmin = max(xmin, 0)
-            xmax = min(xmax, self.nx-1)
-            ymin = max(ymin, 0)
-            ymax = min(ymax, self.ny-1)
-            # Color
-            self.checkpoints[ymin:ymax, xmin:xmax] = 1
-        return self.checkpoints
-
-
-    def set_robots(self, robots):
-        """
-        Return a full map of the environment showing the locations of other robots
-        Floor space is colored 0. Other robots are colored 1.
-        """
-        self.robots.fill(0)
-        for enemy_pos, enemy_orn in robots:
-            enemy_x, enemy_y = self._to_pixel_coords(enemy_pos)
-            # Pixels to color
-            xmin = int(enemy_x - 1)
-            xmax = int(enemy_x + 2)
-            ymin = int(enemy_y - 1)
-            ymax = int(enemy_y + 2)
-            # Clip
-            xmin = max(xmin,0)
-            xmax = min(xmax, self.nx-1)
-            ymin = max(ymin, 0)
-            ymax = min(ymax, self.ny-1)
-            # Color
-            self.robots[ymin:ymax, xmin:xmax] = 1
-        return self.robots
-
-
-    def _to_pixel_coords(self, pos):
-        x = int(self.scale*(pos[0]-self.xmin) + self.padding)
-        y = int(self.scale*(pos[1]-self.ymin) + self.padding)
-        return x,y
-
-
-    def _get_map_size(self, building_map):
-        xmin = math.inf
-        xmax = -math.inf
-        ymin = math.inf
-        ymax = -math.inf
-        for ob in building_map:
-            for polygon in ob['external_polygons']:
-                for x,y in polygon['points']:
-                    xmin = min(x, xmin)
-                    xmax = max(x, xmax)
-                    ymin = min(y, ymin)
-                    ymax = max(y, ymax)
-        return xmin, xmax, ymin, ymax
 
 

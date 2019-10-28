@@ -31,12 +31,14 @@ class SimpleEnvironment(SingleEnvironment, gym.Env):
         self.last_action = None
         super().__init__(base_env, robot=robot, config=config)
         
+        
     def reset(self):
         if self.nsteps > 1000:
             print("Action Norm:", self.action_norm/self.nsteps, self.last_action)
             self.action_norm = 0
             self.nsteps = 0
         return super().reset()
+
 
     def step(self, actions):
         """

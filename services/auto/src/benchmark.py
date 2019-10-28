@@ -22,8 +22,9 @@ import colored_traceback
 from PIL import Image, ImageTk
 from gym.envs.registration import registry
 from environment.loaders.geometry import GeometryLoader
-from environment.env.base import BaseEnvironment # Env type
-from environment.env.multi import MultiEnvironment # Env type
+from environment.env.sensor import SensorEnvironment
+from environment.env.base.base import BaseEnvironment # Env type
+#from environment.env.multi import MultiEnvironment # Env type
 
 
 colored_traceback.add_hook()
@@ -46,6 +47,7 @@ def train_env_creator():
         "debug": True,
         "monitor": True,
         "headless": True,
+        "verbosity": 0, 
         "reset_on_target": True
     }
     with open('environment/configs/prod.yaml') as fs:
@@ -53,8 +55,8 @@ def train_env_creator():
         api_config['building_id'] = '5d984a7c6f1886dacf9c730d'
     loader = GeometryLoader(api_config) # Handles HTTP
     base = BaseEnvironment(loader, headless=cfg["headless"])
-    return MultiEnvironment(base, verbosity=0, env_config=cfg)
-
+    #return MultiEnvironment(base, verbosity=0, env_config=cfg)
+    return SensorEnvironment(base, config=cfg)
 
 
 
@@ -134,6 +136,7 @@ class ViewWindow():
     def step(self):
         action = {}
         for robot, obser in self.obser.items():
+            print(obser)
             steering = obser["target"][0] / math.pi / 4
             throttle = 0.3
             action[robot] = [steering, throttle]

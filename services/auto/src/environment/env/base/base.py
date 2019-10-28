@@ -5,10 +5,10 @@ import pybullet
 import os, inspect
 from shapely import geometry
 from random import randrange
-from .utils.geometry import min_distance
-from .utils.bullet_client import BulletClient
-from .robots.robot_models import Turtlebot
-from .robots.robot_messages import get_odom_message
+from ..utils.geometry import min_distance
+from ..utils.bullet_client import BulletClient
+from ..robots.robot_models import Turtlebot
+from ..robots.robot_messages import get_odom_message
 
 
 

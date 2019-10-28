@@ -81,6 +81,58 @@ class StateEncoder(torch.nn.Module):
 
 
 
+class SensorEncoder(torch.nn.Module):
+    """
+    Encode the state into a single vector
+    """
+    # Define the number of dimensions returned by 
+    # the state encoder excluding the time and batch dimensions
+    pointcloud_ndim = 1
+    output_ndim = 1
+    output_channels = 256
+    input_sensor_channels = 26
+
+    def __init__(self):
+        super().__init__()
+        channels = self.input_sensor_channels
+        self.dense = nn.Linear(channels, self.output_channels)
+        self.norm = nn.BatchNorm1d(num_features=self.output_channels, momentum=0.001, affine=False)
+
+    def normalize_observation(self, observation):
+        DIST_SCALE = 5
+        ANGLE_SCALE = 3
+        VELOCITY_SCALE = 0.1
+        ObservationCls = namedarraytuple_like(observation)
+        # Scale all variables to mean=0 and std=1
+        return ObservationCls(
+            pointcloud=observation.pointcloud/DIST_SCALE,
+            ckpts=observation.ckpts/DIST_SCALE,
+            target=observation.target/DIST_SCALE,
+            robot_theta=observation.robot_theta/ANGLE_SCALE,
+            robot_velocity=observation.robot_velocity/VELOCITY_SCALE,
+        )
+
+    def forward(self, observation, prev_action, prev_reward):
+        lead_dim, T, B, _ = infer_leading_dims(observation.pointcloud, self.pointcloud_ndim)
+
+        sensors = torch.cat([
+            observation.pointcloud.view(T*B,-1),
+            observation.ckpts.view(T*B,-1),
+            observation.target.view(T*B,-1),
+            observation.robot_theta.view(T*B,-1),
+            observation.robot_velocity.view(T*B,-1)
+        ], dim=1)
+
+        x = F.relu(self.dense(sensors))
+        #if B>1:
+        #    print(x.shape)
+        #    x = self.norm(x)
+
+        x = restore_leading_dims(x, lead_dim, T, B)
+        return x
+
+
+
 class PiModel(torch.nn.Module):
     """
     Policy Model

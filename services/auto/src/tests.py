@@ -21,18 +21,19 @@ from ray.tune import run_experiments
 from ray.tune.registry import register_env
 from ray.rllib.models import ModelCatalog
 from ray.rllib.models.preprocessors import get_preprocessor
-from learning.mink import MinkModel
+#from learning.mink import MinkModel
 from environment.env.utils.math import normalize_angle
 from environment.loaders.geometry import GeometryLoader
-from environment.env.base import BaseEnvironment # Env type
-from environment.env.multi import MultiEnvironment # Env type
+from environment.env.base.base import BaseEnvironment # Env type
+#from environment.env.multi import MultiEnvironment # Env type
+from environment.env.sensor import SensorEnvironment
 colored_traceback.add_hook()
 
 ENVIRONMENT = "MultiRobot-v0"
 
 
 def setup():
-    ModelCatalog.register_custom_model("mink", MinkModel)
+    #ModelCatalog.register_custom_model("mink", MinkModel)
     register_env(ENVIRONMENT, lambda cfg: train_env_creator(cfg))
 
 
@@ -44,6 +45,7 @@ def train_env_creator():
         "debug": True,
         "monitor": True,
         "headless": False,
+        "verbosity": 0,
         "reset_on_target": True
     }
     with open('environment/configs/prod.yaml') as fs:
@@ -51,7 +53,8 @@ def train_env_creator():
         api_config['building_id'] = '5d984a7c6f1886dacf9c730d'
     loader = GeometryLoader(api_config) # Handles HTTP
     base = BaseEnvironment(loader, headless=cfg["headless"])
-    return MultiEnvironment(base, verbosity=0, env_config=cfg)
+    #return MultiEnvironment(base, verbosity=0, env_config=cfg)
+    return SensorEnvironment(base,  config=cfg)
 
 
 
@@ -187,6 +190,21 @@ def test_noisey_policy(env):
                 break
 
 
+def test_noisey_policy_single_env(env):
+    for i in range(10):
+        obs = env.reset()
+        done = False
+        total_reward = 0
+        for i in range(100):
+            import time; time.sleep(1)
+            action = noisey_policy(obs)
+            obs, reward, done, _ = env.step(action)
+            total_reward += reward
+            if done:
+                print("Total reward:",total_reward)
+                break
+
+
 
 def checkpoint_policy(obs):
     """
@@ -216,6 +234,7 @@ def simple_policy(obs):
     """
     Collect checkpoints if they are close
     """
+    print("C", obs)
     _, ckpt_dist = obs['ckpts'][0,:]
     if ckpt_dist>4:
         return target_policy(obs)
@@ -244,4 +263,5 @@ if __name__=="__main__":
     #test_rotate_checkpoint(env)
     #test_collect_checkpoints(env)
     #test_collect_target(env)
-    test_noisey_policy(env)
+    #test_noisey_policy(env)
+    test_noisey_policy_single_env(env)

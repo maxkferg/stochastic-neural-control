@@ -10,6 +10,7 @@ Example Usage:
 python train.py --cuda_idx=0
 
 """
+import yaml
 from rlpyt.envs.gym import make as gym_make
 from rlpyt.utils.launching.affinity import encode_affinity
 from rlpyt.utils.launching.affinity import prepend_run_slot, affinity_from_code
@@ -18,22 +19,33 @@ from rlpyt.algos.qpg.sac import SAC
 #from rlpyt.agents.qpg.sac_agent import SacAgent
 from rlpyt.runners.minibatch_rl import MinibatchRlEval
 from rlpyt.utils.logging.context import logger_context
+from learning.sac_agent import SacAgent
+
 from gym.envs.registration import register
-from learning.models import StateEncoder
+from learning.models import SensorEncoder
 from learning.models import PiModel
 from learning.models import QofMuModel
-from learning.sac_agent import SacAgent
+from environment.env.base.base import BaseEnvironment
+from environment.loaders.geometry import GeometryLoader
 
 
 register(
-    id='Seeker-v0',
-    entry_point='environment.env.simple:SimpleEnvironment',
+    id='Sensor-Robot-v0',
+    entry_point='environment.env.sensor:SensorEnvironment',
     max_episode_steps=500,
 )
 
 
 
-def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
+def get_base_env(headless=True):
+    with open('environment/configs/prod.yaml') as cfg:
+        api_config = yaml.load(cfg, Loader=yaml.Loader)
+        api_config['building_id'] = '5d984a7c6f1886dacf9c730d'
+    loader = GeometryLoader(api_config) # Handles HTTP
+    return BaseEnvironment(loader, headless=headless)
+
+
+def build_and_train(env_id="Sensor-Robot-v0", run_ID=0, cuda_idx=None):
     affinity_code = encode_affinity(
         n_cpu_core=8,
         n_gpu=1,
@@ -44,19 +56,19 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
     print("Affinity:", affinity)
 
     env_config = dict(
-        headless=True
+        headless=True,
     )
 
     eval_env_config = dict(
-        headless=True
+        headless=True,   
     )
  
     sampler = CpuSampler(
         EnvCls=gym_make,
-        env_kwargs=dict(id=env_id, config=env_config),
-        eval_env_kwargs=dict(id=env_id, config=eval_env_config),
+        env_kwargs=dict(id=env_id, base_env=get_base_env(), config=env_config),
+        eval_env_kwargs=dict(id=env_id, base_env=get_base_env(), config=eval_env_config),
         batch_T=1,  # Num time-step per sampler iteration.
-        batch_B=8,  # One environment (i.e. sampler Batch dimension).
+        batch_B=6,  # One environment (i.e. sampler Batch dimension).
         max_decorrelation_steps=0,
         eval_n_envs=4,
         eval_max_steps=int(1e3),
@@ -68,16 +80,16 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
         n_step_return=1,
         learning_rate=3e-4,
         target_update_tau=0.005,
+        clip_grad_norm=10,
         target_entropy="auto",
     )
 
     agent = SacAgent(
-        StateEncoderCls=StateEncoder,
+        StateEncoderCls=SensorEncoder,
         ModelCls=PiModel,
         QModelCls=QofMuModel,
-        model_kwargs = dict(hidden_sizes=[128]),
-        q_model_kwargs = dict(hidden_sizes=[128]),
-        pretrain_std=0.1, # Start with noisy but reasonable policy
+        model_kwargs = dict(hidden_sizes=[256]),
+        q_model_kwargs = dict(hidden_sizes=[256]),
     )
 
     runner = MinibatchRlEval(
@@ -99,7 +111,7 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--env_id', help='environment ID', default='Seeker-v0')
+    parser.add_argument('--env_id', help='environment ID', default='Sensor-Robot-v0')
     parser.add_argument('--run_ID', help='run identifier (logging)', type=int, default=0)
     parser.add_argument('--cuda_idx', help='gpu to use ', type=int, default=None)
     args = parser.parse_args()

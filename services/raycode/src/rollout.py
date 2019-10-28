@@ -39,6 +39,7 @@ from ray.rllib.agents.registry import get_agent_class
 from ray.rllib.models.preprocessors import get_preprocessor
 from ray.rllib.policy.sample_batch import DEFAULT_POLICY_ID
 from learning.mink import MinkModel
+from learning.robot import RobotModel
 from learning.preprocessing import DictFlatteningPreprocessor
 from environment.loaders.geometry import GeometryLoader
 from environment.env.base import BaseEnvironment # Env type
@@ -86,12 +87,18 @@ def train_env_factory(args):
         api_config['building_id'] = '5d984a7c6f1886dacf9c730d'
 
     def train_env(cfg):
+        cfg.update({
+            "verbosity": 0,
+            "creation_delay": 0,
+            "reset_on_target": False
+        })
         if args.headless:
-            cfg.headless = True
-        cfg['headless'] = False
+            cfg["headless"] = True
+        elif args.render:
+            cfg["headless"] = False
         loader = GeometryLoader(api_config) # Handles HTTP
         base = BaseEnvironment(loader, headless=cfg["headless"])
-        return MultiEnvironment(base, verbosity=0, creation_delay=0, env_config=cfg)
+        return MultiEnvironment(base, config=cfg)
 
     return train_env
 
@@ -128,11 +135,21 @@ def create_parser(parser_creator=None):
         help="The gym environment to use."
     )
     parser.add_argument(
-        "--headless",
+        "--no-render",
         default=False,
         action="store_const",
         const=True,
         help="Surpress rendering of the environment.")
+    parser.add_argument(
+        "--headless",
+        default=False,
+        action="store_true",
+        help="Surpress rendering of the environment.")
+    parser.add_argument(
+        "--render",
+        default=False,
+        action="store_true",
+        help="Render the environment.")
     parser.add_argument(
         "--render-q",
         default=False,
@@ -232,7 +249,7 @@ def default_policy_agent_mapping(unused_agent_id):
     return DEFAULT_POLICY_ID
 
 
-def rollout(agent, env_name, num_steps, out=None, headless=True, render_q=False, save_q=False):
+def rollout(agent, env_name, num_steps, out=None, no_render=True, render_q=False, save_q=False):
     pid = PID()
     policy_agent_mapping = default_policy_agent_mapping
     if hasattr(agent, "workers"):
@@ -294,19 +311,11 @@ def rollout(agent, env_name, num_steps, out=None, headless=True, render_q=False,
                             policy_id=policy_id)
                     a_action = _flatten_action(a_action)  # tuple actions
                     action_dict[agent_id] = a_action
-                    #if agent_id==0:
-                    #    theta, dist = a_obs["target"][0], a_obs["target"][1]
-                    #    action_dict[agent_id] = pid.eval(theta, dist) # PID
                     prev_actions[agent_id] = a_action
             action = action_dict
 
             action = action if multiagent else action[_DUMMY_AGENT_ID]
             print(action)
-
-            #action = {
-            #    0: np.array([0.1, 0.1], dtype=np.float32),
-            #    1: np.array([0.1, 0], dtype=np.float32)
-            #}
 
             next_obs, reward, done, _ = env.step(action)
             if multiagent:
@@ -320,7 +329,7 @@ def rollout(agent, env_name, num_steps, out=None, headless=True, render_q=False,
                 reward_total += sum(reward.values())
             else:
                 reward_total += reward
-            if not headless:
+            if not no_render:
                 env.render()
             if out is not None:
                 rollout.append([obs, action, next_obs, reward, done])
@@ -334,6 +343,7 @@ def rollout(agent, env_name, num_steps, out=None, headless=True, render_q=False,
 def run(args, parser):
     config = args.config
     ModelCatalog.register_custom_model("mink", MinkModel)
+    ModelCatalog.register_custom_model("robot", RobotModel)
     register_env(ENVIRONMENT, train_env_factory(args))
 
     config_dir = os.path.dirname(args.checkpoint)
@@ -355,15 +365,13 @@ def run(args, parser):
         del config["horizon"]
 
     # Stop all the actor noise
-    config['exploration_ou_noise_scale'] = 0
-    config['exploration_gaussian_sigma'] = 0
-    config['per_worker_exploration'] = False
-    config['schedule_max_timesteps'] = 0
     config['num_workers'] = 0
+    config['evaluation_interval'] = 0
+    config['exploration_enabled'] = False
 
     ray.init()
 
-    if not args.headless:
+    if not args.no_render:
         config["monitor"] = True
 
     pprint(config)
@@ -371,7 +379,7 @@ def run(args, parser):
     agent = cls(env=args.env, config=config)
     agent.restore(args.checkpoint)
     num_steps = int(args.steps)
-    rollout(agent, args.env, num_steps, args.out, args.headless, args.render_q, args.save_q)
+    rollout(agent, args.env, num_steps, args.out, args.no_render, args.render_q, args.save_q)
     cv2.destroyAllWindows()
     video.release()
 

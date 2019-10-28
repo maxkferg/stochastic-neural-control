@@ -1,0 +1,51 @@
+# This configuration can expect to reach -160 reward in 10k-20k timesteps
+seeker-sac:
+    run: SAC
+    checkpoint_freq: 50
+    stop:
+        episode_reward_mean: 2
+    config:
+        # === Environment ===
+        horizon: 100
+        env: MultiRobot-v0
+        env_config:
+            headless: True
+            creation_delay: 20
+            reset_on_target: True
+
+        # === Evaluation ===
+        #eager: False
+        evaluation_interval: 10
+        evaluation_num_episodes: 10
+
+        # Maybe unused
+        exploration_fraction: 0.1
+        schedule_max_timesteps: 100000
+
+        # === Model ===
+        use_state_preprocessor: True
+        model:
+            use_lstm: False
+            custom_model: "robot"
+            custom_options: {}
+
+        # === Model ===
+        #exploration_noise_type: "gaussian"
+        #exploration_gaussian_sigma: 0.06
+
+        # === Parallelism ===
+        num_workers: 24
+        num_gpus_per_worker: 0
+        num_gpus: 0.1
+
+        # === Optimization ===
+        tau: 0.005
+        min_iter_time_s: 60
+        compress_observations: True
+        learning_starts: 5000
+
+        optimization:
+            actor_learning_rate: 0.0001
+            critic_learning_rate: 0.0001
+            entropy_learning_rate: 0.0001
+    

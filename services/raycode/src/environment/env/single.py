@@ -32,8 +32,8 @@ TARGET_REWARD = 1
 CHECKPOINT_REWARD = 0.1
 CHECKPOINT_DISTANCE = 0.5
 BATTERY_THRESHOLD = 0.5
-BATTERY_WEIGHT = -0.1
-ROTATION_COST = -0.005
+BATTERY_WEIGHT = -0.01
+ROTATION_COST = -0.001
 CRASHED_PENALTY = -1
 MAP_GRID_SCALE = 0.2
 NUM_CHECKPOINTS = 10
@@ -43,6 +43,20 @@ TARGET_DISTANCE_THRESHOLD = 0.6 # Max distance to the target
 HOST, PORT = "localhost", 9999
 COUNT = 0
 
+
+DEFAULTS = {
+    'is_discrete': False,
+    'target_policy': 'random',
+    'robot_policy': 'random',
+    'geometry_policy': 'initial',
+    'reset_on_target': False,
+    'start_reference': [-1,0],
+    'action_repeat': 10, # Robot makes a decision every 400ms
+    'verbosity': 0,
+    'debug': False,
+    'renders': False,
+    'headless': False,
+}
 
 
 def pad(array, reference_shape, offsets):
@@ -68,12 +82,6 @@ class SingleEnvironment():
         self,
         base_env,
         robot=None,
-        target_policy="random",
-        robot_policy="random",
-        geometry_policy="initial",
-        start_reference=[-1,0],
-        action_repeat=10, # Robot makes a decision every 400ms
-        verbosity=1,
         config={}
     ):
         """
@@ -86,49 +94,48 @@ class SingleEnvironment():
 
         @config: Additional enviroment configuration
 
-        @target_policy: Where to put the robot target at the start of the simulation
+        @config.target_policy: Where to put the robot target at the start of the simulation
         If "random" then the target position is set to a random position on restart
         If "api" then the target position is pulled from the API on restart
 
-        @robot_policy: Controls how the robot position is updated
+        @config.robot_policy: Controls how the robot position is updated
         If "random" then the robot position is set to a random position on restart
         If "api" then the robot position is pulled from the API on restart
         If "subscribe" then the robot position is constant pulled from the API
 
-        @geometry_policy: Controls how the geometry is updated
+        @config.geometry_policy: Controls how the geometry is updated
         If "initial" then the geometry is pulled once from the API
         If "api" then the geometry position is pulled from the API on restart
         If "subscribe" then the geometry is constantly pulled from Kafka
 
-        @verbosity:
+        @config.verbosity:
         0 - Silent
         1 - Normal logging
         2 - Verbose
         """
-        if verbosity>0:
+        config = dict(DEFAULTS, **config)
+        if config['verbosity']>1:
             print("Initializing new Single Robot Environment")
-            print("Environment Config:",config)
-        super().__init__()
+            print("Environment Config:", config)
 
         self.base = base_env
         self.physics = base_env.physics
 
         self.color = random_color()
-        self.verbosity = verbosity
-        self.start_reference = start_reference
-        self.actionRepeat = config.get("actionRepeat", 2) # Choose an action every 0.2 seconds
-        self.resetOnTarget = config.get("resetOnTarget", True)
-        self.debug = config.get("debug", False)
-        self.renders = config.get("renders",False)
-        self.isDiscrete = config.get("isDiscrete",False)
-        self.action_repeat = action_repeat
+        self.verbosity = config["verbosity"]
+        self.start_reference = config["start_reference"]
+        self.reset_on_target = config["reset_on_target"]
+        self.debug = config["debug"]
+        self.renders = config["renders"]
+        self.isDiscrete = config["is_discrete"]
+        self.action_repeat = config["action_repeat"]
         self.previous_state = None
         self.ckpt_count = 4
 
         # Environment Policies
-        self.robot_policy = robot_policy
-        self.target_policy = target_policy
-        self.geometry_policy = geometry_policy
+        self.robot_policy = config['robot_policy']
+        self.target_policy = config['target_policy']
+        self.geometry_policy = config['geometry_policy']
 
         self.targetUniqueId = -1
         self.robot = robot              # The controlled robot
@@ -170,10 +177,9 @@ class SingleEnvironment():
         if self.isDiscrete:
             self.action_space = spaces.Discrete(9)
         else:
-            action_dim = 2
-            self._action_bound = 1
-            action_high = np.array([self._action_bound] * action_dim)
-            self.action_space = spaces.Box(-action_high, action_high, dtype=np.float32)
+            action_min = -1
+            action_max = 1
+            self.action_space = spaces.Box(low=action_min, high=action_max, shape=(2,), dtype=np.float32)
 
         self.viewer = None
         self.reset()
@@ -185,7 +191,7 @@ class SingleEnvironment():
 
     def reset(self):
         """Reset the environment. Move the target and the car"""
-        steps = self.envStepCounter / self.actionRepeat
+        steps = self.envStepCounter
         duration = time.time() - self.startedTime
         if self.debug:
             print("Reset after %i steps in %.2f seconds"%(steps,duration))
@@ -453,7 +459,7 @@ class SingleEnvironment():
             ], dtype=np.float32),
             'target': encode_target(state),
             'ckpts': encode_checkpoints(state["rel_ckpt_positions"], state["robot_theta"]),
-            'maps': state["map"]
+            'maps': state["map"].astype(dtype=np.float32)
         }
         # Important that the order is the same as observation space
         obs = OrderedDict((k, obs[k]) for k in self.observation_space.spaces.keys())
@@ -537,7 +543,7 @@ class SingleEnvironment():
         done = self.termination(state)
 
         # Respawn the target and clear the isAtTarget flag
-        if not self.resetOnTarget and state["is_at_target"]:
+        if not self.reset_on_target and state["is_at_target"]:
             self.reset_target_position()
             self.reset_checkpoints()
 
@@ -568,7 +574,11 @@ class SingleEnvironment():
 
     def termination(self, state):
         """Return True if the episode should end"""
-        return state["is_crashed"] or state["is_broken"] or self.reward_so_far < MIN_EPISODE_REWARD or (self.resetOnTarget and state["is_at_target"])
+        if state["is_crashed"] or state["is_broken"]:
+            return True
+        if state["is_at_target"] and self.reset_on_target:
+            return True
+        return self.reward_so_far < MIN_EPISODE_REWARD
 
 
     def reward(self, state, action):

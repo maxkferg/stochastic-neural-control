@@ -71,7 +71,7 @@ class MeshLoader():
             position = self._convert_position(mesh)
             name = mesh['name']
             url = os.path.join(self.geometry_endpoint, relative_url)
-            fp = os.path.join('tmp/', relative_url)
+            fp = os.path.join('/tmp/', relative_url)
             try:
                 print("Downloading",url,fp)
                 self._download_geometry_resource(url, fp)

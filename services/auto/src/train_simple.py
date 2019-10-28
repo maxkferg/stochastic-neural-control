@@ -69,6 +69,8 @@ def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
         n_step_return=1,
         learning_rate=3e-4,
         target_update_tau=0.005,
+        clip_grad_norm=10,
+        action_prior="gaussian",
         target_entropy="auto",
     )
 

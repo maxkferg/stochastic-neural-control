@@ -3,6 +3,18 @@ from ray.rllib.models import Model
 
 
 class MinkModel(Model):
+
+    def __init__(self, *args, **kwargs):
+        config = args[4]
+        if 'custom_options' not in config:
+            raise ValueError("Mink: Could not find custom options")
+        elif 'cnn_weight' not in config['custom_options']:
+            raise ValueError("Mink: Could not find cnn_weight")
+        else:
+            self.cnn_weight = config['custom_options']['cnn_weight']
+            print("Model using CNN Weight: ", self.cnn_weight)
+        super().__init__(*args, **kwargs)
+
     def _build_layers_v2(self, input_dict, num_outputs, options):
         """Define the layers of a custom model.
 
@@ -83,16 +95,14 @@ class MinkModel(Model):
         ckpts = tf.keras.layers.Flatten(name="ckpts_flatten")(obs['ckpts'])
 
         # Concatenate all inputs together
-        x = tf.keras.layers.Concatenate(axis=-1, name="mink_cat")([
-            x,
+        last_layer = tf.keras.layers.Concatenate(axis=-1, name="mink_cat")([
+            self.cnn_weight*x,
             obs['target'],
             obs['robot_theta'],
             obs['robot_velocity'],
             ckpts
         ])
 
-        x = tf.keras.layers.Dense(256, activation="relu", name="mink_last")(x)
-        last_layer = x#tf.keras.layers.BatchNormalization(name="mink_bn3")(x)
         output_layer = tf.keras.layers.Dense(num_outputs, activation=None, name="mink_out")(last_layer)
 
         return output_layer, last_layer

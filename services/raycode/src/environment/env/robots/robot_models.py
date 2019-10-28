@@ -28,9 +28,11 @@ class WalkerBase(BaseRobot):
         scale = 1,
         resolution=512,
         control = 'torque',
+        physics = None,
         env = None
     ):
-        BaseRobot.__init__(self, filename, robot_name, scale, env)
+        BaseRobot.__init__(self, filename, robot_name, scale, physics, env)
+        self.physics = physics
         self.control = control
         self.resolution = resolution
         self.obs_dim = 0
@@ -430,17 +432,17 @@ class Humanoid(WalkerBase):
         WalkerBase.robot_specific_reset(self)
 
         humanoidId = -1
-        numBodies = p.getNumBodies()
+        numBodies = self.physics.getNumBodies()
         for i in range (numBodies):
-            bodyInfo = p.getBodyInfo(i)
+            bodyInfo = self.physics.getBodyInfo(i)
             if bodyInfo[1].decode("ascii") == 'humanoid':
                 humanoidId = i
         ## Spherical radiance/glass shield to protect the robot's camera
         if self.glass_id is None:
-            glass_id = p.loadMJCF(os.path.join(self.physics_model_dir, "glass.xml"))[0]
+            glass_id = self.physics.loadMJCF(os.path.join(self.physics_model_dir, "glass.xml"))[0]
             #print("setting up glass", glass_id, humanoidId)
-            p.changeVisualShape(glass_id, -1, rgbaColor=[0, 0, 0, 0])
-            cid = p.createConstraint(humanoidId, -1, glass_id,-1,p.JOINT_FIXED,[0,0,0],[0,0,1.4],[0,0,1])
+            self.physics.changeVisualShape(glass_id, -1, rgbaColor=[0, 0, 0, 0])
+            cid = self.physics.createConstraint(humanoidId, -1, glass_id,-1,p.JOINT_FIXED,[0,0,0],[0,0,1.4],[0,0,1])
 
         self.motor_names  = ["abdomen_z", "abdomen_y", "abdomen_x"]
         self.motor_power  = [100, 100, 100]
@@ -621,8 +623,8 @@ class Quadrotor(WalkerBase):
         else:
             realaction = action
 
-        p.setGravity(0, 0, 0)
-        p.resetBaseVelocity(self.robot_ids[0], realaction[:3], realaction[3:])
+        self.physics.setGravity(0, 0, 0)
+        self.physics.resetBaseVelocity(self.robot_ids[0], realaction[:3], realaction[3:])
 
     def robot_specific_reset(self):
         WalkerBase.robot_specific_reset(self)
@@ -646,6 +648,7 @@ class Turtlebot(WalkerBase):
 
     def __init__(self, physics, config, env=None):
         self.config = config
+        self.physics = physics
         WalkerBase.__init__(self, "robots/turtlebot/turtlebot.urdf", "base_link", action_dim=4,
                             sensor_dim=20,
                             scale=1,
@@ -654,6 +657,7 @@ class Turtlebot(WalkerBase):
                             target_pos=config["target_pos"],
                             resolution=config["resolution"],
                             control = 'velocity',
+                            physics = physics,
                             env=env)
 
         self.is_discrete = config["is_discrete"]
@@ -730,7 +734,7 @@ class Turtlebot(WalkerBase):
 
     def get_state(self):
         state = {}
-        pos, orn = p.getBasePositionAndOrientation(self.racecarUniqueId)
+        pos, orn = self.physics.getBasePositionAndOrientation(self.racecarUniqueId)
         return {
             "position": pos,
             "orientation": orn 

@@ -1,8 +1,8 @@
-seeker-apex-dev:
+seeker-apex-td3:
     run: APEX_DDPG
-    checkpoint_freq: 20
+    checkpoint_freq: 50
     stop:
-        episode_reward_mean: 2.0
+        episode_reward_mean: 5
     config:
         # === Environment ===
         env: MultiRobot-v0
@@ -13,44 +13,53 @@ seeker-apex-dev:
         twin_q: True
         policy_delay: 2
         smooth_target_policy: True
-        target_noise: 0.2
+        target_noise_clip: 0.5
         horizon: 100
 
         # === Model ===
-        n_step: 4
+        actor_hiddens: [256]
+        critic_hiddens: [256]
+        n_step: 1
         gamma: 0.99
-        use_state_preprocessor: True
+        env_config: {}
         model:
             use_lstm: False
             custom_model: "mink"
-
-        # === Evaluation ===
-        #evaluation_interval: 5
-        #evaluation_num_episodes: 10
+            custom_options: {}
 
         # === Exploration ===
-        schedule_max_timesteps: 2000000
-        exploration_fraction: 0.5
-        target_network_update_freq: 100000
-        tau: 0.001 # 1
+        exploration_should_anneal: True
+        schedule_max_timesteps: 1000000 # 1 million
+        exploration_ou_noise_scale: 0.2
+        tau: 1.0 # 1
 
         # === Replay buffer ===
-        buffer_size: 480000
+        buffer_size: 400000
+        prioritized_replay: True
+        prioritized_replay_alpha: 0.6
+        prioritized_replay_beta: 0.4
+        prioritized_replay_eps: 0.000001
+        clip_rewards: False
         optimizer:
-            num_replay_buffer_shards: 4
+            num_replay_buffer_shards: 8
 
         # === Optimization ===
-        lr: 0.0001
+        actor_lr: 0.0001
+        critic_lr: 0.0005
         use_huber: True
         huber_threshold: 1.0
         l2_reg: 0.000001
-        learning_starts: 1000
-        sample_batch_size: 20
-        train_batch_size: 128
+        learning_starts: 100000
+        sample_batch_size: 40
+        train_batch_size: 1024
         min_iter_time_s: 30
-        timesteps_per_iteration: 1000
 
         # === Parallelism ===
-        num_gpus: 0
-        num_workers: 64
-        num_cpus_per_worker: 1
+        num_gpus: 1
+        num_workers: 8
+        num_cpus_per_worker: 8
+        num_envs_per_worker: 8
+        remote_worker_envs: True
+
+        # === Resources ===
+        num_cpus_for_driver: 12

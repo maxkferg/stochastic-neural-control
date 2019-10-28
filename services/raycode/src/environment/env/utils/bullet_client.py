@@ -13,7 +13,10 @@ class BulletClient(object):
     """Create a simulation and connect to it."""
     self._client = pybullet.connect(pybullet.SHARED_MEMORY)
     if (self._client<0):
-      self._client = pybullet.connect(connection_mode, options=options)
+      try:
+        self._client = pybullet.connect(connection_mode, options=options)
+      except Exception:
+        self._client = pybullet.connect(pybullet.DIRECT, options=options)
     else:
       print("PyBullet using Shared Memory")
     logging.info("Created bullet client: %i"%self._client)

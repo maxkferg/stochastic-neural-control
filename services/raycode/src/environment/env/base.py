@@ -121,18 +121,17 @@ class BaseEnvironment():
 
     def create_turtlebot(self, id, position, name):
         position[2] = max(0, position[2])
-        physics = {}
         config = {
             "is_discrete": False,
             "initial_pos": position,
             "target_pos": [0,0,0],
             "resolution": 0.05,
             "power": 1.0,
-            "linear_power": float(os.environ.get('LINEAR_SPEED', 50)),
+            "linear_power": float(os.environ.get('LINEAR_SPEED', 40)),
             "angular_power": float(os.environ.get('ANGULAR_SPEED', 10)),
         }
         logging.debug("Creating Turtlebot at: {}".format(position))
-        turtlebot = Turtlebot(physics, config)
+        turtlebot = Turtlebot(self.physics, config)
         turtlebot.id = id
         turtlebot.name = name
         turtlebot.set_position(position)

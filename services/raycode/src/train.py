@@ -37,6 +37,7 @@ from ray.tune.registry import register_env
 from ray.rllib.models import ModelCatalog
 from learning.mink import MinkModel
 from learning.simple import SimpleModel
+from learning.robot import RobotModel
 from learning.preprocessing import DictFlatteningPreprocessor
 from environment.loaders.geometry import GeometryLoader
 from environment.env.base import BaseEnvironment # Env type
@@ -48,13 +49,6 @@ ENVIRONMENT = "MultiRobot-v0"
 
 # Only show errors and warnings
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.WARN)
-
-
-# Print available tensorflow devices
-with tf.Session() as sess:
-    print("Tensorflow devices:", sess.list_devices())
-
-
 
 
 def train_env_factory(args):
@@ -69,10 +63,12 @@ def train_env_factory(args):
 
     def train_env(cfg):
         if args.headless:
-            cfg.headless = True
+            cfg["headless"] = True
+        elif args.render:
+            cfg["headless"] = False
         loader = GeometryLoader(api_config) # Handles HTTP
         base = BaseEnvironment(loader, headless=cfg["headless"])
-        return MultiEnvironment(base, verbosity=0, creation_delay=10, env_config=cfg)
+        return MultiEnvironment(base, config=cfg)
 
     return train_env
 
@@ -92,6 +88,11 @@ def create_parser():
         action="store_true",
         help="Run population based training.")
     parser.add_argument(
+        "--trials",
+        default=False,
+        action="store_true",
+        help="Run trials.")
+    parser.add_argument(
         "--dev",
         action="store_true",
         help="Use development cluster with local redis server")
@@ -99,13 +100,43 @@ def create_parser():
         "--headless",
         action="store_true",
         help="Hide any GUI windows")
+    parser.add_argument(
+        "--render",
+        action="store_true",
+        help="Show GUI windows")
+    parser.add_argument(
+        "--workers",
+        type=int,
+        required=False,
+        help="Number of workers per trial")
     return parser
+
+
+
+def on_episode_start(info):
+    episode = info["episode"]
+    episode.user_data["actions"] = []
+
+
+def on_episode_step(info):
+    episode = info["episode"]
+    episode.user_data["actions"].append(episode.prev_action_for(0))
+    episode.user_data["actions"].append(episode.prev_action_for(1))
+
+def on_episode_end(info):
+    episode = info["episode"]
+    actions = episode.user_data["actions"]
+    throttle = [a[1] for a in actions]
+    rotation = [a[0] for a in actions]
+    episode.custom_metrics["rotation"] = np.mean(rotation)
+    episode.custom_metrics["throttle"] = np.mean(throttle)
 
 
 
 def run(args):
     ModelCatalog.register_custom_model("mink", MinkModel)
     ModelCatalog.register_custom_model("simple", SimpleModel)
+    ModelCatalog.register_custom_model("robot", RobotModel)
     register_env(ENVIRONMENT, train_env_factory(args))
 
     with open(args.config, 'r') as stream:
@@ -113,6 +144,17 @@ def run(args):
 
     for experiment_name, settings in experiments.items():
         print("Running %s"%experiment_name)
+        settings["config"].update({
+            "callbacks": {
+                "on_episode_start": on_episode_start,
+                "on_episode_step": on_episode_step,
+                "on_episode_end": on_episode_end,
+            }
+        })
+        
+        if args.workers is not None:
+            settings['config']['num_workers'] = args.workers
+        
         ray.tune.run(
             settings['run'],
             name=experiment_name,
@@ -135,29 +177,22 @@ def log_uniform(max, min):
 
 def run_pbt(args):
     ModelCatalog.register_custom_model("mink", MinkModel)
-    register_env(ENVIRONMENT, lambda cfg: train_env_creator(cfg))
-
-    def get_batch_mode(spec):
-        print(spec)
-        if spec['config']['parameter_noise']:
-            return 'complete_episodes'
-        else:
-            return 'truncate_episodes'
+    ModelCatalog.register_custom_model("robot", RobotModel)
+    register_env(ENVIRONMENT, train_env_factory(args))
 
     pbt_scheduler = PopulationBasedTraining(
         time_attr='time_total_s',
         metric="episode_reward_mean",
         mode="max",
-        perturbation_interval=1200.0,
+        perturbation_interval=600.0,
         hyperparam_mutations={
-            "lr": lambda: log_uniform(1e-3, 1e-5),
-            "tau": lambda: random.uniform(0.001, 0.002),
-            "target_network_update_freq": lambda: random.randint(50000, 200000),
-            "exploration_ou_noise_scale": lambda: random.uniform(0.01, 0.2),
-            "train_batch_size": lambda: random.randint(128, 1024),
-            "buffer_size": lambda: random.randint(128000, 512000),
-            "l2_reg": lambda: log_uniform(1e-5, 1e-8),
-        })
+            "tau": lambda: random.uniform(0.001, 0.005),
+            "optimization": {
+                "actor_learning_rate": log_uniform(1e-3, 1e-5),
+                "critic_learning_rate": log_uniform(1e-3, 1e-5),
+                "entropy_learning_rate": log_uniform(1e-3, 1e-5),
+            }
+        })          
 
     # Prepare the default settings
     with open(args.config, 'r') as stream:
@@ -166,15 +201,25 @@ def run_pbt(args):
     for experiment_name, settings in experiments.items():
         print("Running %s"%experiment_name)
         settings['config'].update({
-            "parameter_noise": sample_from(
-                lambda spec: random.choice([True, False])),
+            "learning_starts": sample_from(
+                lambda spec: random.choice([1000, 10000, 20000])),
             "target_network_update_freq": sample_from(
-                lambda spec: random.randint(20000, 80000)),
+                lambda spec: random.choice([0, 10, 100])),
+            "buffer_size": sample_from(
+                lambda spec: int(random.choice([1e6, 2e6, 4e6, 8e6]))),
+            "sample_batch_size": sample_from(
+                lambda spec: int(random.choice([1,4,8]))),
             "train_batch_size": sample_from(
-                lambda spec: random.choice([64, 256, 512, 1024])),
-            "batch_mode": sample_from(
-                lambda spec: get_batch_mode(spec)),
+                lambda spec: int(random.choice([128,256,512]))),
+            "callbacks": {
+                "on_episode_start": on_episode_start,
+                "on_episode_step": on_episode_step,
+                "on_episode_end": on_episode_end,
+            }
         })
+
+        if args.workers is not None:
+            settings['config']['num_workers'] = args.workers
 
         ray.tune.run(
             settings['run'],
@@ -187,6 +232,49 @@ def run_pbt(args):
         )
 
 
+def run_trials(args):
+    ModelCatalog.register_custom_model("mink", MinkModel)
+    ModelCatalog.register_custom_model("robot", RobotModel)
+    register_env(ENVIRONMENT, train_env_factory(args))
+
+    # Prepare the default settings
+    with open(args.config, 'r') as stream:
+        experiments = yaml.load(stream, Loader=yaml.Loader)
+
+    for experiment_name, settings in experiments.items():
+        print("Running %s"%experiment_name)
+        settings['config'].update({
+            "target_network_update_freq": sample_from(
+                lambda spec: random.choice([0, 1, 2])),
+            "buffer_size": sample_from(
+                lambda spec: int(random.choice([1e6, 2e6, 4e6, 8e6]))),
+            "sample_batch_size": sample_from(
+                lambda spec: int(random.choice([1,2,4]))),
+            "train_batch_size": sample_from(
+                lambda spec: int(random.choice([128,256,512]))),
+            "no_done_at_end": sample_from(
+                lambda spec: random.choice([True, False])),
+            "callbacks": {
+                "on_episode_start": on_episode_start,
+                "on_episode_step": on_episode_step,
+                "on_episode_end": on_episode_end,
+            }
+        })
+
+        if args.workers is not None:
+            settings['config']['num_workers'] = args.workers
+
+        ray.tune.run(
+            settings['run'],
+            name=experiment_name,
+            config=settings['config'],
+            checkpoint_freq=20,
+            max_failures=4,
+            num_samples=6
+        )
+
+
+
 if __name__ == "__main__":
     parser = create_parser()
     args = parser.parse_args()
@@ -196,6 +284,8 @@ if __name__ == "__main__":
         ray.init("localhost:6379")
     if args.pbt:
         run_pbt(args)
+    if args.trials:
+        run_trials(args)
     else:
         run(args)
 

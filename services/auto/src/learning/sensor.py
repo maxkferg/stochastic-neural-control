@@ -32,14 +32,14 @@ class SensorModel(SACModel):
             "ckpts": Box((4,2)),
         }
 
-        point_input = tf.keras.layers.Input(shape=obs_space["pointcloud"].shape, dtype="float32", name="pointcloud")
+        pointcloud_input = tf.keras.layers.Input(shape=obs_space["pointcloud"].shape, dtype="float32", name="pointcloud")
         target_input = tf.keras.layers.Input(shape=obs_space["target"].shape, dtype="float32", name="target")
         robot_theta_input = tf.keras.layers.Input(shape=obs_space["robot_theta"].shape, dtype="float32", name="robot_theta")
         robot_velocity_input = tf.keras.layers.Input(shape=obs_space["robot_velocity"].shape, dtype="float32", name="robot_velocity")
         ckpt_input = tf.keras.layers.Input(shape=obs_space["ckpts"].shape, dtype="float32", name="ckpts")
 
         inputs = [
-            point_input,
+            pointcloud_input,
             robot_theta_input,
             robot_velocity_input,
             target_input,
@@ -49,15 +49,23 @@ class SensorModel(SACModel):
         # Flatten layers that have structure
         ckpt = tf.keras.layers.Flatten()(ckpt_input)
 
+        # Noise
+        pointcloud = tf.keras.layers.GaussianNoise(stddev=0.2)(pointcloud_input)
+        robot_velocity = tf.keras.layers.GaussianNoise(stddev=0.0001)(robot_velocity_input)
+        robot_theta = tf.keras.layers.GaussianNoise(stddev=0.1)(target_input)
+        target = tf.keras.layers.GaussianNoise(stddev=0.1)(target_input)
+        ckpt = tf.keras.layers.GaussianNoise(stddev=0.1)(ckpt)
+        
         # Concatenate all inputs together
         sensors = [
-            (point_input-POINTCLOUD_MEAN)/POINTCLOUD_STD,
-            robot_theta_input/DIST_STD,
-            robot_velocity_input/DIST_STD,
-            target_input/DIST_STD,
+            (pointcloud-POINTCLOUD_MEAN)/POINTCLOUD_STD,
+            robot_theta/DIST_STD,
+            robot_velocity/DIST_STD,
+            target/DIST_STD,
             ckpt/DIST_STD,
         ]
 
+        # Layers
         num_sensors = np.sum([tensor.shape[-1] for tensor in sensors])
         x = tf.keras.layers.Concatenate(axis=-1, name="sensor_input")(sensors)
         x = tf.keras.layers.Dense(num_outputs - num_sensors)(x)
@@ -71,7 +79,7 @@ class SensorModel(SACModel):
 
         self.base_model = tf.keras.Model(inputs, [output_layer, metrics])
         self.register_variables(self.base_model.variables)
-        #self.base_model.summary()
+        self.base_model.summary()
         
 
     def forward(self, input_dict, state, seq_lens=None):
@@ -86,7 +94,7 @@ class SensorModel(SACModel):
         return model_out, state
 
     def policy_variables(self):
-        return super().policy_variables()
+        return self.base_model.variables + super().policy_variables()
 
     def q_variables(self):
         return self.base_model.variables + super().q_variables()

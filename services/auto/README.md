@@ -19,11 +19,6 @@ In visualization mode:
 - The service subscribes to building geometry and robot position, keeping the model current
 - The service writes trajectories and Q-values to the server
 
-# Installation
-```
-conda env create -f environment.yml
-```
-
 # Quick Start
 
 Training

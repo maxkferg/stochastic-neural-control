@@ -17,18 +17,20 @@ seeker-test:
         horizon: 100
 
         # === Model ===
-        n_step: 4
+        n_step: 3
         gamma: 0.99
         use_state_preprocessor: True
         model:
             use_lstm: False
             custom_model: "mink"
+            custom_options:
+                cnn_weight: 0
 
         # === Exploration ===
         schedule_max_timesteps: 100000
         exploration_fraction: 0.5
         target_network_update_freq: 500000
-        tau: 0.001 # 1
+        tau: 0.005
 
         # === Replay buffer ===
         buffer_size: 48000
@@ -49,4 +51,3 @@ seeker-test:
         # === Parallelism ===
         num_gpus: 0
         num_workers: 2
-        num_envs_per_worker: 1

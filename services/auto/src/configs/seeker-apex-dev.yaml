@@ -15,23 +15,27 @@ seeker-apex-dev:
         smooth_target_policy: True
         target_noise: 0.2
         horizon: 100
+        gamma: 0.99
 
         # === Model ===
-        n_step: 4
-        gamma: 0.99
+        n_step: 3
+        actor_hiddens: [256]
+        critic_hiddens: [256]
         use_state_preprocessor: True
         model:
             use_lstm: False
             custom_model: "mink"
+            custom_options:
+                cnn_weight: 0
 
         # === Evaluation ===
-        evaluation_interval: 5
-        evaluation_num_episodes: 10
+        #evaluation_interval: 5
+        #evaluation_num_episodes: 10
 
         # === Exploration ===
-        schedule_max_timesteps: 2000000
+        schedule_max_timesteps: 20000000 # 20 Million
         exploration_fraction: 0.5
-        target_network_update_freq: 500000
+        target_network_update_freq: 100000
         tau: 0.001 # 1
 
         # === Replay buffer ===
@@ -40,7 +44,8 @@ seeker-apex-dev:
             num_replay_buffer_shards: 4
 
         # === Optimization ===
-        lr: 0.0001
+        actor_lr: 0.0001
+        critic_lr: 0.0001
         use_huber: True
         huber_threshold: 1.0
         l2_reg: 0.0000001
@@ -52,7 +57,5 @@ seeker-apex-dev:
 
         # === Parallelism ===
         num_gpus: 0
-        num_workers: 4
+        num_workers: 128
         num_cpus_per_worker: 1
-        num_envs_per_worker: 4
-        remote_worker_envs: True

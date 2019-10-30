@@ -44,10 +44,10 @@ dependencies:
     - tensorboard
     - tensorflow
     - tensorflow-estimator
+    - tensorflow-probability
     - termcolor
     - tqdm
     - transforms3d
     - trimesh
-    - git+https://github.com/astooke/rlpyt
 prefix: /usr/local/miniconda3/envs/sim
 

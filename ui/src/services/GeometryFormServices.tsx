@@ -20,24 +20,6 @@ export default class GeometrySingleton {
               directory: "/geometry/env/labv2/",
               scale: 1.0,
             },
-            "playground-walls": {
-              id: "playground-walls-",
-              name: "playground-walls-",
-              type: "wall",
-              filetype: "obj",
-              filename: "walls.obj",
-              directory: "/geometry/env/playground/",
-              scale: 1.0,
-            },
-            "playground-floor": {
-              id: "playground-floor-",
-              name: "playground-floor-",
-              type: "floor",
-              filetype: "obj",
-              filename: "floors.obj",
-              directory: "/geometry/env/playground/",
-              scale: 1.0,
-            },
             "robot": {
               id: "robot-",
               name: "robot-",
@@ -127,9 +109,45 @@ export default class GeometrySingleton {
               filename: "recycle bin.obj",
               directory: "/geometry/objects/recycle-bin/",
               scale: 0.001,
-            }
+            },
+            "playground-walls": {
+              id: "playground-walls-",
+              name: "playground-walls-",
+              type: "wall",
+              filetype: "obj",
+              filename: "walls.obj",
+              directory: "/geometry/env/playground/",
+              scale: 1.0,
+            },
+            "playground-floor": {
+              id: "playground-floor-",
+              name: "playground-floor-",
+              type: "floor",
+              filetype: "obj",
+              filename: "floors.obj",
+              directory: "/geometry/env/playground/",
+              scale: 1.0,
+            },
+            "y2e2-walls": {
+              id: "y2e2-walls-",
+              name: "y2e2-walls-",
+              type: "wall",
+              filetype: "obj",
+              filename: "walls.obj",
+              directory: "/geometry/env/y2e2/bullet/",
+              scale: 1.0,
+            },
+            "y2e2-floor": {
+              id: "y2e2-floor-",
+              name: "y2e2-floor-",
+              type: "floor",
+              filetype: "obj",
+              filename: "floors.obj",
+              directory: "/geometry/env/y2e2/bullet/",
+              scale: 1.0,
+            },
         };
-    } 
+    }
     public static getInstance() : GeometrySingleton {
         if (!GeometrySingleton.instance) {
             return new GeometrySingleton();

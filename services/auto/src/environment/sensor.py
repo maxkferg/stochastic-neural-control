@@ -1,9 +1,17 @@
+"""
+Single agent environment with simple sensor readings
+
+Can be wrapped by multi.MultiEnvironment
+"""
 import gym
 import numpy as np
+import pybullet as p
 from gym import spaces
+from pyquaternion import Quaternion
 from collections import OrderedDict
-from .base.single import SingleEnvironment
-from .utils.vector import *
+from .core.env.single import SingleEnvironment
+from .core.utils.vector import *
+
 
 
 class SensorEnvironment(SingleEnvironment, gym.Env):
@@ -12,8 +20,7 @@ class SensorEnvironment(SingleEnvironment, gym.Env):
     Lidar readings from nearby objects
     """
 
-    def __init__(self, base_env, config):
-        robot = base_env.robots[0]
+    def __init__(self, base_env, robot, config):
         self.init_lidar()
         super().__init__(base_env=base_env, robot=robot, config=config)
         self.pointcloud_size = len(self.rays)
@@ -36,7 +43,7 @@ class SensorEnvironment(SingleEnvironment, gym.Env):
 
         self.rays = []
         for i in range(ray_count):
-            q = make_quaternion([0, 0, 1], i*ray_angle)
+            q = Quaternion(axis=[0, 0, 1], angle=i*ray_angle)
             self.rays.append(q)
 
 
@@ -44,22 +51,35 @@ class SensorEnvironment(SingleEnvironment, gym.Env):
         """
         Read values from the laser scanner
         """
-        # The LIDAR is assumed to be attached to the top (to avoid self-intersection)
-        lidar_pos = add_vec(robot_pos, [0, 0, .25])
-
         # The total length of the ray emanating from the LIDAR
         ray_len = 10
 
+        robot_orn = Quaternion(
+            a=robot_orn[3], 
+            b=robot_orn[0], 
+            c=robot_orn[1], 
+            d=robot_orn[2])
+
+        lidar_pos = add_vec(robot_pos, [0, 0, .25])
+
         # Rotate the ray vector and determine intersection
         intersections = []
+        ray_from = []
+        ray_to = []
+        robot_radius = 0.2
         for ray in self.rays:
-            rot = mul_quat(robot_orn, ray)
-            dir_vec = rotate_vector(rot, [1, 0, 0])
-            start_pos = add_vec(lidar_pos, scale_vec(.1, dir_vec))
+            rot = robot_orn*ray
+            dir_vec = rot.rotate([1, 0, 0])
+            start_pos = add_vec(lidar_pos, scale_vec(robot_radius, dir_vec))
             end_pos = add_vec(lidar_pos, scale_vec(ray_len, dir_vec))
-            intersection = self.physics.rayTest(start_pos, end_pos)
-            if intersection[0][0] in self.base.walls + self.base.robots:
-                intersections.append(intersection[0][2]*ray_len)
+            ray_from.append(start_pos)
+            ray_to.append(end_pos)
+        
+        # Test as a batch for improved performance
+        ray_hits = self.physics.rayTestBatch(ray_from, ray_to)
+        for ray in ray_hits:
+            if ray[0] in self.base.walls + self.base.robots:
+                intersections.append(ray[2]*ray_len)
             else:
                 intersections.append(ray_len)
         return intersections
@@ -78,14 +98,5 @@ class SensorEnvironment(SingleEnvironment, gym.Env):
         obs = OrderedDict((k, obs[k]) for k in self.observation_space.spaces.keys())
         return obs
 
-
-    def step(self, actions):
-        """
-        Step the simulation forward one timestep
-        """
-        self.act(actions)
-        super().step()
-        obs, rew, done, info = self.observe()
-        return obs, rew, done, info
 
 

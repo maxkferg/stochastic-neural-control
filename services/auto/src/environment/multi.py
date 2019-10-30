@@ -4,10 +4,9 @@ import time
 import math
 import random
 import numpy as np
-from .single import SingleEnvironment
-from .base import BaseEnvironment
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
-from PIL import Image, ImageDraw, ImageColor
+from .core.env.single import SingleEnvironment
+from .core.env.base import BaseEnvironment
 
 
 DEFAULTS = {
@@ -19,21 +18,23 @@ DEFAULTS = {
 class MultiEnvironment(MultiAgentEnv):
     noop_action = (0,0)
 
-    def __init__(self, base_env, config={}):
+    def __init__(self, environment_cls, config={}):
         config = dict(DEFAULTS, **config)
         self.dones = set()
-        self.base_env = base_env
-        self.robots = base_env.robots
         self.verbosity = config['verbosity']
         self.creation_delay = config['creation_delay']
         self.env = {}
+
+        # Create PyBullet environment
+        base_env = BaseEnvironment(config=config)
+        self.robots = base_env.robots
 
         delay = self.creation_delay*random.random()
         print("Waiting for %.3f seconds before creating this env"%delay)
         time.sleep(delay)
 
         for i,robot in enumerate(self.robots):
-            self.env[i] = SingleEnvironment(base_env, robot=robot, config=config)
+            self.env[i] = environment_cls(base_env, robot=robot, config=config)
 
         self.default_env = self.env[0]
         self.action_space = self.default_env.action_space

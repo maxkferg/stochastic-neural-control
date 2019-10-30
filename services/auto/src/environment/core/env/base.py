@@ -1,3 +1,9 @@
+"""
+Base environment is a single Pybullet world
+The base environment handles the loading of world geometry
+A base environment can be shared between multiple gym environments
+"""
+
 import time
 import random
 import logging
@@ -6,7 +12,8 @@ import os, inspect
 from shapely import geometry
 from random import randrange
 from ..utils.geometry import min_distance
-from ..utils.bullet_client import BulletClient
+from ..loaders.geometry import GeometryLoader
+from ..bullet.bullet_client import BulletClient
 from ..robots.robot_models import Turtlebot
 from ..robots.robot_messages import get_odom_message
 
@@ -15,26 +22,27 @@ from ..robots.robot_messages import get_odom_message
 class BaseEnvironment():
 
     def __init__(self,
-      loader,
-      headless=False,
       planner="prm",
+      config={},
     ):
         """
         A environment for simulating robot movement
-        @headless: Does not show a GUI if headless is True
         @planner: The planner used for checkpointing. Either "rrt" or "prm"
-        @building_id: The building geometry to use
+        @config: Environment config
+        @config.headless: Does not show a GUI if headless is True
+        @confg.building_id: The building geometry to use
         """
 
         #choose connection method: GUI, DIRECT, SHARED_MEMORY
-        if headless:
+        self.headless = config["headless"]
+        if self.headless:
           self.physics = BulletClient(pybullet.DIRECT)
         else:
           self.physics = BulletClient(pybullet.GUI)
         self.planner = planner
+        self.loader = GeometryLoader(config) 
         self.physics.setPhysicsEngineParameter(numSubSteps=10)
         self.physics.setTimeStep(timeStep=0.020)
-        self.loader = loader
         self.robots = []
         self.robot_ids = []
         self.walls = []

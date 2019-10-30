@@ -1,107 +1,290 @@
-
 """
-Runs one instance of the environment and optimizes using the Soft Actor
-Critic algorithm. Can use a GPU for the agent (applies to both sample and
-train). No parallelism employed, everything happens in one python process; can
-be easier to debug.
+Train an agent on SeekerSimEnv
 
-Example Usage:
+# For a lightweight test
 
-python train.py --cuda_idx=0
 
+
+# For a development td3 test
+python train.py configs/seeker-td3.yaml --headless
+
+# For a GPU driven large test
+python train.py configs/seeker-apex-td3.yaml
+python train.py configs/simple/simple-td3.yaml --headless
+
+# Population based training
+python train.py configs/seeker-apex-pbt.yaml --pbt
 """
-from rlpyt.envs.gym import make as gym_make
-from rlpyt.utils.launching.affinity import encode_affinity
-from rlpyt.utils.launching.affinity import prepend_run_slot, affinity_from_code
-from rlpyt.samplers.async_.cpu_sampler import AsyncCpuSampler
-from rlpyt.samplers.async_.gpu_sampler import AsyncGpuSampler
-from rlpyt.algos.qpg.sac import SAC
-from rlpyt.runners.async_rl import AsyncRlEval
-from rlpyt.utils.logging.context import logger_context
-from gym.envs.registration import register
-from learning.models import PiModel, QofMuModel, StateEncoder
-from learning.sac_agent import SacAgent
+import io
+import ray
+import yaml
+import numpy as np
+import gym
+import math
+import random
+import logging
+import argparse
+import tensorflow as tf
+import colored_traceback
+from random import choice
+from pprint import pprint
+from gym.spaces import Discrete, Box
+from gym.envs.registration import EnvSpec
+from gym.envs.registration import registry
+from ray import tune
+from ray.tune import run, sample_from, run_experiments
+from ray.tune.schedulers import PopulationBasedTraining
+from ray.tune.registry import register_env
+from ray.rllib.models import ModelCatalog
+from learning.robot import RobotModel
+from learning.sensor import SensorModel
+from learning.preprocessing import DictFlatteningPreprocessor
+from environment.sensor import SensorEnvironment # Env type
+from environment.multi import MultiEnvironment # Env type
+colored_traceback.add_hook()
 
 
-register(
-    id='Seeker-v0',
-    entry_point='environment.env.simple:SimpleEnvironment',
-    max_episode_steps=500,
-)
+ENVIRONMENT = "MultiRobot-v0"
+
+DEFAULTS = {
+    'headless': True,
+    'building_id': '5d984a7c6f1886dacf9c730d'
+}
+
+
+# Only show errors and warnings
+logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.WARN)
+
+
+def train_env_factory(args):
+    """
+    Create an environment that is linked to the communication platform
+    @env_config: Environment configuration from config file
+    @args: Command line arguments for overriding defaults
+    """
+    config = DEFAULTS.copy()
+    def train_env(cfg):
+        if args.headless:
+            config["headless"] = True
+        elif args.render:
+            config["headless"] = False
+        return MultiEnvironment(config=config, environment_cls=SensorEnvironment)
+
+    return train_env
 
 
 
-def build_and_train(env_id="Seeker-v0", run_ID=0, cuda_idx=None):
-    affinity_code = encode_affinity(
-        n_cpu_core=32,
-        n_gpu=2,
-        async_sample=True,
-    )
-    slot_affinity_code = prepend_run_slot(0, affinity_code)
-    affinity = affinity_from_code(slot_affinity_code)
-    print("Affinity:", affinity)
+def create_parser():
+    parser = argparse.ArgumentParser(
+        description='Process some integers.')
+    parser.add_argument(
+        "config",
+        default="configs/seeker-test.yaml",
+        type=str,
+        help="The configuration file to use for the RL agent.")
+    parser.add_argument(
+        "--pbt",
+        default=False,
+        action="store_true",
+        help="Run population based training.")
+    parser.add_argument(
+        "--trials",
+        default=False,
+        action="store_true",
+        help="Run trials.")
+    parser.add_argument(
+        "--dev",
+        action="store_true",
+        help="Use development cluster with local redis server")
+    parser.add_argument(
+        "--headless",
+        action="store_true",
+        help="Hide any GUI windows")
+    parser.add_argument(
+        "--render",
+        action="store_true",
+        help="Show GUI windows")
+    parser.add_argument(
+        "--workers",
+        type=int,
+        required=False,
+        help="Number of workers per trial")
+    return parser
 
-    env_config = dict(
-        headless=True
-    )
 
-    eval_env_config = dict(
-        headless=True
-    )
- 
-    sampler = AsyncCpuSampler(
-        EnvCls=gym_make,
-        env_kwargs=dict(id=env_id, config=env_config),
-        eval_env_kwargs=dict(id=env_id, config=eval_env_config),
-        batch_T=1,  # One time-step per sampler iteration.
-        batch_B=24,  # One environment (i.e. sampler Batch dimension).
-        max_decorrelation_steps=0,
-        eval_n_envs=4,
-        eval_max_steps=int(20e3),
-        eval_max_trajectories=50,
-    )
 
-    algo = SAC(
-        reward_scale=10,
-        n_step_return=1,
-        learning_rate=1e-4,
-        clip_grad_norm=10,
-        target_update_tau=0.001,
-        target_entropy="auto",
-    )
+def on_episode_start(info):
+    episode = info["episode"]
+    episode.user_data["actions"] = []
 
-    agent = SacAgent(
-        StateEncoderCls=StateEncoder,
-        ModelCls=PiModel,
-        QModelCls=QofMuModel,
-        pretrain_std=0.1, # Start with noisy but reasonable policy
-    )
 
-    runner = AsyncRlEval(
-        algo=algo,
-        agent=agent,
-        sampler=sampler,
-        n_steps=1e7,
-        affinity=affinity,
-        log_interval_steps=20e3
-    )
+def on_episode_step(info):
+    episode = info["episode"]
+    episode.user_data["actions"].append(episode.prev_action_for(0))
+    episode.user_data["actions"].append(episode.prev_action_for(1))
 
-    config = dict(env_id=env_id)
-    name = "sac_" + env_id
-    log_dir = "example_1"
-    with logger_context(log_dir, run_ID, name, config):
-        runner.train()
+def on_episode_end(info):
+    episode = info["episode"]
+    actions = episode.user_data["actions"]
+    throttle = [a[1] for a in actions]
+    rotation = [a[0] for a in actions]
+    episode.custom_metrics["rotation"] = np.mean(rotation)
+    episode.custom_metrics["throttle"] = np.mean(throttle)
+
+
+
+def run(args):
+    ModelCatalog.register_custom_model("robot", RobotModel)
+    ModelCatalog.register_custom_model("sensor", SensorModel)
+    register_env(ENVIRONMENT, train_env_factory(args))
+
+    with open(args.config, 'r') as stream:
+        experiments = yaml.load(stream, Loader=yaml.Loader)
+
+    for experiment_name, settings in experiments.items():
+        print("Running %s"%experiment_name)
+        settings["config"].update({
+            "callbacks": {
+                "on_episode_start": on_episode_start,
+                "on_episode_step": on_episode_step,
+                "on_episode_end": on_episode_end,
+            }
+        })
+        
+        if args.workers is not None:
+            settings['config']['num_workers'] = args.workers
+        
+        ray.tune.run(
+            settings['run'],
+            name=experiment_name,
+            stop=settings['stop'],
+            config=settings['config'],
+            checkpoint_freq=settings['checkpoint_freq'],
+            queue_trials=True,
+        )
+
+def log_uniform(max, min):
+    """
+    log_uniform(1e-2, 1e-5)
+    """
+    min_exp = math.log10(min)
+    max_exp = math.log10(max)
+    exp = random.uniform(min_exp, max_exp)
+    return 10**exp
+
+
+
+def run_pbt(args):
+    ModelCatalog.register_custom_model("robot", RobotModel)
+    ModelCatalog.register_custom_model("sensor", SensorModel)
+    register_env(ENVIRONMENT, train_env_factory(args))
+
+    pbt_scheduler = PopulationBasedTraining(
+        time_attr='time_total_s',
+        metric="episode_reward_mean",
+        mode="max",
+        perturbation_interval=600.0,
+        hyperparam_mutations={
+            "tau": lambda: random.uniform(0.001, 0.005),
+            "optimization": {
+                "actor_learning_rate": log_uniform(1e-3, 1e-5),
+                "critic_learning_rate": log_uniform(1e-3, 1e-5),
+                "entropy_learning_rate": log_uniform(1e-3, 1e-5),
+            }
+        })          
+
+    # Prepare the default settings
+    with open(args.config, 'r') as stream:
+        experiments = yaml.load(stream, Loader=yaml.Loader)
+
+    for experiment_name, settings in experiments.items():
+        print("Running %s"%experiment_name)
+        settings['config'].update({
+            "learning_starts": sample_from(
+                lambda spec: random.choice([1000, 10000, 20000])),
+            "target_network_update_freq": sample_from(
+                lambda spec: random.choice([0, 10, 100])),
+            "buffer_size": sample_from(
+                lambda spec: int(random.choice([1e6, 2e6, 4e6, 8e6]))),
+            "sample_batch_size": sample_from(
+                lambda spec: int(random.choice([1,4,8]))),
+            "train_batch_size": sample_from(
+                lambda spec: int(random.choice([128,256,512]))),
+            "callbacks": {
+                "on_episode_start": on_episode_start,
+                "on_episode_step": on_episode_step,
+                "on_episode_end": on_episode_end,
+            }
+        })
+
+        if args.workers is not None:
+            settings['config']['num_workers'] = args.workers
+
+        ray.tune.run(
+            settings['run'],
+            name=experiment_name,
+            scheduler=pbt_scheduler,
+            config=settings['config'],
+            checkpoint_freq=20,
+            max_failures=5,
+            num_samples=6
+        )
+
+
+def run_trials(args):
+    ModelCatalog.register_custom_model("robot", RobotModel)
+    ModelCatalog.register_custom_model("sensor", SensorModel)
+    register_env(ENVIRONMENT, train_env_factory(args))
+
+    # Prepare the default settings
+    with open(args.config, 'r') as stream:
+        experiments = yaml.load(stream, Loader=yaml.Loader)
+
+    for experiment_name, settings in experiments.items():
+        print("Running %s"%experiment_name)
+        settings['config'].update({
+            "target_network_update_freq": sample_from(
+                lambda spec: random.choice([0, 1, 2])),
+            "buffer_size": sample_from(
+                lambda spec: int(random.choice([1e6, 2e6, 4e6, 8e6]))),
+            "sample_batch_size": sample_from(
+                lambda spec: int(random.choice([1,2,4]))),
+            "train_batch_size": sample_from(
+                lambda spec: int(random.choice([128,256,512]))),
+            "no_done_at_end": sample_from(
+                lambda spec: random.choice([True, False])),
+            "callbacks": {
+                "on_episode_start": on_episode_start,
+                "on_episode_step": on_episode_step,
+                "on_episode_end": on_episode_end,
+            }
+        })
+
+        if args.workers is not None:
+            settings['config']['num_workers'] = args.workers
+
+        ray.tune.run(
+            settings['run'],
+            name=experiment_name,
+            config=settings['config'],
+            checkpoint_freq=20,
+            max_failures=4,
+            num_samples=6
+        )
+
 
 
 if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--env_id', help='environment ID', default='Seeker-v0')
-    parser.add_argument('--run_ID', help='run identifier (logging)', type=int, default=0)
-    parser.add_argument('--cuda_idx', help='gpu to use ', type=int, default=None)
+    parser = create_parser()
     args = parser.parse_args()
-    build_and_train(
-        env_id=args.env_id,
-        run_ID=args.run_ID,
-        cuda_idx=args.cuda_idx,
-    )
+    if args.dev:
+        ray.init()
+    else:
+        ray.init("localhost:6379")
+    if args.pbt:
+        run_pbt(args)
+    if args.trials:
+        run_trials(args)
+    else:
+        run(args)
+

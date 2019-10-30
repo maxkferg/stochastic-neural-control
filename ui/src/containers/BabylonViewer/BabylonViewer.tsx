@@ -11,7 +11,7 @@ import * as React from 'react';
 import PropTypes from 'prop-types';
 import { withStyles, WithStyles, Theme } from '@material-ui/core/styles';
 import { Vector3, HemisphericLight, DirectionalLight, CannonJSPlugin, ArcRotateCamera,
-    MeshBuilder, DefaultRenderingPipeline, ShadowGenerator, StandardMaterial, PhysicsImpostor, Mesh, Color3 } from 'babylonjs';
+    MeshBuilder, DefaultRenderingPipeline, ShadowGenerator, PhysicsImpostor } from 'babylonjs';
 import { AdvancedDynamicTexture, Button } from 'babylonjs-gui';
 import { Scene, Engine } from 'react-babylonjs';
 import { find } from 'lodash';
@@ -438,51 +438,6 @@ class BabylonViewer extends React.Component<Props, State> {
         // for self-shadowing (ie: blocks)
         shadowGenerator.forceBackFacesOnly = true;
         shadowGenerator.depthScale = 100;
-
-        var sphere = Mesh.CreateSphere('sphere', 10, 0.4, scene, false);
-        sphere.position.y = 5;
-
-        var darkMaterial = new StandardMaterial('Grey', scene);
-        darkMaterial.diffuseColor = Color3.FromInts(255, 255, 255); // Color3.FromInts(200, 200, 200)
-        const radiansFromCameraForShadows = -3 * (Math.PI / 4);
-
-        scene.registerBeforeRender(() => {
-            shadowLight.position.x = Math.cos(camera.alpha + radiansFromCameraForShadows) * 40;
-            shadowLight.position.z = Math.sin(camera.alpha + radiansFromCameraForShadows) * 40;
-            shadowLight.setDirectionToTarget(Vector3.Zero());
-        });
-
-        shadowGenerator.getShadowMap()!.renderList!.push(sphere);
-
-        sphere.physicsImpostor = new PhysicsImpostor(
-            sphere,
-            PhysicsImpostor.SphereImpostor,
-            {
-                mass: 1,
-                restitution: 0.9
-            },
-            scene
-        );
-
-        // GUI
-        var plane = MeshBuilder.CreatePlane('plane', {size: 2}, scene);
-        plane.parent = sphere;
-        plane.position.y = 2;
-
-        var advancedTexture = AdvancedDynamicTexture.CreateForMesh(plane);
-        var button1 = Button.CreateSimpleButton('but1', 'Sphere-0');
-
-        button1.width = 1;
-        button1.height = 0.4;
-        button1.color = 'white';
-        button1.fontSize = 200;
-        button1.background = 'green';
-        button1.onPointerUpObservable.add(function() {
-            sphere.physicsImpostor!.applyImpulse(
-                new Vector3(0, 10, 0), sphere.getAbsolutePosition()
-            );
-        });
-        advancedTexture.addControl(button1);
 
         // Create default pipeline and enable dof with Medium blur level
         let pipeline = new DefaultRenderingPipeline("default", true, scene);

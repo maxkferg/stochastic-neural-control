@@ -1,13 +1,9 @@
-const path = require('path');
-const config = require('config');
-const database = require('../database');
 const geometryConnector = require('./mapGeometry');
-
-
 
 async function start(db){
 	require('./robotPosition');
 	require('./robotImu');
+	require('./pointCloud');
 	//require('./robotMap');
 	geometryConnector(db)
 }

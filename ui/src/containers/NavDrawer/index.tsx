@@ -138,7 +138,7 @@ function NavDrawer(props) {
               <ListItemIcon><SlamIcon /></ListItemIcon>
               <ListItemText primary={"SLAM"} />
             </ListItem>
-            <ListItem button onClick={() => handleIconClick("pointcloud")} key="PointCloud">
+            <ListItem button onClick={() => handleIconClick("point-cloud")} key="PointCloud">
               <ListItemIcon><PointCloudIcon /></ListItemIcon>
               <ListItemText primary="PointCloud" />
             </ListItem>

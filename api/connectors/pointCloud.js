@@ -5,12 +5,10 @@ const pointService = require('../services/PointService');
 
 const Consumer = kafka.Consumer;
 
-// const kafkaHost = config.get("Kafka.host");
+const kafkaHost = config.get("Kafka.host");
 
 Logger.info("Creating Kafka Consumer (Point cloud): ");
-const client = new kafka.KafkaClient({
-    kafkaHost: '10.3.100.196:9092'
-});
+const client = new kafka.KafkaClient({kafkaHost});
 
 const consumer = new Consumer(
     client,

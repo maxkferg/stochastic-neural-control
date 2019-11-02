@@ -26,7 +26,6 @@ import logging
 import argparse
 import collections
 import colored_traceback
-from matplotlib import cm
 from pprint import pprint
 from gym.spaces import Discrete, Box
 from gym.envs.registration import EnvSpec

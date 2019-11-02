@@ -181,7 +181,7 @@ class SingleEnvironment():
 
         self.viewer = None
         self.reset()
-        print("Initialized env with %i timestep (%i base repeat)"%(self.timestep, self.action_repeat))
+        print("Initialized env with %.3f timestep (%i base repeat)"%(self.timestep, self.action_repeat))
 
 
     def __del__(self):

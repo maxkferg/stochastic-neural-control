@@ -21,9 +21,8 @@ import argparse
 import colored_traceback
 from PIL import Image, ImageTk
 from gym.envs.registration import registry
-from environment.loaders.geometry import GeometryLoader
-from environment.env.base import BaseEnvironment # Env type
-from environment.env.multi import MultiEnvironment # Env type
+from environment.sensor import SensorEnvironment # Env type
+from environment.multi import MultiEnvironment # Env type
 
 
 colored_traceback.add_hook()
@@ -36,25 +35,30 @@ MAP_HEIGHT = int(520*1.6)
 
 RENDER_SIZE = (RENDER_HEIGHT, RENDER_WIDTH)
 
+ENVIRONMENT = "MultiRobot-v0"
+DEFAULTS = {
+    'headless': False,
+    'reset_on_target': True,
+    'building_id': '5d984a7c6f1886dacf9c730d'
+}
 
 
-def train_env_creator():
+def train_env_factory(args):
     """
     Create an environment that is linked to the communication platform
+    @env_config: Environment configuration from config file
+    @args: Command line arguments for overriding defaults
     """
-    cfg = {
-        "debug": True,
-        "monitor": True,
-        "headless": True,
-        "reset_on_target": True
-    }
-    with open('environment/configs/prod.yaml') as fs:
-        api_config = yaml.load(fs, Loader=yaml.Loader)
-        api_config['building_id'] = '5d984a7c6f1886dacf9c730d'
-    loader = GeometryLoader(api_config) # Handles HTTP
-    base = BaseEnvironment(loader, headless=cfg["headless"])
-    return MultiEnvironment(base, verbosity=0, env_config=cfg)
+    def train_env(cfg):
+        config = DEFAULTS.copy()
+        config.update(cfg)
+        if args.headless:
+            config["headless"] = True
+        elif args.render:
+            config["headless"] = False
+        return MultiEnvironment(config=config, environment_cls=SensorEnvironment)
 
+    return train_env
 
 
 
@@ -69,6 +73,11 @@ def create_parser(parser_creator=None):
         "--headless",
         action="store_true",
         help="Optionally disable all rendering (default=False).")
+
+    parser.add_argument(
+        "--render",
+        action="store_true",
+        help="Show GUI windows")
 
     return parser
 
@@ -101,8 +110,10 @@ class BenchmarkWindow():
         if self.times%33==0:
             print("%.02f FPS"%(self.times/(time.clock()-self.timestart)))
         if done["__all__"]:
-            print("--- Resetting ---")
+            time_before_reset = time.time()
             env.reset()
+            reset_duration = time.time() - time_before_reset
+            print("Reset in %.4f seconds"%reset_duration)
 
 
 
@@ -180,10 +191,12 @@ class MapWindow():
 if __name__=="__main__":
     parser = create_parser()
     args = parser.parse_args()
-    env = train_env_creator()
+    env = train_env_factory(args)({})
+
     if args.headless:
         view = BenchmarkWindow(env)
-    else:
-        mapw = MapWindow(MAP_WIDTH, MAP_HEIGHT)
-        view = ViewWindow(mapw, RENDER_WIDTH, RENDER_HEIGHT)
+    # Not working at the moment
+    #else:
+    #    mapw = MapWindow(MAP_WIDTH, MAP_HEIGHT)
+    #    view = ViewWindow(mapw, RENDER_WIDTH, RENDER_HEIGHT)
     view.start()

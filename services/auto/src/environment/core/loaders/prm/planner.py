@@ -10,7 +10,6 @@ import math
 import random
 import numpy as np
 import scipy.spatial
-import matplotlib.pyplot as plt
 from .graph import Graph
 
 

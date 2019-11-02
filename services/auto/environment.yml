@@ -2,20 +2,17 @@ name: sim
 channels:
   - conda-forge
   - defaults
-  - pytorch
 dependencies:
   - pip
   - python
   - numpy
   - pillow
   - psutil
-  - pytorch
   - readline
   - rtree
   - setuptools
   - sqlite
   - tk
-  - torchvision
   - wheel
   - x264
   - xz
@@ -31,23 +28,27 @@ dependencies:
     - kafka-python
     - keras-applications
     - numpy
+    - lz4
     - opencv-python-headless
     - plotly
     - pybullet
     - pyprind
     - pyyaml
+    - pyquaternion
     - requests
     - scikit-image
     - scipy
     - setproctitle
     - shapely
+    - tabulate
     - tensorboard
-    - tensorflow
+    - tensorflow-gpu
     - tensorflow-estimator
     - tensorflow-probability
     - termcolor
     - tqdm
     - transforms3d
     - trimesh
+    - https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-0.8.0.dev6-cp37-cp37m-manylinux1_x86_64.whl
 prefix: /usr/local/miniconda3/envs/sim
 

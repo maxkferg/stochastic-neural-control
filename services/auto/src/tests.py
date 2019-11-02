@@ -22,13 +22,18 @@ from ray.tune.registry import register_env
 from ray.rllib.models import ModelCatalog
 from ray.rllib.models.preprocessors import get_preprocessor
 from learning.mink import MinkModel
-from environment.env.utils.math import normalize_angle
-from environment.loaders.geometry import GeometryLoader
-from environment.env.base import BaseEnvironment # Env type
-from environment.env.multi import MultiEnvironment # Env type
+from environment.core.utils.math import normalize_angle
+from environment.sensor import SensorEnvironment # Env type
+from environment.multi import MultiEnvironment # Env type
 colored_traceback.add_hook()
 
 ENVIRONMENT = "MultiRobot-v0"
+
+DEFAULTS = {
+    'headless': False,
+    'reset_on_target': True,
+    'building_id': '5d984a7c6f1886dacf9c730d'
+}
 
 
 def setup():
@@ -36,22 +41,41 @@ def setup():
     register_env(ENVIRONMENT, lambda cfg: train_env_creator(cfg))
 
 
-def train_env_creator():
+def create_parser():
+    parser = argparse.ArgumentParser(
+        description='Process some integers.')
+    parser.add_argument(
+        "--dev",
+        action="store_true",
+        help="Use development cluster with local redis server")
+    parser.add_argument(
+        "--headless",
+        action="store_true",
+        help="Hide any GUI windows")
+    parser.add_argument(
+        "--render",
+        action="store_true",
+        help="Show GUI windows")
+    return parser
+
+
+
+def train_env_factory(args):
     """
     Create an environment that is linked to the communication platform
+    @env_config: Environment configuration from config file
+    @args: Command line arguments for overriding defaults
     """
-    cfg = {
-        "debug": True,
-        "monitor": True,
-        "headless": False,
-        "reset_on_target": True
-    }
-    with open('environment/configs/prod.yaml') as fs:
-        api_config = yaml.load(fs, Loader=yaml.Loader)
-        api_config['building_id'] = '5d984a7c6f1886dacf9c730d'
-    loader = GeometryLoader(api_config) # Handles HTTP
-    base = BaseEnvironment(loader, headless=cfg["headless"])
-    return MultiEnvironment(base, verbosity=0, env_config=cfg)
+    def train_env(cfg={}):
+        config = DEFAULTS.copy()
+        config.update(cfg)
+        if args.headless:
+            config["headless"] = True
+        elif args.render:
+            config["headless"] = False
+        return MultiEnvironment(config=config, environment_cls=SensorEnvironment)
+
+    return train_env
 
 
 
@@ -157,34 +181,21 @@ def test_collect_target(env):
         obs, reward, done, _ = env.step(action)
 
 
-def test_simple_policy(env):
+def test_policy(env, policy):
     for i in range(10):
         obs = env.reset()
         done = {i:False for i in obs}
         done['__all__'] = False
         total_reward = 0
+        total_steps = 0
         for i in range(100):
-            action = {i:simple_policy(obs[i]) for i in done if i!='__all__' and not done[i]}
+            action = {i:policy(obs[i]) for i in done if i!='__all__' and not done[i]}
             obs, reward, done, _ = env.step(action)
+            total_steps += 1
             total_reward += np.sum(list(reward.values()))
             if done['__all__']:
-                print("Total reward:",total_reward)
                 break
-
-
-def test_noisey_policy(env):
-    for i in range(10):
-        obs = env.reset()
-        done = {i:False for i in obs}
-        done['__all__'] = False
-        total_reward = 0
-        for i in range(100):
-            action = {i:noisey_policy(obs[i]) for i in done if i!='__all__' and not done[i]}
-            obs, reward, done, _ = env.step(action)
-            total_reward += np.sum(list(reward.values()))
-            if done['__all__']:
-                print("Total reward:",total_reward)
-                break
+        print("Total reward: %.3f in %i steps"%(total_reward, total_steps))
 
 
 
@@ -223,6 +234,20 @@ def simple_policy(obs):
         return checkpoint_policy(obs)
 
 
+def safe_policy(obs):
+    """
+    Collect checkpoints if they are close
+    Stop whenever near another object
+    """
+    scale = 5
+    points = obs['pointcloud']
+    steer, throttle = simple_policy(obs)
+    if np.min(points)<0.5:
+        return [steer/scale, throttle/scale]
+    return [steer, throttle]
+
+
+
 def noisey_policy(obs):
     """
     Collect checkpoints if they are close
@@ -236,7 +261,9 @@ def noisey_policy(obs):
 
 if __name__=="__main__":
     setup()
-    env = train_env_creator()
+    parser = create_parser()
+    args = parser.parse_args()
+    env = train_env_factory(args)()
     #test_preprocessor(env)
     #test_random_actions(env)
     #test_follow_checkpoint(env)
@@ -244,4 +271,7 @@ if __name__=="__main__":
     #test_rotate_checkpoint(env)
     #test_collect_checkpoints(env)
     #test_collect_target(env)
-    test_noisey_policy(env)
+    #test_policy(env, simple_policy)
+    #test_policy(env, safe_policy)
+    test_policy(env, noisey_policy)
+    #test_noisey_policy(env)

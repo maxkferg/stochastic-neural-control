@@ -7,6 +7,7 @@ seeker-sac:
     config:
         # === Environment ===
         horizon: 100
+        monitor: true
         env: MultiRobot-v0
         env_config:
             headless: True
@@ -14,13 +15,8 @@ seeker-sac:
             reset_on_target: True
 
         # === Evaluation ===
-        #eager: False
         evaluation_interval: 10
-        evaluation_num_episodes: 2
-
-        # Maybe unused
-        exploration_fraction: 0.1
-        schedule_max_timesteps: 100000
+        evaluation_num_episodes: 10
 
         # === Model ===
         use_state_preprocessor: True
@@ -33,16 +29,16 @@ seeker-sac:
         #exploration_gaussian_sigma: 0.06
 
         # === Parallelism ===
-        num_workers: 4
+        num_workers: 6
         num_gpus_per_worker: 0
 
         # === Optimization ===
         tau: 0.005
-        min_iter_time_s: 1
-        learning_starts: 1000
+        min_iter_time_s: 5
+        learning_starts: 5000
 
         optimization:
-            actor_learning_rate: 0.0001
-            critic_learning_rate: 0.0001
-            entropy_learning_rate: 0.0001
+            actor_learning_rate: 0.0003
+            critic_learning_rate: 0.0003
+            entropy_learning_rate: 0.0003
     

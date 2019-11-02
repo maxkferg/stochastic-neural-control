@@ -50,7 +50,7 @@ DEFAULTS = {
     'geometry_policy': 'initial',
     'reset_on_target': False,
     'start_reference': [-1,0],
-    'action_repeat': 10, # Robot makes a decision every 400ms
+    'timestep': 0.4, # Robot makes a decision every 0.4 s
     'verbosity': 0,
     'debug': False,
     'renders': False,
@@ -122,12 +122,13 @@ class SingleEnvironment():
 
         self.color = random_color()
         self.verbosity = config["verbosity"]
+        self.timestep = config["timestep"] 
         self.start_reference = config["start_reference"]
         self.reset_on_target = config["reset_on_target"]
         self.debug = config["debug"]
         self.renders = config["renders"]
         self.isDiscrete = config["is_discrete"]
-        self.action_repeat = config["action_repeat"]
+        self.action_repeat = int(self.timestep / base_env.timestep)
         self.previous_state = None
         self.ckpt_count = 4
 
@@ -180,6 +181,7 @@ class SingleEnvironment():
 
         self.viewer = None
         self.reset()
+        print("Initialized env with %i timestep (%i base repeat)"%(self.timestep, self.action_repeat))
 
 
     def __del__(self):
@@ -207,6 +209,11 @@ class SingleEnvironment():
 
         robot_pos, robot_orn = self.physics.getBasePositionAndOrientation(self.robot.racecarUniqueId)
         state = self.get_state(robot_pos, robot_orn)
+
+        # Reset again if the current state is not valid
+        if self.termination(state):
+            return self.reset()
+
         return self.get_observation(state)
 
 

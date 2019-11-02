@@ -2,7 +2,7 @@
 Train an agent on SeekerSimEnv
 
 # For a lightweight test
-
+python train.py configs/seeker-sac-test.yaml --dev
 
 
 # For a development td3 test
@@ -37,6 +37,7 @@ from ray.tune.schedulers import PopulationBasedTraining
 from ray.tune.registry import register_env
 from ray.rllib.models import ModelCatalog
 from learning.robot import RobotModel
+from learning.apex import ApexSACTrainer
 from learning.sensor import SensorModel
 from learning.preprocessing import DictFlatteningPreprocessor
 from environment.sensor import SensorEnvironment # Env type
@@ -62,8 +63,9 @@ def train_env_factory(args):
     @env_config: Environment configuration from config file
     @args: Command line arguments for overriding defaults
     """
-    config = DEFAULTS.copy()
     def train_env(cfg):
+        config = DEFAULTS.copy()
+        config.update(cfg)
         if args.headless:
             config["headless"] = True
         elif args.render:
@@ -155,7 +157,8 @@ def run(args):
             settings['config']['num_workers'] = args.workers
         
         ray.tune.run(
-            settings['run'],
+            #settings['run'],
+            ApexSACTrainer,
             name=experiment_name,
             stop=settings['stop'],
             config=settings['config'],

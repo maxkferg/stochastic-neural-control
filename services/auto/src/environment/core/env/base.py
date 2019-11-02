@@ -32,6 +32,8 @@ class BaseEnvironment():
         @config.headless: Does not show a GUI if headless is True
         @confg.building_id: The building geometry to use
         """
+        timestep = 0.1 # 100 milliseconds
+        substeps = int(timestep/0.008)
 
         #choose connection method: GUI, DIRECT, SHARED_MEMORY
         self.headless = config["headless"]
@@ -39,10 +41,11 @@ class BaseEnvironment():
           self.physics = BulletClient(pybullet.DIRECT)
         else:
           self.physics = BulletClient(pybullet.GUI)
+        self.timestep = timestep
         self.planner = planner
         self.loader = GeometryLoader(config) 
-        self.physics.setPhysicsEngineParameter(numSubSteps=10)
-        self.physics.setTimeStep(timeStep=0.020)
+        self.physics.setPhysicsEngineParameter(numSubSteps=substeps)
+        self.physics.setTimeStep(timeStep=timestep)
         self.robots = []
         self.robot_ids = []
         self.walls = []

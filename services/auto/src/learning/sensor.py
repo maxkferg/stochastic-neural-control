@@ -1,4 +1,5 @@
 import ray
+import random
 import numpy as np
 import tensorflow as tf
 from ray.rllib.models import ModelCatalog
@@ -11,6 +12,7 @@ POINTCLOUD_MEAN = 4
 POINTCLOUD_STD = 4
 DIST_STD = 5
 ANGLE_STD = 3
+VELOCITY_STD = 0.1
 
 
 class Box():
@@ -50,17 +52,17 @@ class SensorModel(SACModel):
         ckpt = tf.keras.layers.Flatten()(ckpt_input)
 
         # Noise
-        pointcloud = tf.keras.layers.GaussianNoise(stddev=0.2)(pointcloud_input)
+        pointcloud = tf.keras.layers.GaussianNoise(stddev=0.01)(pointcloud_input)
         robot_velocity = tf.keras.layers.GaussianNoise(stddev=0.0001)(robot_velocity_input)
-        robot_theta = tf.keras.layers.GaussianNoise(stddev=0.1)(target_input)
-        target = tf.keras.layers.GaussianNoise(stddev=0.1)(target_input)
-        ckpt = tf.keras.layers.GaussianNoise(stddev=0.1)(ckpt)
+        robot_theta = tf.keras.layers.GaussianNoise(stddev=0.01)(target_input)
+        target = tf.keras.layers.GaussianNoise(stddev=0.01)(target_input)
+        ckpt = tf.keras.layers.GaussianNoise(stddev=0.01)(ckpt)
         
         # Concatenate all inputs together
         sensors = [
             (pointcloud-POINTCLOUD_MEAN)/POINTCLOUD_STD,
-            robot_theta/DIST_STD,
-            robot_velocity/DIST_STD,
+            robot_theta/ANGLE_STD,
+            robot_velocity/VELOCITY_STD,
             target/DIST_STD,
             ckpt/DIST_STD,
         ]
@@ -70,11 +72,15 @@ class SensorModel(SACModel):
         x = tf.keras.layers.Concatenate(axis=-1, name="sensor_input")(sensors)
         x = tf.keras.layers.Dense(num_outputs - num_sensors)(x)
         x = tf.keras.layers.BatchNormalization(momentum=0.999)(x)
-        output_layer = tf.keras.layers.Concatenate(axis=-1, name="sensor_concat")([x] + sensors)
+        output_layer = tf.keras.layers.Concatenate(axis=-1, name="sensor_concat")(sensors+[x])
 
         # Metrics to print
-        metrics = [
-            tf.reduce_mean(output_layer)
+        metrics = [            
+            tf.reduce_mean(x),
+            tf.math.reduce_std(x),
+            tf.reduce_mean(output_layer),
+            tf.math.reduce_std(output_layer),
+            tf.math.reduce_std(robot_velocity)
         ]
 
         self.base_model = tf.keras.Model(inputs, [output_layer, metrics])
@@ -91,10 +97,17 @@ class SensorModel(SACModel):
             tf.cast(input_dict["obs"]["ckpts"], tf.float32),
         ])
 
+        if random.random() > 0.99:
+            print("x mean:", metrics[0]),
+            print("x std:", metrics[1]),
+            print("out mean:", metrics[2]),
+            print("out std:", metrics[3])
+            print("velocity std:", metrics[3])
+
         return model_out, state
 
     def policy_variables(self):
-        return self.base_model.variables + super().policy_variables()
+        return super().policy_variables()
 
     def q_variables(self):
         return self.base_model.variables + super().q_variables()

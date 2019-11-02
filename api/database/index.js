@@ -27,7 +27,7 @@ function getMongooseModel(domainName, modelsDir) {
     model.ensureIndexes(function (err) {
         if (err) console.log(err);
     });
-
+    
     return model;
 }
 
@@ -51,7 +51,7 @@ async function processDatabaseModels(modelsDir, databaseURI) {
         connection = await mongoose.connect(databaseURI, config);
         console.log("Database connected to instance at =>", databaseURI);
     } catch (e) {
-        return Promise.reject(e);
+        return e;
     }
 
     if (connection) {
@@ -61,17 +61,15 @@ async function processDatabaseModels(modelsDir, databaseURI) {
             files.forEach(function (file) {
                 let name = file.replace(/\.js$/, '');
                 db[name] = getMongooseModel(name, modelsDir);
-
                 console.info('Loading MongoDB Model:', name);
             });
         } catch (e) {
-            return Promise.reject(e);
+            return e;
         }
     }
-
-    return Promise.resolve(db);
+    return db;
 }
 
 module.exports = {
-    start: processDatabaseModels
+    start: processDatabaseModels,
 };

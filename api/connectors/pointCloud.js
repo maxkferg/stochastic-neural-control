@@ -1,7 +1,7 @@
 const config = require('config');
 const kafka = require('kafka-node');
 const Logger = require('../logger');
-
+const pointService = require('../services/PointService');
 
 const Consumer = kafka.Consumer;
 
@@ -39,7 +39,7 @@ function setupConsumer(){
         console.log('Consumer pointcloud receive message', message);
     });
     consumer.on('error', function(error){
-        console.lopg(error);
+        console.log(error);
     })
 };
 

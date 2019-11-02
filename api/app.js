@@ -22,7 +22,6 @@ async function init() {
     const database_uri = config.get("Mongo.host");
     const db = await database.start(database_schema, database_uri);
     await startConnectors(db)
-
     const server = new ApolloServer({
         schema: GraphQLSchema,
         introspection: true,
@@ -65,10 +64,8 @@ async function init() {
     //cookie option has been passed to make auth work with graphiql
     router.use(jwt({secret: config.get('JWT.secret'), passthrough: true, cookie: "token"}));
 
-    // //custom method to use parsed token data to validate and populate user
     router.use(auth.validate);
 
-    // //other protected url
     router.get('/protected', (ctx, next) => {
         if (!ctx.user) {
             ctx.status = 401;

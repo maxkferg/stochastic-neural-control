@@ -10,7 +10,7 @@ seeker-sac:
         env: MultiRobot-v0
         env_config:
             headless: True
-            creation_delay: 20
+            creation_delay: 10
             reset_on_target: True
 
         # === Evaluation ===
@@ -34,9 +34,9 @@ seeker-sac:
         #exploration_gaussian_sigma: 0.06
 
         # === Parallelism ===
-        num_workers: 24
+        num_workers: 12
         num_gpus_per_worker: 0
-        num_gpus: 0.1
+        num_gpus: 0.5
 
         # === Optimization ===
         tau: 0.005

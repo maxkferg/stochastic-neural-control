@@ -37,7 +37,6 @@ from ray.tune.schedulers import PopulationBasedTraining
 from ray.tune.registry import register_env
 from ray.rllib.models import ModelCatalog
 from learning.robot import RobotModel
-from learning.apex import ApexSACTrainer
 from learning.sensor import SensorModel
 from learning.preprocessing import DictFlatteningPreprocessor
 from environment.sensor import SensorEnvironment # Env type
@@ -157,8 +156,7 @@ def run(args):
             settings['config']['num_workers'] = args.workers
         
         ray.tune.run(
-            #settings['run'],
-            ApexSACTrainer,
+            settings['run'],
             name=experiment_name,
             stop=settings['stop'],
             config=settings['config'],

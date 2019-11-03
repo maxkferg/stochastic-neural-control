@@ -17,6 +17,26 @@ const Point2D = new GraphQLObjectType({
 })
 
 
+const PointPosition = new GraphQLObjectType({
+    name: 'PointPosition',
+    description: 'Point position',
+    fields: () => ({
+        x: {type: GraphQLFloat},
+        y: {type: GraphQLFloat},
+        z: {type: GraphQLFloat},
+    })
+})
+
+const PointAttribute = new GraphQLObjectType({
+    name: 'Point Attribute',
+    description: 'Point attribute',
+    fields: () => ({
+        r: {type: GraphQLFloat},
+        b: {type: GraphQLFloat},
+        g: {type: GraphQLFloat},
+    })
+})
+
 /**
  * Point2D type
  * A 3D point represented as a (x,y,z) tuple
@@ -26,12 +46,8 @@ const Point3D = new GraphQLObjectType({
     name: 'Point3D',
     description: 'A point in 3D space',
     fields: () => ({
-        x: {type: GraphQLFloat},
-        y: {type: GraphQLFloat},
-        z: {type: GraphQLFloat},
-        r: {type: GraphQLFloat},
-        b: {type: GraphQLFloat},
-        g: {type: GraphQLFloat},
+        position: ({ type : PointPosition }),
+        attribute: ({ type: PointAttribute }),
         robot_id: {type: GraphQLString},
         building_id: {type: GraphQLString}
     }),
@@ -40,6 +56,8 @@ const Point3D = new GraphQLObjectType({
 
 
 module.exports = {
+    PointPosition,
+    PointAttribute,
     Point2D,
     Point3D,
 };

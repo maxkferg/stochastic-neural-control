@@ -1,32 +1,36 @@
 export interface PointI {
-    x: Number
-    y: Number
-    z: Number
-    r: Number
-    g: Number
-    b: Number
+    position: PointPositionI
+    attribute: PointAttributeI
     t: Number
     robotId: String
     buildingId: String
 }
 
-export class Point implements PointI {
-    x: Number
-    y: Number
+
+interface PointPositionI { 
+    x: Number 
+    y: Number 
     z: Number
-    r: Number
+}
+
+
+interface PointAttributeI { 
+    r: Number 
+    b: Number 
     g: Number
-    b: Number
+}
+
+
+export class Point implements PointI {
+    position: PointPositionI
+    attribute: PointAttributeI
     t: Number
     robotId: String
     buildingId: String
     constructor(pointData: PointI) {
-        this.x = pointData.x;
-        this.y = pointData.y;
-        this.z = pointData.z;
-        this.r = pointData.r;
-        this.g = pointData.g;
-        this.b = pointData.b;
+        const { position, attribute } = pointData;
+        this.position = position;
+        this.attribute = attribute;
         this.t = pointData.t;
         this.robotId = pointData.robotId;
         this.buildingId = pointData.buildingId;

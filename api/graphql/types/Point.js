@@ -2,6 +2,7 @@ const {
     GraphQLList,
     GraphQLFloat,
     GraphQLObjectType,
+    GraphQLString
 } = require('graphql');
 
 /**
@@ -24,7 +25,16 @@ const Point2D = new GraphQLObjectType({
 const Point3D = new GraphQLObjectType({
     name: 'Point3D',
     description: 'A point in 3D space',
-    fields: () => new GraphQLList(GraphQLFloat),
+    fields: () => ({
+        x: {type: GraphQLFloat},
+        y: {type: GraphQLFloat},
+        z: {type: GraphQLFloat},
+        r: {type: GraphQLFloat},
+        b: {type: GraphQLFloat},
+        g: {type: GraphQLFloat},
+        robot_id: {type: GraphQLString},
+        building_id: {type: GraphQLString}
+    }),
 })
 
 

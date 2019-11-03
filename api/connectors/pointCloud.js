@@ -21,8 +21,14 @@ const consumer = new Consumer(
  * 
  */
 function setupConsumer(){
-	consumer.on('message', function(message){
-        console.log('Consumer pointcloud receive message', message);
+	consumer.on('message', function(message) {
+        console.log('Consumer point cloud receive message', message);
+        const { pointsList } = message; 
+        try {
+            pointService.addPointsOfRobot(pointsList);
+        } catch(e) {
+            throw new Error('Add points of robot error', e);
+        }
     });
     consumer.on('error', function(error){
         console.log(error);

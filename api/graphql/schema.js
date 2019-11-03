@@ -14,6 +14,7 @@ const Mesh = require('./types/Mesh');
 const Trajectory = require('./types/Trajectory');
 const MapGeometry = require('./types/MapGeometry');
 const MeshPosition = require('./types/MeshPosition');
+const PointType = require('./types/Point')
 const VelocityHistory = require('./types/VelocityHistory');
 const Building = require('./types/Building');
 const Robot = require('./types/Robot');
@@ -24,6 +25,7 @@ const Subscription = new GraphQLObjectType({
     description: 'Root Subscription',
     fields: () => ({
         meshPosition: new resolvers.Mesh.subscribeMeshPosition(MeshPosition, "Get notified when any mesh moves", false),
+        pointCloud: new resolvers.Point.pointCloudSubscription(PointType.Point3D, "Subscribe point cloud", false),
     })
 });
 

@@ -39,6 +39,7 @@ class SensorModel(SACModel):
         robot_theta_input = tf.keras.layers.Input(shape=obs_space["robot_theta"].shape, dtype="float32", name="robot_theta")
         robot_velocity_input = tf.keras.layers.Input(shape=obs_space["robot_velocity"].shape, dtype="float32", name="robot_velocity")
         ckpt_input = tf.keras.layers.Input(shape=obs_space["ckpts"].shape, dtype="float32", name="ckpts")
+        is_training = tf.keras.layers.Input(shape=(1,), dtype="bool", name="is_training")
 
         inputs = [
             pointcloud_input,

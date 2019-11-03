@@ -28,7 +28,7 @@ const PointPosition = new GraphQLObjectType({
 })
 
 const PointAttribute = new GraphQLObjectType({
-    name: 'Point Attribute',
+    name: 'PointAttribute',
     description: 'Point attribute',
     fields: () => ({
         r: {type: GraphQLFloat},

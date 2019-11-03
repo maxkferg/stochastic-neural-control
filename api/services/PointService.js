@@ -10,6 +10,7 @@ function addPointsOfRobot(robotId, pointsData) {
     return PointModel.insertMany(pointsData)
 }
 
+
 module.exports = {
     getPointsOfRobot,
     addPointsOfRobot

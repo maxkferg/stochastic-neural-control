@@ -7,7 +7,7 @@ import BabylonViewer from '../BabylonViewer/BabylonViewer';
 import { withStyles, WithStyles, Theme } from '@material-ui/core/styles';
 import apollo from '../../apollo';
 import { withRouter } from 'react-router-dom';
-import SubscriptionClient from '../../apollo/websocket';
+// import SubscriptionClient from '../../apollo/websocket';
 import { loader } from 'graphql.macro';
 import { difference } from 'lodash';
 const SUBSCRIBE_MESH_POSITION = loader('../../graphql/subscribeMesh.gql');
@@ -69,30 +69,6 @@ class BuildingViewer extends React.Component<Props, State> {
           meshesCurrent,
           deleteMesh
         });
-
-        for (let i=0; i<meshesCurrent.length; i++) {
-          //let mesh = meshesCurrent[i];
-          SubscriptionClient.subscribe({
-            query: SUBSCRIBE_MESH_POSITION,
-          }).subscribe({
-            next (data) {
-              for (let j=0; j<self.state.meshesCurrent.length; j++){
-                if (self.state.meshesCurrent[j].id==data.data.meshPosition.id){
-                  let meshCopy = Object.assign({}, self.state.meshesCurrent[j]);
-                  meshCopy.x = data.data.meshPosition.position.x
-                  meshCopy.y = data.data.meshPosition.position.y
-                  meshCopy.z = data.data.meshPosition.position.z
-                  meshCopy.theta = data.data.meshPosition.position.theta
-                  self.state.meshesCurrent[j] = meshCopy;
-                  self.setState({meshesCurrent: self.state.meshesCurrent});
-                  if (self.state.meshesCurrent[j].id=="5d3f7bf06e30e20100000004"){
-                    console.log(data.data.meshPosition.position.z)
-                  }
-                }
-              }
-            }
-          });
-        }
       })
      }
     componentWillUnmount() {

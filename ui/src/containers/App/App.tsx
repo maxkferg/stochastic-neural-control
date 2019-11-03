@@ -101,6 +101,7 @@ class PersistentDrawerRight extends React.Component {
     navMenuOpen: false,
     creatingGeometry: true,
     editingObject: false,
+    editPointCloud: false,
     selectedObjectId: "",
     selectedType: "",
   };
@@ -125,7 +126,8 @@ class PersistentDrawerRight extends React.Component {
     this.setState({
       open: true,
       editingObject: false,
-      creatingGeometry: true
+      creatingGeometry: true,
+      editPointCloud: false,
     });
   }
 
@@ -135,11 +137,20 @@ class PersistentDrawerRight extends React.Component {
       navMenuOpen: false,
       editingObject: true,
       creatingGeometry: false,
+      editPointCloud: false,
       selectedObjectId: objectId,
       selectedType: type,
     });
   }
 
+  onEditPointCloud = () => {
+    this.setState({
+      open: true,
+      editingObject: false,
+      creatingGeometry: false,
+      editPointCloud: true,
+    });
+  }
   /** 
    * handleNavMenuClick
    * Expand the navigation draw
@@ -152,13 +163,15 @@ class PersistentDrawerRight extends React.Component {
   renderRightForm() {
     if (this.state.creatingGeometry) {
       return <CreateGeometryForm objectId={this.state.selectedObjectId} onSuccess={this.handleDrawerClose} onCancel={this.handleDrawerClose} />
-    } else if (this.state.editingObject) {
+    } else if (this.state.editingObject){
       return <EditObjectForm
         type={this.state.selectedType}
         objectId={this.state.selectedObjectId}
         onSuccess={this.handleDrawerClose}
         onCancel={this.handleDrawerClose}
       />
+    } else if (this.state.editPointCloud) {
+
     } else {
       console.error("Should always be creating or editing an object");
       return <p>Edit or create an object</p>

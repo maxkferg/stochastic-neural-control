@@ -202,7 +202,7 @@ def run_pbt(args):
         print("Running %s"%experiment_name)
         settings['config'].update({
             "learning_starts": sample_from(
-                lambda spec: random.choice([1000, 10000, 20000])),
+                lambda spec: random.choice([10000, 20000])),
             "target_network_update_freq": sample_from(
                 lambda spec: random.choice([0, 10, 100])),
             "buffer_size": sample_from(
@@ -245,13 +245,13 @@ def run_trials(args):
         print("Running %s"%experiment_name)
         settings['config'].update({
             "target_network_update_freq": sample_from(
-                lambda spec: random.choice([0, 1, 2])),
+                lambda spec: random.choice([1, 2, 3])),
             "buffer_size": sample_from(
-                lambda spec: int(random.choice([1e6, 2e6, 4e6, 8e6]))),
+                lambda spec: int(random.choice([2e6, 4e6, 8e6]))),
             "sample_batch_size": sample_from(
                 lambda spec: int(random.choice([1,2,4]))),
             "train_batch_size": sample_from(
-                lambda spec: int(random.choice([128,256,512]))),
+                lambda spec: int(random.choice([256, 512, 1024]))),
             "no_done_at_end": sample_from(
                 lambda spec: random.choice([True, False])),
             "callbacks": {

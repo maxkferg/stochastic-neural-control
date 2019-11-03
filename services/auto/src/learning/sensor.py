@@ -46,6 +46,7 @@ class SensorModel(SACModel):
             robot_velocity_input,
             target_input,
             ckpt_input,
+            is_training,
         ]
 
         # Flatten layers that have structure
@@ -69,10 +70,11 @@ class SensorModel(SACModel):
 
         # Layers
         num_sensors = np.sum([tensor.shape[-1] for tensor in sensors])
-        x = tf.keras.layers.Concatenate(axis=-1, name="sensor_input")(sensors)
-        x = tf.keras.layers.Dense(num_outputs - num_sensors)(x)
-        x = tf.keras.layers.LayerNormalization()(x)
-        output_layer = tf.keras.layers.Concatenate(axis=-1, name="sensor_concat")(sensors+[x])
+        x = tf.keras.layers.Concatenate(axis=-1, name="sensor_concat")(sensors+[x])
+        x = tf.keras.layers.BatchNormalization(renorm=True)(x, training=is_training)
+        x = tf.keras.layers.Dense()(x)
+        x = tf.keras.layers.BatchNormalization(renorm=True)(x, training=is_training)
+        output_layer = x
 
         # Metrics to print
         metrics = [            
@@ -95,6 +97,7 @@ class SensorModel(SACModel):
             tf.cast(input_dict["obs"]["robot_velocity"], tf.float32),
             tf.cast(input_dict["obs"]["target"], tf.float32),
             tf.cast(input_dict["obs"]["ckpts"], tf.float32),
+            input_dict["is_training"],
         ])
 
         if random.random() > 0.99:
@@ -106,8 +109,10 @@ class SensorModel(SACModel):
 
         return model_out, state
 
+
     def policy_variables(self):
         return super().policy_variables()
+
 
     def q_variables(self):
         return self.base_model.variables + super().q_variables()

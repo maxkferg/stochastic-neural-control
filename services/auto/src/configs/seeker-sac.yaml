@@ -24,12 +24,15 @@ seeker-sac:
 
         # === Model ===
         use_state_preprocessor: True
-        actor_hiddens: [256]
-        critic_hiddens: [256]
         model:
             use_lstm: False
             custom_model: "sensor"
-            custom_options: {}
+
+        Q_model:
+            hidden_layer_sizes: [256]
+
+        policy_model:
+            hidden_layer_sizes: [256]
 
         # === Model ===
         #exploration_noise_type: "gaussian"

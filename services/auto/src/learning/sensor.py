@@ -71,7 +71,7 @@ class SensorModel(SACModel):
         num_sensors = np.sum([tensor.shape[-1] for tensor in sensors])
         x = tf.keras.layers.Concatenate(axis=-1, name="sensor_input")(sensors)
         x = tf.keras.layers.Dense(num_outputs - num_sensors)(x)
-        x = tf.keras.layers.BatchNormalization(momentum=0.999)(x)
+        x = tf.keras.layers.LayerNormalization()(x)
         output_layer = tf.keras.layers.Concatenate(axis=-1, name="sensor_concat")(sensors+[x])
 
         # Metrics to print
@@ -85,7 +85,7 @@ class SensorModel(SACModel):
 
         self.base_model = tf.keras.Model(inputs, [output_layer, metrics])
         self.register_variables(self.base_model.variables)
-        self.base_model.summary()
+        #self.base_model.summary()
         
 
     def forward(self, input_dict, state, seq_lens=None):

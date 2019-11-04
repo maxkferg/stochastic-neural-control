@@ -10,6 +10,11 @@ ray rsync-down cluster.yaml ray_results ~/
 python rollout.py --steps 1000 \
     --checkpoint=checkpoints/October2c/checkpoint_120/checkpoint-120
 
+python rollout.py --steps 1000 \
+    --save-q \
+    --checkpoint=~/ray_results/good/seeker-sac/SAC_MultiRobot-v0_bbbac6db_2019-11-02_23-01-41d2tss5p9/checkpoint_500/checkpoint-500
+
+
 """
 import io
 import os
@@ -27,6 +32,7 @@ import argparse
 import collections
 import colored_traceback
 from pprint import pprint
+from matplotlib import cm
 from gym.spaces import Discrete, Box
 from gym.envs.registration import EnvSpec
 from gym.envs.registration import registry
@@ -39,11 +45,15 @@ from ray.rllib.models.preprocessors import get_preprocessor
 from ray.rllib.policy.sample_batch import DEFAULT_POLICY_ID
 from learning.mink import MinkModel
 from learning.robot import RobotModel
+from learning.sensor import SensorModel
 from learning.preprocessing import DictFlatteningPreprocessor
-from environment.loaders.geometry import GeometryLoader
-from environment.env.base import BaseEnvironment # Env type
-from environment.env.multi import MultiEnvironment # Env type
+from environment.sensor import SensorEnvironment # Env type
+from environment.multi import MultiEnvironment # Env type
 colored_traceback.add_hook()
+
+import tensorflow as tf
+print(tf.__version__)
+
 
 EXAMPLE_USAGE = """
 Example Usage via RLlib CLI:
@@ -51,6 +61,7 @@ Example Usage via RLlib CLI:
 python rollout.py --steps 1000 \
     --checkpoint=checkpoints/October2c/checkpoint_120/checkpoint-120
 """
+
 
 ENVIRONMENT = "MultiRobot-v0"
 RESET_ON_TARGET = True
@@ -66,13 +77,17 @@ timestamp = datetime.datetime.now().strftime("%I-%M-%S %p")
 filename = 'videos/video %s.mp4'%timestamp
 
 video_FourCC = -1#cv2.VideoWriter_fourcc(*"mp4v")
-video = cv2.VideoWriter(filename, video_FourCC, fps=20, frameSize=(RENDER_WIDTH,RENDER_HEIGHT))
+video = cv2.VideoWriter(filename, video_FourCC, fps=20, frameSize=(RENDER_WIDTH, RENDER_HEIGHT))
 viridis = cm.get_cmap('viridis')
 
 
-# Load API Config
-with open('environment/configs/prod.yaml') as cfg:
-    api_config = yaml.load(cfg, Loader=yaml.Loader)
+OVERIDES = {
+    'headless': False,
+    'timestep': 0.1,
+    'creation_delay': 0,
+    'reset_on_target': False,
+    'building_id': '5d984a7c6f1886dacf9c730d'
+}
 
 
 def train_env_factory(args):
@@ -81,25 +96,16 @@ def train_env_factory(args):
     @env_config: Environment configuration from config file
     @args: Command line arguments for overriding defaults
     """
-    with open('environment/configs/prod.yaml') as cfg:
-        api_config = yaml.load(cfg, Loader=yaml.Loader)
-        api_config['building_id'] = '5d984a7c6f1886dacf9c730d'
-
     def train_env(cfg):
-        cfg.update({
-            "verbosity": 0,
-            "creation_delay": 0,
-            "reset_on_target": False
-        })
+        config = cfg.copy()
+        config.update(OVERIDES)
         if args.headless:
-            cfg["headless"] = True
+            config["headless"] = True
         elif args.render:
-            cfg["headless"] = False
-        loader = GeometryLoader(api_config) # Handles HTTP
-        base = BaseEnvironment(loader, headless=cfg["headless"])
-        return MultiEnvironment(base, config=cfg)
-
+            config["headless"] = False
+        return MultiEnvironment(config=config, environment_cls=SensorEnvironment)
     return train_env
+
 
 
 
@@ -122,7 +128,7 @@ def create_parser(parser_creator=None):
         "--run",
         type=str,
         required=False,
-        default="APEX_DDPG",
+        default="SAC",
         help="The algorithm or model to train. This may refer to the name "
         "of a built-on algorithm (e.g. RLLib's DQN or PPO), or a "
         "user-defined trainable function or class registered in the "
@@ -173,6 +179,50 @@ def create_parser(parser_creator=None):
     return parser
 
 
+def get_q_value(env, agent, policy_id, obs):
+    """Return the Q value for the current state"""
+    state = []
+    prev_action=None
+    prev_reward=None
+    info=None
+
+    policy = agent.get_policy(policy_id)
+    preprocessor = agent.workers.local_worker().preprocessors[policy_id]
+    preprocessed = preprocessor.transform(obs)
+    #obs_batch = obs[None, :]
+
+    filtered_obs = agent.workers.local_worker().filters[policy_id](
+        preprocessed, update=False)
+
+    print(dir(agent.get_policy(policy_id)))
+
+    res = agent.get_policy(policy_id).compute_single_action(
+        filtered_obs,
+        state,
+        prev_action,
+        prev_reward,
+        info,
+        clip_actions=True)
+    print(res)
+
+    feed_dict = {self.obs_t: observation[i], self.act_t: action[i] }
+    feed_dict.update(self.extra_compute_action_feed_dict())
+    q_value, q_twin_value = self.sess.run([self.q_t, self.twin_q_t], feed_dict=feed_dict)
+
+
+
+
+    model_out_t, _ = policy.model({
+        "obs": obs_batch,
+        "is_training": False,
+    }, [], None)
+
+    policy_t, log_pis_t = policy.model.get_policy_output(model_out_t)
+    q = policy.model.get_q_values(model_out_t, policy_t)
+    print(q)
+    return q
+
+
 def render_q_function(env, agent):
     action = np.array([0,0])
     prep = get_preprocessor(env.observation_space)(env.observation_space)
@@ -215,41 +265,11 @@ class DefaultMapping(collections.defaultdict):
         return value
 
 
-class PID():
-    """
-    Creates a 2-d trajectory of a robot.
-    Arguments:
-        tau_p: Float, controls importance of proportionality
-        tau_d: Float, controls importance of derivative
-        tau_i: Float, controls importance of integral
-        n: Integer, number of steps the robot should take.
-        speed: Float, how many seconds pass per timestep.
-    Returns:
-        x_trajectory, y_trajectory: A 2d list containing the
-        path taken by the robot.
-    """
-    def __init__(self, tau_p=0.02, tau_d=0.3, tau_i=0.0001, speed=0.3):
-        self.tau_p = tau_p
-        self.tau_d = tau_d
-        self.tau_i = tau_i
-        self.speed = speed
-        self.integral = 0.0
-        self.cte = 0
-
-    def eval(self, theta, dist):
-        diff = (theta - self.cte) / self.speed
-        self.cte = theta
-        self.integral += self.cte
-        steer = (-self.tau_p * self.cte) - (self.tau_d * diff) - (self.tau_i * self.integral)
-        return steer, self.speed
-
-
 def default_policy_agent_mapping(unused_agent_id):
     return DEFAULT_POLICY_ID
 
 
 def rollout(agent, env_name, num_steps, out=None, no_render=True, render_q=False, save_q=False):
-    pid = PID()
     policy_agent_mapping = default_policy_agent_mapping
     if hasattr(agent, "workers"):
         env = agent.workers.local_worker().env
@@ -311,6 +331,11 @@ def rollout(agent, env_name, num_steps, out=None, no_render=True, render_q=False
                     a_action = _flatten_action(a_action)  # tuple actions
                     action_dict[agent_id] = a_action
                     prev_actions[agent_id] = a_action
+
+                    # Custom code for getting Q values
+                    q = get_q_value(env, agent, policy_id, a_obs)
+                    print("Q",q)
+
             action = action_dict
 
             action = action if multiagent else action[_DUMMY_AGENT_ID]
@@ -343,9 +368,12 @@ def run(args, parser):
     config = args.config
     ModelCatalog.register_custom_model("mink", MinkModel)
     ModelCatalog.register_custom_model("robot", RobotModel)
+    ModelCatalog.register_custom_model("sensor", SensorModel)
     register_env(ENVIRONMENT, train_env_factory(args))
 
-    config_dir = os.path.dirname(args.checkpoint)
+    checkpoint_file = os.path.expanduser(args.checkpoint)
+    config_dir = os.path.dirname(checkpoint_file)
+    config_dir = os.path.expanduser(config_dir)
     config_path = os.path.join(config_dir, "params.pkl")
     if not os.path.exists(config_path):
         config_path = os.path.join(config_dir, "../params.pkl")
@@ -375,8 +403,11 @@ def run(args, parser):
 
     pprint(config)
     cls = get_agent_class(args.run)
+    print(args.env)
+    print(config)
     agent = cls(env=args.env, config=config)
-    agent.restore(args.checkpoint)
+    print(checkpoint_file)
+    agent.restore(checkpoint_file)
     num_steps = int(args.steps)
     rollout(agent, args.env, num_steps, args.out, args.no_render, args.render_q, args.save_q)
     cv2.destroyAllWindows()

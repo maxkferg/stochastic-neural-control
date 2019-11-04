@@ -28,12 +28,6 @@ seeker-sac:
             use_lstm: False
             custom_model: "sensor"
 
-        Q_model:
-            hidden_layer_sizes: [256]
-
-        policy_model:
-            hidden_layer_sizes: [256]
-
         # === Model ===
         #exploration_noise_type: "gaussian"
         #exploration_gaussian_sigma: 0.06

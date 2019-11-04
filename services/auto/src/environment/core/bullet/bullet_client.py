@@ -16,6 +16,7 @@ class BulletClient(object):
       self._client = pybullet.connect(connection_mode, options=options)
     else:
       print("PyBullet using Shared Memory")
+    pybullet.configureDebugVisualizer(pybullet.COV_ENABLE_GUI, 0)
     logging.info("Created bullet client: %i"%self._client)
     self._shapes = {}
 

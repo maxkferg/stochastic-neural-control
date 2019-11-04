@@ -192,9 +192,7 @@ if __name__=="__main__":
     parser = create_parser()
     args = parser.parse_args()
     env = train_env_factory(args)({})
-
-    if args.headless:
-        view = BenchmarkWindow(env)
+    view = BenchmarkWindow(env)
     # Not working at the moment
     #else:
     #    mapw = MapWindow(MAP_WIDTH, MAP_HEIGHT)

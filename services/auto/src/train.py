@@ -245,13 +245,11 @@ def run_trials(args):
         print("Running %s"%experiment_name)
         settings['config'].update({
             "target_network_update_freq": sample_from(
-                lambda spec: random.choice([1, 2, 3])),
+                lambda spec: random.choice([1, 2])),
             "buffer_size": sample_from(
                 lambda spec: int(random.choice([2e6, 4e6, 8e6]))),
-            "sample_batch_size": sample_from(
-                lambda spec: int(random.choice([1,2,4]))),
             "train_batch_size": sample_from(
-                lambda spec: int(random.choice([256, 512, 1024]))),
+                lambda spec: int(random.choice([256, 512]))),
             "no_done_at_end": sample_from(
                 lambda spec: random.choice([True, False])),
             "callbacks": {

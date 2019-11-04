@@ -39,7 +39,6 @@ class SensorModel(SACModel):
         robot_theta_input = tf.keras.layers.Input(shape=obs_space["robot_theta"].shape, dtype="float32", name="robot_theta")
         robot_velocity_input = tf.keras.layers.Input(shape=obs_space["robot_velocity"].shape, dtype="float32", name="robot_velocity")
         ckpt_input = tf.keras.layers.Input(shape=obs_space["ckpts"].shape, dtype="float32", name="ckpts")
-        is_training = tf.keras.layers.Input(shape=(1,), dtype="bool", name="is_training")
 
         inputs = [
             pointcloud_input,
@@ -47,7 +46,6 @@ class SensorModel(SACModel):
             robot_velocity_input,
             target_input,
             ckpt_input,
-            is_training,
         ]
 
         # Flatten layers that have structure
@@ -71,10 +69,10 @@ class SensorModel(SACModel):
 
         # Layers
         num_sensors = np.sum([tensor.shape[-1] for tensor in sensors])
+        x = tf.keras.layers.Concatenate(axis=-1, name="sensor_input")(sensors)
+        x = tf.keras.layers.Dense(num_outputs - num_sensors)(x)
+        x = tf.keras.layers.LayerNormalization()(x)
         x = tf.keras.layers.Concatenate(axis=-1, name="sensor_concat")(sensors+[x])
-        x = tf.keras.layers.BatchNormalization(renorm=True)(x, training=is_training)
-        x = tf.keras.layers.Dense()(x)
-        x = tf.keras.layers.BatchNormalization(renorm=True)(x, training=is_training)
         output_layer = x
 
         # Metrics to print
@@ -98,7 +96,6 @@ class SensorModel(SACModel):
             tf.cast(input_dict["obs"]["robot_velocity"], tf.float32),
             tf.cast(input_dict["obs"]["target"], tf.float32),
             tf.cast(input_dict["obs"]["ckpts"], tf.float32),
-            input_dict["is_training"],
         ])
 
         if random.random() > 0.99:

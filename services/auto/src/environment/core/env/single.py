@@ -30,9 +30,9 @@ ROBOT_CRASH_DISTANCE = 0.4
 TARGET_REWARD = 1
 CHECKPOINT_REWARD = 0.1
 CHECKPOINT_DISTANCE = 0.5
-BATTERY_THRESHOLD = 0.5
+BATTERY_THRESHOLD = 0.6
 BATTERY_WEIGHT = -0.01
-ROTATION_COST = -0.001
+ROTATION_COST = -0.01
 CRASHED_PENALTY = -1
 MAP_GRID_SCALE = 0.2
 NUM_CHECKPOINTS = 10
@@ -198,14 +198,14 @@ class SingleEnvironment():
         self.startedTime = time.time()
         self.envStepCounter = 0
         self.reward_so_far = 0
+        self.action = [0,0]
 
         self.reset_robot_position()
         self.reset_target_position()
         self.reset_checkpoints()
     
         # Allow all the objects to reach equilibrium
-        for i in range(10):
-            self.physics.stepSimulation()
+        self.physics.stepSimulation()
 
         robot_pos, robot_orn = self.physics.getBasePositionAndOrientation(self.robot.racecarUniqueId)
         state = self.get_state(robot_pos, robot_orn)

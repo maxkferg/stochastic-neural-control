@@ -118,10 +118,10 @@ function SignIn(props) {
           </Button>
           <GoogleLogin
             className={classes.googleBtn}
-            clientId="1028478244391-t9maukva74huv4hqm5sc12qalr9kc5vj.apps.googleusercontent.com"
+            clientId="556183193710-ojbsg0ks227at5ecqempbboukfl15271.apps.googleusercontent.com"
             buttonText="Sign in with Google"
             onSuccess={e => handleAuthenticationGoogle(e, props)}
-            onFailure={() => console.log('login faill')}
+            onFailure={(e) => console.log('login failed',e)}
             cookiePolicy={'single_host_origin'}
           />
           <Grid container justify="flex-end">

@@ -5,6 +5,7 @@ const MapGeometryMutations = require('./map');
 const TrajectoryMutations = require('./trajectory');
 const BuildingMutation = require('./building');
 const ObjectMutations = require('./object')
+const PointMutations = require('./point');
 
 module.exports = {
     UserMutations,
@@ -14,4 +15,5 @@ module.exports = {
     TrajectoryMutations,
     BuildingMutation,
     ObjectMutations,
+    PointMutations
 };

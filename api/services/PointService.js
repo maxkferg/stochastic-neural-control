@@ -6,8 +6,14 @@ function getPointsOfRobot(robotId) {
     return PointModel.find({ robot_id: robotId })
 }
 
-function addPointsOfRobot(robotId, pointsData) {
-    return PointModel.insertMany(pointsData)
+function addPointsOfRobot(robotId, buildingId, pointsData, t) {
+    const insertPoints = pointsData.map(point => {
+        point.t = t;
+        point.robot_id = robotId;
+        point.building_id = buildingId;
+        return point
+    })
+    return PointModel.insertMany(insertPoints)
 }
 
 

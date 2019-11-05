@@ -1,6 +1,15 @@
-import os
-import sys
+import collections
 
-CURR_DIR = os.path.dirname(os.path.realpath(__file__))
-ROOT_DIR = os.path.dirname(os.path.dirname(CURR_DIR))
-URDF_ROOT = os.path.join(ROOT_DIR,"assets")
+
+def extend_config(source, overrides):
+    """
+    Update a nested dictionary or similar mapping.
+    Modify ``source`` in place.
+    """
+    for key, value in overrides.items():
+        if isinstance(value, collections.Mapping) and value:
+            returned = extend_config(source.get(key, {}), value)
+            source[key] = returned
+        else:
+            source[key] = overrides[key]
+    return source

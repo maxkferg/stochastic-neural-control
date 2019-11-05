@@ -13,32 +13,20 @@ import colored_traceback
 from random import choice
 from pprint import pprint
 from gym.spaces import Discrete, Box
-from gym.envs.registration import EnvSpec
-from gym.envs.registration import registry
 from ray import tune
-from ray.tune.schedulers import PopulationBasedTraining
 from ray.tune import run_experiments
-from ray.tune.registry import register_env
-from ray.rllib.models import ModelCatalog
 from ray.rllib.models.preprocessors import get_preprocessor
-from learning.mink import MinkModel
 from environment.core.utils.math import normalize_angle
-from environment.sensor import SensorEnvironment # Env type
-from environment.multi import MultiEnvironment # Env type
-colored_traceback.add_hook()
+from environment.core.utils.config import extend_config
+from common import train_env_factory
 
-ENVIRONMENT = "MultiRobot-v0"
 
-DEFAULTS = {
-    'headless': False,
+ENV_CONFIG = {
+    'headless': True,
     'reset_on_target': True,
-    'building_id': '5d984a7c6f1886dacf9c730d'
+    'building_id': '5d97edec93a71c81fb0fbbf1'
 }
 
-
-def setup():
-    ModelCatalog.register_custom_model("mink", MinkModel)
-    register_env(ENVIRONMENT, lambda cfg: train_env_creator(cfg))
 
 
 def create_parser():
@@ -60,23 +48,20 @@ def create_parser():
 
 
 
-def train_env_factory(args):
-    """
-    Create an environment that is linked to the communication platform
-    @env_config: Environment configuration from config file
-    @args: Command line arguments for overriding defaults
-    """
-    def train_env(cfg={}):
-        config = DEFAULTS.copy()
-        config.update(cfg)
-        if args.headless:
-            config["headless"] = True
-        elif args.render:
-            config["headless"] = False
-        return MultiEnvironment(config=config, environment_cls=SensorEnvironment)
 
-    return train_env
 
+
+def config_from_args(args):
+    """
+    Extract experiment args from the command line args
+    These can be used to overrided the args in a yaml file
+    """
+    config = {}
+    if args.headless:
+        config["env_config"] = dict(headless=True)
+    if args.render:
+        config["env_config"] = dict(headless=False)
+    return config
 
 
 
@@ -260,10 +245,10 @@ def noisey_policy(obs):
 
 
 if __name__=="__main__":
-    setup()
     parser = create_parser()
     args = parser.parse_args()
-    env = train_env_factory(args)()
+    cfg = extend_config(ENV_CONFIG, config_from_args(args))
+    env = train_env_factory()(cfg)
     #test_preprocessor(env)
     #test_random_actions(env)
     #test_follow_checkpoint(env)

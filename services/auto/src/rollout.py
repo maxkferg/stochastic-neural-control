@@ -43,16 +43,8 @@ from ray.rllib.evaluation.episode import _flatten_action
 from ray.rllib.agents.registry import get_agent_class
 from ray.rllib.models.preprocessors import get_preprocessor
 from ray.rllib.policy.sample_batch import DEFAULT_POLICY_ID
-from learning.mink import MinkModel
-from learning.robot import RobotModel
-from learning.sensor import SensorModel
-from learning.preprocessing import DictFlatteningPreprocessor
-from environment.sensor import SensorEnvironment # Env type
-from environment.multi import MultiEnvironment # Env type
-colored_traceback.add_hook()
-
-import tensorflow as tf
-print(tf.__version__)
+from common import train_env_factory
+from environment.core.utils.config import extend_config
 
 
 EXAMPLE_USAGE = """
@@ -88,23 +80,6 @@ OVERIDES = {
     'reset_on_target': False,
     'building_id': '5d984a7c6f1886dacf9c730d'
 }
-
-
-def train_env_factory(args):
-    """
-    Create an environment that is linked to the communication platform
-    @env_config: Environment configuration from config file
-    @args: Command line arguments for overriding defaults
-    """
-    def train_env(cfg):
-        config = cfg.copy()
-        config.update(OVERIDES)
-        if args.headless:
-            config["headless"] = True
-        elif args.render:
-            config["headless"] = False
-        return MultiEnvironment(config=config, environment_cls=SensorEnvironment)
-    return train_env
 
 
 
@@ -177,6 +152,20 @@ def create_parser(parser_creator=None):
         help="Algorithm-specific configuration (e.g. env, hyperparams). "
         "Surpresses loading of configuration from checkpoint.")
     return parser
+
+
+def config_from_args(args):
+    """
+    Extract experiment args from the command line args
+    These can be used to overrided the args in a yaml file
+    """
+    config = {}
+    if args.headless:
+        config["env_config"] = dict(headless=True)
+    if args.render:
+        config["env_config"] = dict(headless=False)
+    return config
+
 
 
 def get_q_value(env, agent, policy_id, obs):
@@ -365,12 +354,6 @@ def rollout(agent, env_name, num_steps, out=None, no_render=True, render_q=False
 
 
 def run(args, parser):
-    config = args.config
-    ModelCatalog.register_custom_model("mink", MinkModel)
-    ModelCatalog.register_custom_model("robot", RobotModel)
-    ModelCatalog.register_custom_model("sensor", SensorModel)
-    register_env(ENVIRONMENT, train_env_factory(args))
-
     checkpoint_file = os.path.expanduser(args.checkpoint)
     config_dir = os.path.dirname(checkpoint_file)
     config_dir = os.path.expanduser(config_dir)

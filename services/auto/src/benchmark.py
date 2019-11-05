@@ -20,12 +20,10 @@ import tkinter
 import argparse
 import colored_traceback
 from PIL import Image, ImageTk
-from gym.envs.registration import registry
-from environment.sensor import SensorEnvironment # Env type
-from environment.multi import MultiEnvironment # Env type
+from common import train_env_factory
+from environment.core.utils.config import extend_config
 
 
-colored_traceback.add_hook()
 tkinter.NoDefaultRoot()
 
 RENDER_WIDTH = 800
@@ -41,24 +39,6 @@ DEFAULTS = {
     'reset_on_target': True,
     'building_id': '5d984a7c6f1886dacf9c730d'
 }
-
-
-def train_env_factory(args):
-    """
-    Create an environment that is linked to the communication platform
-    @env_config: Environment configuration from config file
-    @args: Command line arguments for overriding defaults
-    """
-    def train_env(cfg):
-        config = DEFAULTS.copy()
-        config.update(cfg)
-        if args.headless:
-            config["headless"] = True
-        elif args.render:
-            config["headless"] = False
-        return MultiEnvironment(config=config, environment_cls=SensorEnvironment)
-
-    return train_env
 
 
 
@@ -80,6 +60,20 @@ def create_parser(parser_creator=None):
         help="Show GUI windows")
 
     return parser
+
+
+
+def config_from_args(args):
+    """
+    Extract experiment args from the command line args
+    These can be used to overrided the args in a yaml file
+    """
+    config = {}
+    if args.headless:
+        config["env_config"]["headless"] = True
+    if args.render:
+        config["env_config"]["headless"] = False
+    return config
 
 
 
@@ -191,7 +185,8 @@ class MapWindow():
 if __name__=="__main__":
     parser = create_parser()
     args = parser.parse_args()
-    env = train_env_factory(args)({})
+    cfg = extend_config(DEFAULTS, config_from_args(args))
+    env = train_env_factory()(cfg)
     view = BenchmarkWindow(env)
     # Not working at the moment
     #else:

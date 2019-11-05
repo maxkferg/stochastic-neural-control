@@ -34,45 +34,18 @@ from gym.envs.registration import registry
 from ray import tune
 from ray.tune import run, sample_from, run_experiments
 from ray.tune.schedulers import PopulationBasedTraining
-from ray.tune.registry import register_env
-from ray.rllib.models import ModelCatalog
-from learning.robot import RobotModel
-from learning.sensor import SensorModel
-from learning.preprocessing import DictFlatteningPreprocessor
-from environment.sensor import SensorEnvironment # Env type
-from environment.multi import MultiEnvironment # Env type
-colored_traceback.add_hook()
+from environment.core.utils.config import extend_config
+from common import train_env_factory
 
 
-ENVIRONMENT = "MultiRobot-v0"
-
-DEFAULTS = {
+ENV_CONFIG = {
     'headless': True,
-    'building_id': '5d984a7c6f1886dacf9c730d'
+    'building_id': '5d97edec93a71c81fb0fbbf1'
 }
 
 
 # Only show errors and warnings
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.WARN)
-
-
-def train_env_factory(args):
-    """
-    Create an environment that is linked to the communication platform
-    @env_config: Environment configuration from config file
-    @args: Command line arguments for overriding defaults
-    """
-    def train_env(cfg):
-        config = DEFAULTS.copy()
-        config.update(cfg)
-        if args.headless:
-            config["headless"] = True
-        elif args.render:
-            config["headless"] = False
-        return MultiEnvironment(config=config, environment_cls=SensorEnvironment)
-
-    return train_env
-
 
 
 def create_parser():
@@ -114,6 +87,31 @@ def create_parser():
 
 
 
+def config_from_args(args):
+    """
+    Extract experiment args from the command line args
+    These can be used to overrided the args in a yaml file
+    """
+    config = {}
+    if args.workers:
+        config["workers"] = args.workers
+    if args.headless:
+        config["env_config"] = dict(headless=True)
+    if args.render:
+        config["env_config"] = dict(headless=False)
+    return config
+
+
+def get_callbacks():
+    return {
+        "callbacks": {
+            "on_episode_start": on_episode_start,
+            "on_episode_step": on_episode_step,
+            "on_episode_end": on_episode_end,
+        }
+    }
+
+
 def on_episode_start(info):
     episode = info["episode"]
     episode.user_data["actions"] = []
@@ -123,6 +121,7 @@ def on_episode_step(info):
     episode = info["episode"]
     episode.user_data["actions"].append(episode.prev_action_for(0))
     episode.user_data["actions"].append(episode.prev_action_for(1))
+
 
 def on_episode_end(info):
     episode = info["episode"]
@@ -135,34 +134,29 @@ def on_episode_end(info):
 
 
 def run(args):
-    ModelCatalog.register_custom_model("robot", RobotModel)
-    ModelCatalog.register_custom_model("sensor", SensorModel)
-    register_env(ENVIRONMENT, train_env_factory(args))
-
+    """
+    Run a single trial
+    """
     with open(args.config, 'r') as stream:
         experiments = yaml.load(stream, Loader=yaml.Loader)
 
     for experiment_name, settings in experiments.items():
         print("Running %s"%experiment_name)
-        settings["config"].update({
-            "callbacks": {
-                "on_episode_start": on_episode_start,
-                "on_episode_step": on_episode_step,
-                "on_episode_end": on_episode_end,
-            }
-        })
-        
-        if args.workers is not None:
-            settings['config']['num_workers'] = args.workers
-        
+        config = settings['config']
+        config = extend_config(config, get_callbacks())
+        config = extend_config(config, dict(env_config=ENV_CONFIG))
+        config = extend_config(config, config_from_args(args))
+
         ray.tune.run(
             settings['run'],
             name=experiment_name,
             stop=settings['stop'],
-            config=settings['config'],
+            config=config,
             checkpoint_freq=settings['checkpoint_freq'],
             queue_trials=True,
         )
+
+
 
 def log_uniform(max, min):
     """
@@ -176,10 +170,9 @@ def log_uniform(max, min):
 
 
 def run_pbt(args):
-    ModelCatalog.register_custom_model("robot", RobotModel)
-    ModelCatalog.register_custom_model("sensor", SensorModel)
-    register_env(ENVIRONMENT, train_env_factory(args))
-
+    """
+    Run population based training
+    """
     pbt_scheduler = PopulationBasedTraining(
         time_attr='time_total_s',
         metric="episode_reward_mean",
@@ -194,13 +187,13 @@ def run_pbt(args):
             }
         })          
 
-    # Prepare the default settings
     with open(args.config, 'r') as stream:
         experiments = yaml.load(stream, Loader=yaml.Loader)
 
     for experiment_name, settings in experiments.items():
         print("Running %s"%experiment_name)
-        settings['config'].update({
+        config = settings['config']
+        config.update({
             "learning_starts": sample_from(
                 lambda spec: random.choice([10000, 20000])),
             "target_network_update_freq": sample_from(
@@ -211,21 +204,17 @@ def run_pbt(args):
                 lambda spec: int(random.choice([1,4,8]))),
             "train_batch_size": sample_from(
                 lambda spec: int(random.choice([128,256,512]))),
-            "callbacks": {
-                "on_episode_start": on_episode_start,
-                "on_episode_step": on_episode_step,
-                "on_episode_end": on_episode_end,
-            }
         })
-
-        if args.workers is not None:
-            settings['config']['num_workers'] = args.workers
+        # Hard overrides from this file and the commandline
+        config = extend_config(config, get_callbacks())
+        config = extend_config(config, dict(env_config=ENV_CONFIG))
+        config = extend_config(config, config_from_args(args))
 
         ray.tune.run(
             settings['run'],
             name=experiment_name,
             scheduler=pbt_scheduler,
-            config=settings['config'],
+            config=config,
             checkpoint_freq=20,
             max_failures=5,
             num_samples=6
@@ -233,34 +222,27 @@ def run_pbt(args):
 
 
 def run_trials(args):
-    ModelCatalog.register_custom_model("robot", RobotModel)
-    ModelCatalog.register_custom_model("sensor", SensorModel)
-    register_env(ENVIRONMENT, train_env_factory(args))
-
-    # Prepare the default settings
+    """
+    Run a series of trials with different hyperparameters
+    """
     with open(args.config, 'r') as stream:
         experiments = yaml.load(stream, Loader=yaml.Loader)
 
     for experiment_name, settings in experiments.items():
         print("Running %s"%experiment_name)
-        settings['config'].update({
+        config = settings['config']
+        config.update({
             "target_network_update_freq": sample_from(
-                lambda spec: random.choice([1, 2])),
+                lambda spec: random.choice([0, 1, 2])),
             "buffer_size": sample_from(
                 lambda spec: int(random.choice([2e6, 4e6, 8e6]))),
             "train_batch_size": sample_from(
                 lambda spec: int(random.choice([256, 512]))),
-            "no_done_at_end": sample_from(
-                lambda spec: random.choice([True, False])),
-            "callbacks": {
-                "on_episode_start": on_episode_start,
-                "on_episode_step": on_episode_step,
-                "on_episode_end": on_episode_end,
-            }
         })
-
-        if args.workers is not None:
-            settings['config']['num_workers'] = args.workers
+        # Hard overrides from this file and the commandline
+        config = extend_config(config, get_callbacks())
+        config = extend_config(config, dict(env_config=ENV_CONFIG))
+        config = extend_config(config, config_from_args(args))
 
         ray.tune.run(
             settings['run'],
@@ -268,7 +250,7 @@ def run_trials(args):
             config=settings['config'],
             checkpoint_freq=20,
             max_failures=4,
-            num_samples=6
+            num_samples=4
         )
 
 

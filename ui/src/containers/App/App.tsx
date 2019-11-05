@@ -172,6 +172,7 @@ class PersistentDrawerRight extends React.Component {
       />
     } else if (this.state.editPointCloud) {
 
+      
     } else {
       console.error("Should always be creating or editing an object");
       return <p>Edit or create an object</p>

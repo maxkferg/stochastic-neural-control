@@ -18,16 +18,30 @@ const pointAttributeSchema = {
     g: { type: Number, required: true, default: null },
     b: { type: Number, required: true, default: null },
 }
+
+const robotSchema = {
+    id: {
+        type: ObjectId, required: true
+    }
+}
+
+const timeSchema = { 
+    secs: {
+        type: Date
+    },
+    nsecs: {
+        type: Date
+    }
+}
+
 exports.schema = {
-    building_id: {type: ObjectId, required: true},
-    robot_id: {type: ObjectId, required: false},
+    robot: { type: robotSchema, require: true },
     position: { type: pointPositionSchema, required: true},
     attribute: { type: pointAttributeSchema, require: true}, 
-    t: { type: Date, required: true, default: null },
+    time: { type: timeSchema}
 };
 
 exports.indexes = [
-    {building_id: 1},
-    {robot_id: 1},
+    {"robot.id":  1},
 ];
 

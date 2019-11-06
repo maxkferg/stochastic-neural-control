@@ -12,7 +12,7 @@ const client = new kafka.KafkaClient({kafkaHost});
 
 const consumer = new Consumer(
     client,
-    [{ topic: 'robots.sensors.pointcloud', partition: 0 }],
+    [{ topic: 'robot.sensors.pointcloud', partition: 0 }],
     { autoCommit: true }
 );
 
@@ -21,13 +21,13 @@ const consumer = new Consumer(
  * 
  */
 function setupConsumer() {
-	consumer.on('message', function(message) {
+	consumer.on('message', async function(message) {
         console.log('Consumer point cloud receive message', JSON.parse(message.value));
         const messagesData = JSON.parse(message.value);
-        const { points, building_id, robot_id, t } = messagesData; 
-        
+        const { points, header , robot } = messagesData; 
+        console.log(robot);
         try {
-            pointService.addPointsOfRobot(robot_id, building_id, points, t);
+            await pointService.addPointsOfRobot(robot, header, points);
             // change after receive data structure from kafa
             pubSub.publish(POINT_CLOUD_TOPIC, {
                 id: message.robot_id,

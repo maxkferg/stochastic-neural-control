@@ -6,13 +6,30 @@ function getPointsOfRobot(robotId) {
     return PointModel.find({ robot_id: robotId })
 }
 
-function addPointsOfRobot(robotId, buildingId, pointsData, t) {
-    const insertPoints = pointsData.map(point => {
-        point.t = t;
-        point.robot_id = robotId;
-        point.building_id = buildingId;
-        return point
-    })
+function addPointsOfRobot(robot, header, points) {
+    const insertPoints = points.map(point => {
+        const newPoint = {
+            position: {
+                x: point[0],
+                y: point[1],
+                z: point[2]
+            },
+            attribute: {
+                r: point[4] ? point[4] : 0,
+                b: point[5] ? point[5] : 0,
+                g: point[6] ? point[6] : 0
+            },
+            robot: {
+                id: robot.id
+            },
+            time: {
+                secs: header.stamp.secs,
+                nsecs: header.stamp.nsecs
+            }
+        }
+        return newPoint;
+    });
+    console.log(insertPoints);
     return PointModel.insertMany(insertPoints)
 }
 

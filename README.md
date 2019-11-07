@@ -4,28 +4,41 @@ A real-time geometry server for applications in robotics and building management
 ![Digital Points UI](docs/screenshot.png)
 
 ## Quick start
+
+Start the databases
+```sh
+source .env
+docker-compose up
+```
+
+Start the API
+```
+cd ui 
+npm i
+npm start
+```
+
+Start the UI
+```
+cd ui 
+npm i
+npm start
+```
+
+
+## Building the docker images
 ```sh
 docker build -t digitalpoints/api:latest api
 docker build -t digitalpoints/ui:latest ui
 docker-compose up
 ```
 
-## Deploying
 
-Push to dockerhub and patch GKE cluster
+## Deployment (GKE)
 
-```sh
-export TAG=12
-# UI
-docker build -t digitalpoints/ui:production-$TAG ui
-docker push digitalpoints/ui:production-$TAG
-kubectl set image deployment/ui-deployment ui=digitalpoints/ui:production-$TAG
+Google CloudBuild is used to build and deploy the codebase.
 
-# API
-docker build -t digitalpoints/api:production-$TAG api
-docker push digitalpoints/api:production-$TAG
-kubectl set image deployment/api-deployment api=digitalpoints/api:production-$TAG
-```
+Every commit is built and tested using the same CI pipeline. The UI and API components are automatically deployed to production whenever a pull request is merged into `master`. Deployment configuration is stored in /deployment/cloudbuild.
 
 
 ## About

@@ -158,13 +158,16 @@ def actor_critic_loss(policy, model, _, train_batch):
 
     # target q network evaluation
     q_tp1 = policy.target_model.get_q_values(target_model_out_tp1, policy_tp1)
+    
+    # CUSTOM:
+    # Clip the target Q prediction
+    print("Clipping Q function to [-4,4]")
+    q_tp1 = tf.clip_by_value(q_tp1, -4, 4)
+
     if policy.config["twin_q"]:
-        print("Clipping Q function to [-2,2]")
         twin_q_tp1 = policy.target_model.get_twin_q_values(
             target_model_out_tp1, policy_tp1)
-        # CUSTOM: CLIP THE TARGET Q VALUE
-        twin_q_tp1 = tf.clip_by_value(twin_q_tp1, -2, 2)
-
+    
     q_t_selected = tf.squeeze(q_t, axis=len(q_t.shape) - 1)
     if policy.config["twin_q"]:
         twin_q_t_selected = tf.squeeze(twin_q_t, axis=len(q_t.shape) - 1)

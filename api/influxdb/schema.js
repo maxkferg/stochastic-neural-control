@@ -3,7 +3,7 @@ const config = require('config');
 const logger = require('../logger');
 
 const influxHost = config.get('Influx.host');
-logger.info("Creating new influx client "+influxHost);
+logger.info("Creating new influx client: " + influxHost);
 
 const db = new Influx.InfluxDB({
  host: influxHost,
@@ -51,5 +51,7 @@ const db = new Influx.InfluxDB({
    }
  ]
 })
+logger.info("Influx client created");
+
 
 module.exports = db;

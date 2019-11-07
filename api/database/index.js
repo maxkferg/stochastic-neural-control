@@ -22,6 +22,12 @@ function getMongooseModel(domainName, modelsDir) {
         schema.index(index);
     });
 
+    if (domain.hooks) {
+        if (domain.hooks.type === 'pre') {
+            schema.post(domain.hooks.query, domain.hooks.callback(doc, next))
+        }
+    }
+
     //initialize the model
     let model = mongoose.model(domainName, schema);
     model.ensureIndexes(function (err) {

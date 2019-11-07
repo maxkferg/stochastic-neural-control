@@ -17,21 +17,20 @@ const consumer = new Consumer(
 );
 
 /**
- * setupConsumer
+ * setupConsumer point cloud
  * 
  */
 function setupConsumer() {
 	consumer.on('message', async function(message) {
-        console.log('Consumer point cloud receive message', JSON.parse(message.value));
         const messagesData = JSON.parse(message.value);
-        const { points, header , robot } = messagesData; 
-        console.log(robot);
+        console.log(messagesData);
+        const { points, header, robot } = messagesData; 
         try {
+            console.log('test')
             await pointService.addPointsOfRobot(robot, header, points);
             // change after receive data structure from kafa
             pubSub.publish(POINT_CLOUD_TOPIC, {
                 id: message.robot_id,
-                buildingId: message.building_id
             });
     } catch(e) {
         console.log(e)

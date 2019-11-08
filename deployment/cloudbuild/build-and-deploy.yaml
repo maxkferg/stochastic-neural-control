@@ -3,8 +3,14 @@
 
 steps:
 
-
 ######################## UI #########################
+# Pull cached image
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'setup-ui'
+  args: 
+  - 'pull'
+  - 'gcr.io/$PROJECT_ID/digital-points-ui:latest'
+
 # Build
 - name: 'gcr.io/cloud-builders/docker'
   dir: ui
@@ -16,7 +22,7 @@ steps:
   - '--file=Dockerfile'
   - '.'
   id: 'build-ui'
-  waitFor: ['-']
+  waitFor: ['setup-ui']
 
 # Push
 - name: 'gcr.io/cloud-builders/docker'
@@ -44,6 +50,13 @@ steps:
 
 
 ######################## API #########################
+# Pull cached image
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'setup-api'
+  args: 
+  - 'pull'
+  - 'gcr.io/$PROJECT_ID/digital-points-api:latest'
+
 # Build
 - name: 'gcr.io/cloud-builders/docker'
   dir: api
@@ -55,7 +68,7 @@ steps:
   - '--file=Dockerfile'
   - '.'
   id: 'build-api'
-  waitFor: ['-']
+  waitFor: ['setup-api']
 
 # Push
 - name: 'gcr.io/cloud-builders/docker'
@@ -92,7 +105,7 @@ steps:
 #  - '--file=Dockerfile'
 #  - '.'
 #  id: 'build-services'
-#  waitFor: ['-']
+#  waitFor: ['setup']
 
 
 # Push Services to GKE

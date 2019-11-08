@@ -1,9 +1,6 @@
 """
 Copy map data from 3D to 2D
 Removes old map data
-
-python main.py --config=config/dev.yaml
-python main.py --config=config/prod.yaml
 """
 import os
 import math
@@ -19,16 +16,12 @@ import argparse
 import numpy as np
 import transforms3d
 import plotly.graph_objs as go
+from collections import defaultdict
 from graphqlclient import GraphQLClient
-from graphql import getCurrentGeometry, getDeletedGeometry, getMapGeometry, updateMapGeometry, deleteMapGeometry
+from .graphql import getCurrentGeometry, getDeletedGeometry, getMapGeometry, updateMapGeometry, deleteMapGeometry
 from kafka import KafkaProducer
 
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
-
-parser = argparse.ArgumentParser(description='Convert 3D geometry to 2D geometry.')
-parser.add_argument('--headless', action='store_true', help='run without GUI components')
-parser.add_argument('--height', type=float, default=0.1, help='height to generate map')
-parser.add_argument('--config', type=str, default='config/dev.yaml', help='path to config file')
 
 
 class MapBuilder():
@@ -77,22 +70,18 @@ class MapBuilder():
         """
         Delete any map data that does not appear in the building
         """
-        deleted_mesh = self._get_deleted_mesh()
-        print(deleted_mesh)
-        map_geometry = self._get_map_geometry()
-        map_geometry_hash = { m["mesh_id"]:m for m in map_geometry }
-        for mesh in deleted_mesh:
-            mesh_id = mesh["id"]
-            if not mesh["deleted"]:
-                logging.warn("Mesh was not deleted %s"%mesh["name"])
+        logging.info("Deleting stale map geometry")
+        meshes = self._get_initial_geometry()
+        mesh_lookup = {mesh["id"]:mesh for mesh in meshes}
+        maps = self._get_map_geometry()
+        for map_object in maps:
+            mesh_id = map_object["mesh_id"]
+            if map_object["is_deleted"] == "true":
                 continue
-            if mesh_id not in map_geometry_hash:
-                logging.warn("Could not find map geometry for %s"%mesh["name"])
-                continue
-            if map_geometry_hash[mesh_id]["is_deleted"]:
-                logging.info("Deleting map geometry for %s"%mesh["name"])
+            if mesh_id not in mesh_lookup or mesh_lookup[mesh_id]["is_deleted"]:
+                print("Deleting map geometry for %s"%map_object["name"])
                 self.graphql_client.execute(deleteMapGeometry,
-                    {"id": map_geometry_hash[mesh_id]["id"]}
+                    {"id": map_object["id"]}
                 )
 
 
@@ -101,10 +90,12 @@ class MapBuilder():
         Update the polygons in the database
         Creates new polygons if they do not exist
         """
-        logging.info("Writing updated map to GraphQL: %s"%map_object["mesh_id"])
+        logging.info("Writing updated map to API: %s"%map_object["mesh_id"])
         params = map_object.copy()
-        params["upsert"] = True
-        self.graphql_client.execute(updateMapGeometry, params)
+        from pprint import pprint
+        pprint(params)
+        response = self.graphql_client.execute(updateMapGeometry, params)
+        print(response)
 
 
     def _convert_to_polygons(self, mesh, furniture_height):
@@ -172,7 +163,7 @@ class MapBuilder():
         relative_url = os.path.join(geometry_object['geometry']['directory'], geometry_object['geometry']['filename'])
         relative_url = relative_url.strip('./')
         url = os.path.join(self.geometry_endpoint, relative_url)
-        fp = os.path.join('tmp/', relative_url)
+        fp = os.path.join('/tmp/', relative_url)
         logging.info("{} -> {}".format(url, fp))
         os.makedirs(os.path.dirname(fp), exist_ok=True)
         with urllib.request.urlopen(url) as response, open(fp, 'wb') as out_file:
@@ -277,18 +268,6 @@ class MapBuilder():
                 logging.error("Error while deleting geometry: %s"%e)
 
             time.sleep(20)
-
-
-
-
-
-if __name__=="__main__":
-    args = parser.parse_args()
-    with open(args.config) as cfg:
-        config = yaml.load(cfg, Loader=yaml.Loader)
-    builder = MapBuilder(args.height, config)
-    builder.run()
-
 
 
 

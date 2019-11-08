@@ -3,13 +3,14 @@
 # Exported from SketchUp, (c) 2000-2012 Trimble Navigation Limited
 
 newmtl Cladding_Stucco_White
-Ka 0.000000 0.000000 0.000000
+Ka 0.800000 0.800000 0.800000
 Kd 0.784314 0.784314 0.784314
 Ks 0.330000 0.330000 0.330000
 map_Kd walls/Cladding_Stucco_White.jpg
 
-newmtl ForegroundColor
-Ka 0.000000 0.000000 0.000000
-Kd 0.000000 0.000000 0.000000
-Ks 0.330000 0.330000 0.330000
+newmtl Quartz_Light_Grey
+Ka 0.600000 0.600000 0.600000
+Kd 0.784314 0.784314 0.784314
+Ks 0.530000 0.530000 0.530000
+map_Kd walls/Quartz_Light_Grey.jpg
 

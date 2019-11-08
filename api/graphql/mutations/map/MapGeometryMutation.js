@@ -14,14 +14,32 @@ const client = new kafka.KafkaClient({kafkaHost: kafkaHost});
 const producer = new kafka.HighLevelProducer(client);
 
 
+
 /**
  * Convert an array of polygons arrays to polygon type
+ * 
+ * Input: A list of polgons in Mongo form [[[Number]]]
+ * Output: A list of polygons in GraphQL form [{points: [[Number]]}]
+ *
  */
 function toPolygonType(polygons){
   return polygons.map((polygon) => ({
     points: polygon
   }));
 }
+
+
+/**
+ * Convert an array of polygons arrays to polygon type
+ * 
+ * Input: A list of polygons in GraphQL form [{points: [[Number]]}]
+ * Output: A list of polgons in Mongo form [[[Number]]]
+ * 
+ */
+function toMongoPolygonType(polygons){
+  return polygons.map((polygon) => polygon.points);
+}
+
 
 /**
  * MapGeometryMutation
@@ -108,13 +126,13 @@ class MapGeometryMutation extends BaseResolver {
       mapgeometry.isTraversable = args.is_traversable
     }
     if (typeof args.internal_polygons !== 'undefined'){
-      mapgeometry.internalPolygons = args.internal_polygons
+      mapgeometry.internalPolygons = toMongoPolygonType(args.internal_polygons)
     }
     if (typeof args.external_polygons !== 'undefined'){
-      mapgeometry.externalPolygons = args.external_polygons
+      mapgeometry.externalPolygons = toMongoPolygonType(args.external_polygons)
     }
     if (typeof args.visual_polygons !== 'undefined'){
-      mapgeometry.visualPolygons = args.visual_polygons
+      mapgeometry.visualPolygons = toMongoPolygonType(args.visual_polygons)
     }
     if (typeof args.created_at !== 'undefined'){
       mapgeometry.createdAt = args.created_at
@@ -155,7 +173,7 @@ class MapGeometryMutation extends BaseResolver {
       if (err) console.error("Error sending map geometry update command:", err);
     });
 
-    logger.info("Updated map geometry: ", args.id);
+    logger.info("Updated map geometry:", ob._id);
 
     return {
       id: ob._id,

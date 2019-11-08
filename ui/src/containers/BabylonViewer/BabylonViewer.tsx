@@ -121,18 +121,23 @@ function setupObject(objectData: any, parentMesh: any,  scene: BABYLON.Scene){
  */
 function setupLights(scene: any){
     let ceiling = 2
+    // Ambient light
     let light = new HemisphericLight('hemi1', new Vector3(0, 1, 0), scene);
-    light.intensity = 0.8;
+    light.intensity = 0.4;
+
+    // Ambient light (at a different angle)
+    let shadow = new HemisphericLight('hemi2', new Vector3(0.3, 1, 0), scene);
+    shadow.intensity = 0.1;
 
     var lightbulb1 = new BABYLON.PointLight("pointLight1", new BABYLON.Vector3(0, ceiling, 0), scene);
-    lightbulb1.intensity = 1.2
+    lightbulb1.intensity = 0.4
 
-    var lightbulb2 = new BABYLON.PointLight("pointLight2", new BABYLON.Vector3(3, ceiling, 3), scene);
+    var lightbulb2 = new BABYLON.PointLight("pointLight2", new BABYLON.Vector3(2, ceiling, 2), scene);
 
-    lightbulb2.intensity = 1.4
+    lightbulb2.intensity = 0.4
 
-    var lightbulb3 = new BABYLON.PointLight("pointLight3", new BABYLON.Vector3(-3, ceiling, -3), scene);
-    lightbulb3.intensity = 1.2
+    var lightbulb3 = new BABYLON.PointLight("pointLight3", new BABYLON.Vector3(-2, ceiling, -2), scene);
+    lightbulb3.intensity = 0.4
 }
 
 

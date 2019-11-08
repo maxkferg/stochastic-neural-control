@@ -4,7 +4,7 @@ Webserver:
 
 # InfluxDB config
 Influx:
-  host: 'influxdb.default:8086'
+  host: 'influxdb.default'
   dbName: geometry_db
 
 # Kafka config

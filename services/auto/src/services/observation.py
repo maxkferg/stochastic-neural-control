@@ -17,6 +17,7 @@ import urllib
 import shutil
 import logging
 import argparse
+import numpy as np
 from ..environment.sensor import SensorEnvironment
 from ..environment.core.env.base import BaseEnvironment
 from kafka import KafkaProducer, KafkaConsumer
@@ -39,7 +40,10 @@ class KafkaBuffer():
     """
 
     def __init__(self, topic, robot_ids):
+        self.topic = topic
         self.robot_ids = robot_ids
+        self.msg_buffer = {}
+        self.msg_received = {}
         self.consumer = KafkaConsumer(topic, bootstrap_servers=KAFKA_HOST)
 
 
@@ -48,16 +52,15 @@ class KafkaBuffer():
         Return the last message for a robot
         """
         if robot_id not in self.msg_buffer:
-            logging.error(f"No data for robot ", robot_id)
-            return None, None
+            raise ValueError(f"No data for robot {robot_id} on {self.topic}")
         lag = time.time() - self.msg_received[robot_id]
         if lag > 10:
             logging.warn(f"Data for {robot_id} is {lag:i} seconds old")
         return self.msg_buffer[robot_id], lag
 
 
-    def tick():
-        result = self.kafka_consumer.poll()
+    def tick(self):
+        result = self.consumer.poll()
         for partition, messages in result.items():
             for msg in messages:
                 message = json.loads(msg.value)
@@ -65,6 +68,15 @@ class KafkaBuffer():
                 if robot_id in self.robot_ids:
                     self.msg_buffer[robot_id] = message
                     self.msg_received[robot_id] = time.time()
+
+
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        if isinstance(obj, np.bool_):
+            return bool(obj)
+        return json.JSONEncoder.default(self, obj)
 
 
 
@@ -76,16 +88,17 @@ class ObservationGenerator():
     robots, allowing the learner to be totally agnostic to the underlying hardware
     """
 
-    def __init__(self, building_id, min_timestep=0.1):
+    def __init__(self, building_id, min_timestep=0.1, verbosity=0):
         """ 
         @building_id: The building to simulate
         @min_timestep: The minimum time between observations
         """
+        self.verbosity = 0
         self.robot_ids = []
         self.building_id = building_id
         self.min_timestep = min_timestep
         self.kafka_producer = self._setup_kafka_producer(KAFKA_HOST)
-        self._setup_simulator(building_id)
+        self.env = self._setup_simulator(building_id)
         self.odom_buffer = KafkaBuffer(ODOM_READ_TOPIC, self.robot_ids)
         #self.pointcloud_buffer = KafkaBuffer(ODOM_READ_TOPIC, self.robot_ids)
 
@@ -98,29 +111,30 @@ class ObservationGenerator():
         """
         Create a Pybullet env to generate observations
         """
+        env = {}
         config = {
             'headless': True,
             'reset_on_target': False,
             'building_id': self.building_id
         }
-        # Create PyBullet environment
+        
         base_env = BaseEnvironment(config=config)
         self.robots = base_env.robots
         for i,robot in enumerate(self.robots):
-            self.env[i] = SensorEnvironment(base_env, robot=robot, config=config)
+            env[i] = SensorEnvironment(base_env, robot=robot, config=config)
+        return env
 
 
     def _sync_simulator(self):
         """
         Sync the simulator with the Kafka stream
         """
-        for env in self.env:
+        for env in self.env.values():
             self.odom_buffer.tick()
             message, _ = self.odom_buffer.get_last_message(env.robot.id)
-            if message is not None:
-                position = message["pose"]["pose"]["position"]
-                orientation = message["pose"]["pose"]["orientation"]
-                env.robot.set_pose(position, orientation)
+            position = message["pose"]["pose"]["position"]
+            orientation = message["pose"]["pose"]["orientation"]
+            env.robot.set_pose(position, orientation)
 
 
     def _publish_robot_observation(self, robot_id, observation):
@@ -128,12 +142,14 @@ class ObservationGenerator():
         Publish RL observation to kafka
         """
         message = {
-            robot_id: self.robot_id,
-            building_id: self.building_id,
-            observation: observation,
-            timestamp: time.time()
+           "robot_id": robot_id,
+            "building_id": self.building_id,
+            "observation": observation,
+            "timestamp": time.time()
         }
-        message = json.dumps(observation).encode('utf-8')
+        if self.verbosity>0:
+            pprint(message)
+        message = json.dumps(message, cls=NumpyEncoder).encode('utf-8')
         future = self.kafka_producer.send(OBSERVATION_PUBLISH_TOPIC, message)
         logging.info(f"Sent {OBSERVATION_PUBLISH_TOPIC} message for robot %s"%robot_id)
 
@@ -147,8 +163,13 @@ class ObservationGenerator():
         """
         while True:
             started = time.time()
-            self._sync_simulator()
-            for env in self.env:
+            try:
+                self._sync_simulator()
+            except ValueError as err:
+                logging.error(err)
+                time.sleep(1)
+                continue
+            for env in self.env.values():
                 observation = env.observe()
                 self._publish_robot_observation(env.robot.id, observation)
             time_remaining = self.min_timestep - (time.time() - started)

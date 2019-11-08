@@ -35,7 +35,9 @@ Observation Generator (observe):
     Observations are publised to 'robots.events.observation'
 
     Example Usage:
-        python main.py observe <building-id>
+        python main.py observe 5dc3dee819dfb1717a23fad9
+        python main.py observe 5dc3dee819dfb1717a23fad9 --verbosity=1
+
 """
 
 import os
@@ -59,10 +61,12 @@ subparsers = parser.add_subparsers(help='sub-command help')
 observe_parser = subparsers.add_parser('observe', help='Create observations for building')
 observe_parser.add_argument('building_id', type=str, help='Building Id')
 observe_parser.add_argument('--config', type=str, default="prod", help='Api Configuration')
+observe_parser.add_argument('--verbosity', type=int, default=0, help='Logging verbosity')
 
 map_parser = subparsers.add_parser('maps', help='Generate maps for every building')
 map_parser.add_argument('--height', type=float, default=0.1, help='height to generate map')
 map_parser.add_argument('--config', type=str, default="prod", help='Api Configuration')
+map_parser.add_argument('--verbosity', type=int, default=0, help='Logging verbosity')
 
 
 def observe(args, api_config):
@@ -70,8 +74,8 @@ def observe(args, api_config):
     Observe Subcommand
     """
     print("Creating Observation generator for ", args.building_id)
-    generator = ObservationGenerator(args.building_id)
-
+    service = ObservationGenerator(args.building_id, verbosity=args.verbosity)
+    service.run()
 
 
 def maps(args, api_config):

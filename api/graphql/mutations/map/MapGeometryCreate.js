@@ -17,6 +17,10 @@ const producer = new kafka.HighLevelProducer(client);
 
 /**
  * Convert an array of polygons arrays to polygon type
+ * 
+ * Input: A list of polgons in Mongo form [[[Number]]]
+ * Output: A list of polygons in GraphQL form [{points: [[Number]]}]
+ *
  */
 function toPolygonType(polygons){
   return polygons.map((polygon) => ({
@@ -25,7 +29,11 @@ function toPolygonType(polygons){
 }
 
 /**
- * Convert an GraphQL polygon to Mongo database form
+ * Convert an array of polygons arrays to polygon type
+ * 
+ * Input: A list of polygons in GraphQL form [{points: [[Number]]}]
+ * Output: A list of polgons in Mongo form [[[Number]]]
+ * 
  */
 function toMongoPolygonType(polygons){
   return polygons.map((polygon) => polygon.points);

@@ -59,12 +59,12 @@ services:
 
 
   # Run this to start the databases
-  #start_dependencies:
-  #  image: dadarek/wait-for-dependencies
-  #  depends_on:
-  #  - mongo
-  #  - influxdb
-  #  command: mongo:27017 influxdb:8086
+  start_dependencies:
+    image: dadarek/wait-for-dependencies
+    depends_on:
+    - mongo
+    - influxdb
+    command: influxdb:8086 mongo:27017
 
 
 volumes:

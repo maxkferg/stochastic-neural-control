@@ -61,7 +61,7 @@ class BuildingViewer extends React.Component<Props, State> {
           meshesCurrent,
           deleteMesh
         });
-        
+
         for (let i=0; i<meshesCurrent.length; i++) {
           //let mesh = meshesCurrent[i];
           SubscriptionClient.subscribe({

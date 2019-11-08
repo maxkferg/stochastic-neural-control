@@ -36,7 +36,7 @@ OBSERVATION_PUBLISH_TOPIC = 'robot.events.observation'
 class KafkaBuffer():
     """
     Keep track of the last message in a Kafka stream
-    Only trackes messages for @robot_ids 
+    Only trackes messages for @robot_ids
     """
 
     def __init__(self, topic, robot_ids):
@@ -64,7 +64,7 @@ class KafkaBuffer():
         for partition, messages in result.items():
             for msg in messages:
                 message = json.loads(msg.value)
-                robot_id = command["robot"]["id"]
+                robot_id = message["robot"]["id"]
                 if robot_id in self.robot_ids:
                     self.msg_buffer[robot_id] = message
                     self.msg_received[robot_id] = time.time()
@@ -84,12 +84,12 @@ class ObservationGenerator():
     """
     Generate observations for every robot in @building_id
 
-    This generator provides an abstraction over real and simulated 
+    This generator provides an abstraction over real and simulated
     robots, allowing the learner to be totally agnostic to the underlying hardware
     """
 
     def __init__(self, building_id, min_timestep=0.1, verbosity=0):
-        """ 
+        """
         @building_id: The building to simulate
         @min_timestep: The minimum time between observations
         """
@@ -117,7 +117,7 @@ class ObservationGenerator():
             'reset_on_target': False,
             'building_id': self.building_id
         }
-        
+
         base_env = BaseEnvironment(config=config)
         self.robots = base_env.robots
         for i,robot in enumerate(self.robots):

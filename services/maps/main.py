@@ -78,7 +78,7 @@ class MapBuilder():
             mesh_id = map_object["mesh_id"]
             if map_object["is_deleted"] == "true":
                 continue
-            if mesh_id not in mesh_lookup or mesh_lookup[mesh_id]["is_deleted"]:
+            if mesh_id not in mesh_lookup or mesh_lookup[mesh_id]["deleted"]:
                 print("Deleting map geometry for %s"%map_object["name"])
                 self.graphql_client.execute(deleteMapGeometry,
                     {"id": map_object["id"]}
@@ -92,10 +92,10 @@ class MapBuilder():
         """
         logging.info("Writing updated map to API: %s"%map_object["mesh_id"])
         params = map_object.copy()
-        from pprint import pprint
-        pprint(params)
         response = self.graphql_client.execute(updateMapGeometry, params)
-        print(response)
+        response = json.loads(response)
+        if "errors" in response:
+            logging.error(response["errors"])
 
 
     def _convert_to_polygons(self, mesh, furniture_height):

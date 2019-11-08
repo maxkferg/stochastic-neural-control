@@ -6,8 +6,9 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN pip install --upgrade pip
-RUN pip install pyyaml gym graphqlclient kafka-python numpy trimesh
-RUN pip install transforms3d plotly shapely rtree networkx
+RUN pip install trimesh==2.38.42 lxml svg.path
+RUN pip install pyyaml gym graphqlclient kafka-python numpy
+RUN pip install transforms3d plotly shapely rtree networkx pyquaternion
 
 COPY . .
 

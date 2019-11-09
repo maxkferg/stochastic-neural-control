@@ -23,18 +23,17 @@ const consumer = new Consumer(
 function setupConsumer() {
 	consumer.on('message', async function(message) {
         const messagesData = JSON.parse(message.value);
-        console.log(messagesData);
         const { points, header, robot } = messagesData; 
         try {
-            console.log('test')
-            await pointService.addPointsOfRobot(robot, header, points);
+            const pointsGroup = await pointService.addPointsOfRobot(robot, header, points);
             // change after receive data structure from kafa
             pubSub.publish(POINT_CLOUD_TOPIC, {
-                id: message.robot_id,
+                id: robot.id,
+                points: pointsGroup,
             });
     } catch(e) {
         console.log(e)
-            throw new Error('Add points of robot error', e);
+        throw new Error('Add points of robot error', e);
         }
     });
     consumer.on('error', function(error){

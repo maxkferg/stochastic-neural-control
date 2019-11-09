@@ -25,7 +25,7 @@ const Subscription = new GraphQLObjectType({
     description: 'Root Subscription',
     fields: () => ({
         meshPosition: new resolvers.Mesh.subscribeMeshPosition(MeshPosition, "Get notified when any mesh moves", false),
-        pointCloud: new resolvers.Point.pointCloudSubscription(PointType.Point3D, "Subscribe point cloud", false),
+        pointCloud: new resolvers.Point.pointCloudSubscription(PointType.PointsGroup, "Subscribe points group cloud", false),
     })
 });
 

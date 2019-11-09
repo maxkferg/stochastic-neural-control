@@ -2,9 +2,8 @@ const Koa = require('koa');
 const Router = require('koa-router');
 const cors = require('@koa/cors');
 const jwt = require('koa-jwt');
-const GraphQLHTTP = require('koa-graphql');
 const GraphQLSchema = require('./graphql/schema');
-const { ApolloServer, gql } = require('apollo-server-koa');
+const { ApolloServer } = require('apollo-server-koa');
 const startConnectors = require('./connectors')
 const pubSub = require('./connectors/pubSub');
 const Logger = require('./logger');
@@ -27,21 +26,25 @@ async function init() {
         introspection: true,
         playground: true,
         cors: true,
-        context: async (request) => {
-            let user = {}
-            let authenticationHeader;
-            let jwtToken;
-            // Websockets do not have a context object
-            if (!request.ctx){
-                Logger.info("No request context (websocket)")
+        context: async (request)=> {
+            const { connection } = request;
+            let user;
+            if (connection) {
+                return {
+                    influx: influxdb,
+                    db,
+                    pubSub,
+                    ...connection.context
+                };
             } else {
-                authenticationHeader = request.ctx.req.headers.authorization || '';
-                jwtToken = authenticationHeader.split(" ")[1]; 
-            }
-            try {
-                user = await auth.verifyJwtToken(jwtToken);
-            } catch(error){
-                Logger.warn("User could not be authenticated: "+error.message)
+                const authenticationHeader = request.ctx.req.headers.authorization || '';
+                const jwtToken = authenticationHeader.split(" ")[1];
+                try {
+                    user = await auth.verifyJwtToken(jwtToken);
+                } catch(error) {
+                    user = {};
+                    console.log(error)
+                }
             }
             return ({
                 user,
@@ -78,7 +81,7 @@ async function init() {
     app.use(router.routes()).use(router.allowedMethods());
 
     //global error logging
-    app.on("error", (err, ctx) => {
+    app.on("error", (err) => {
         console.log('error', err);
         Logger.error(err);
     });

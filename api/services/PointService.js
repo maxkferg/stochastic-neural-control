@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 const pointSchema = require('../database/mongo/Point').schema;
 const PointModel = mongoose.model('point', pointSchema);
 
-
 function getPointsOfRobot(robotId) {
     return PointModel.find({ "robot.id" : robotId })
 }
@@ -41,8 +40,7 @@ function addPointsOfRobot(robot, header, points) {
             nsecs: header.stamp.nsecs
         }
     }
-    console.log('w')
-    return PointModel.insertMany(insertPointsGroup)
+    return PointModel.create(insertPointsGroup)
 }
 
 

@@ -79,7 +79,7 @@ class MeshCreateMutation extends BaseResolver {
                 description: 'True if the object no longer exists.'
             },
             geometry: {
-                type: GraphQLNonNull(MeshGeometryCreateBuildingInput),
+                type: new GraphQLNonNull(MeshGeometryCreateBuildingInput),
                 description: 'A description of the mesh geometry',
             },
             physics: {

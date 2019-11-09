@@ -2,7 +2,7 @@ const {
     GraphQLList,
     GraphQLFloat,
     GraphQLObjectType,
-    GraphQLString
+    GraphQLString,
 } = require('graphql');
 
 /**
@@ -15,7 +15,6 @@ const Point2D = new GraphQLObjectType({
     description: 'A point in 2D space',
     fields: () => new GraphQLList(GraphQLFloat),
 })
-
 
 const PointPosition = new GraphQLObjectType({
     name: 'PointPosition',
@@ -37,27 +36,36 @@ const PointAttribute = new GraphQLObjectType({
     })
 })
 
-/**
- * Point2D type
- * A 3D point represented as a (x,y,z) tuple
- *
- */
+const Robot = new GraphQLObjectType({
+    name: 'Robot',
+    description: 'Robot', 
+    fields: () => ({
+        id: ({ type: GraphQLString}) 
+    })
+})
+
 const Point3D = new GraphQLObjectType({
     name: 'Point3D',
     description: 'A point in 3D space',
     fields: () => ({
         position: ({ type : PointPosition }),
         attribute: ({ type: PointAttribute }),
-        robot_id: {type: GraphQLString},
-        building_id: {type: GraphQLString}
     }),
 })
 
-
+const PointsGroup = new GraphQLObjectType({
+    name: 'PointsGroup',
+    description: 'Points group',
+    fields: () => ({
+       pointsGroup: ({ type: GraphQLList(Point3D)}),
+       robot: ({ type: Robot })
+    })
+})
 
 module.exports = {
     PointPosition,
     PointAttribute,
     Point2D,
     Point3D,
+    PointsGroup
 };

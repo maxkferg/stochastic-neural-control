@@ -23,14 +23,14 @@ class pointCloudSubscription extends BaseResolver {
 
   resolve (payload, args, context, info) {
     // Manipulate and return the new value
-    return payload;
+    return payload.points;
   }
 
   subscribe(_, args, ctx) {
-    const asyncIterator = ctx.pubSub.asyncIterator([POINT_CLOUD_TOPIC]);
-    return withFilter(() => asyncIterator, (payload, variables) => {
-       return payload.id === args.id;
-    });
+    const asyncIterator =  withFilter(() => ctx.pubSub.asyncIterator([POINT_CLOUD_TOPIC]), (payload) => {
+      return payload.id === args.id;
+    })()
+    return asyncIterator;
   }
 }
 

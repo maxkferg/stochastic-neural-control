@@ -20,7 +20,7 @@ class UserSigninGoogleMutation extends BaseResolver {
                const { email, family_name } = googlePayload;
                if (!email) {
                    throw new Error('Sign in with google fail');
-               } 
+               }
                const user = await ctx.db.User.findOne({email});
                if (user) {
                     const authToken = await auth.generateToken({_id: user._id, email: user.email});

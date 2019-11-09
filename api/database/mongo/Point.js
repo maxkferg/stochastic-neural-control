@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const ObjectId = mongoose.Schema.Types.ObjectId;
-const pointService = require('../../services/PointService');
+// const pointService = require('../../services/PointService');
 /**
  * Point Schema
  * Defines current point in a building
@@ -59,20 +59,20 @@ exports.indexes = [
     {"robot.id":  1},
 ];
 
-exports.hooks = {
-    type: 'pre',
-    query: 'insertMany',
-    callback: async (doc, next) => {
-        try {
-            const currentPointsGroup = await pointService.countPointsGroupOfRobot(doc.robot.id)
-            if (currentPointsGroup + doc.length > MAX_POINTS_GROUP_ROBOT) {
-                await pointService.removePointsGroupOfRobot(doc.robot.id);   
-            } 
-            next()
-        } catch {
-            console.log('ERROR when save points')
-        }
-    }
-}
+// exports.hooks = {
+//     type: 'pre',
+//     query: 'insertMany',
+//     callback: async (doc, next) => {
+//         try {
+//             const currentPointsGroup = await pointService.countPointsGroupOfRobot(doc.robot.id)
+//             if (currentPointsGroup + doc.length > MAX_POINTS_GROUP_ROBOT) {
+//                 await pointService.removePointsGroupOfRobot(doc.robot.id);   
+//             } 
+//             next()
+//         } catch {
+//             console.log('ERROR when save points')
+//         }
+//     }
+// }
 
 

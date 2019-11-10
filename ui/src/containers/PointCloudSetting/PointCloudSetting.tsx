@@ -4,9 +4,7 @@ import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import Checkbox from '@material-ui/core/Checkbox';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormControl from '@material-ui/core/FormControl';
-import InputLabel from '@material-ui/core/InputLabel';
-import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
 import { withStyles } from '@material-ui/core/styles';
 import { withRouter } from 'react-router-dom';
 
@@ -61,44 +59,61 @@ class PointCloudSetting extends React.Component <{
     onSuccess: Function
     onCancel: Function
 }, {
-    inputLabel: any
+  pointSampling: String
+  showModelGeometry: Boolean
+  pointsLimit: Number
 }> {
     classes: any
     constructor(props) {
         super(props);
         this.classes = props.classes;
         this.state = {
-            inputLabel: React.createRef()
+          pointSampling: 'random',
+          showModelGeometry: true,
+          pointsLimit: 0,
         }
     }
+
+    handleChangePointSampling = (e) => {
+      this.setState({ 
+        pointSampling: e.target.value
+      })
+    }
+
+    handleChangeShowModelGeo = (e) => {
+      this.setState({ 
+        showModelGeometry: e.target.value
+      })
+    }
+    
+    handleChangePointsLimit = (e) => {
+      this.setState({
+        pointsLimit: e.target.value
+      })
+    }
+
     render() {
-        const { inputLabel } = this.state; 
-        return <form className={this.classes.container} noValidate autoComplete="off">
+      const { pointSampling, pointsLimit, showModelGeometry } = this.state;
+        return <form className={this.classes.container} onSubmit={(e) => e.preventDefault()} noValidate autoComplete="off">
         <Typography className={this.classes.formTitle} variant="h5" gutterBottom >Setting config pointCloud</Typography>
         <FormControlLabel
           value="modelGeometry"
-          control={<Checkbox onChange={() => console.log('kakak')} color="primary" />}
+          control={<Checkbox onChange={this.handleChangeShowModelGeo} value={showModelGeometry} color="primary" />}
           label="Show Model Geometry"
           labelPlacement="start"
         />
-        <FormControl variant="outlined" className={this.classes.formControl}>
-            <InputLabel ref={inputLabel} shtmlFor="outlined-age-native-simple">
-            Age
-            </InputLabel>
-            <Select
-            native
-            value={'kaka'}
-            inputProps={{
-                name: 'age',
-                id: 'outlined-age-native-simple',
-            }}
-            >
-            <option value="" />
-            <option value={10}>Ten</option>
-            <option value={20}>Twenty</option>
-            <option value={30}>Thirty</option>
-            </Select>
-        </FormControl>
+        <TextField
+          select
+          name="object"
+          className={this.classes.textField}
+          variant="outlined"
+          label="The point sampling strategy"
+          value={pointSampling}
+          onChange={this.handleChangePointSampling}
+        > 
+          <MenuItem value="random">Random</MenuItem>
+          <MenuItem value="latest">Latest</MenuItem>
+        </TextField>
         <TextField
           id="outlined-scale"
           name="scale"
@@ -107,9 +122,11 @@ class PointCloudSetting extends React.Component <{
           className={this.classes.textField}
           margin="normal"
           variant="outlined"
+          value={pointsLimit}
+          onChange={this.handleChangePointsLimit}
         />
         <Button size="large" variant="contained" color="primary" className={this.classes.button}>
-          Change
+          Change Setting
         </Button>
       </form> 
     }

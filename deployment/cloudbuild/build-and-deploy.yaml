@@ -116,16 +116,16 @@ steps:
   id: 'push-services-latest'
 
 # Deploy
-- name: 'gcr.io/cloud-builders/kubectl'
-  id: 'deploy-services'
-  args:
-  - set
-  - image
-  - deployment
-  - service=gcr.io/$PROJECT_ID/digital-points-services:$BUILD_ID
-  env:
-  - 'CLOUDSDK_COMPUTE_ZONE=us-west2-c'
-  - 'CLOUDSDK_CONTAINER_CLUSTER=digital-building-model'
+#- name: 'gcr.io/cloud-builders/kubectl'
+#  id: 'deploy-services'
+#  args:
+#  - set
+#  - image
+#  - deployment
+#  - service=gcr.io/$PROJECT_ID/digital-points-services:$BUILD_ID
+#  env:
+#  - 'CLOUDSDK_COMPUTE_ZONE=us-west2-c'
+#  - 'CLOUDSDK_CONTAINER_CLUSTER=digital-building-model'
 
 
 images:

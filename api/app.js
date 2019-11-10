@@ -29,13 +29,20 @@ async function init() {
         playground: true,
         cors: true,
         context: async (request) => {
-            const authenticationHeader = request.ctx.req.headers.authorization || '';
-            const jwtToken = authenticationHeader.split(" ")[1];
-            let user;
-            try { 
+            let user = {}
+            let authenticationHeader;
+            let jwtToken;
+            // Websockets do not have a context object
+            if (!request.ctx){
+                Logger.info("No request context (websocket)")
+            } else {
+                authenticationHeader = request.ctx.req.headers.authorization || '';
+                jwtToken = authenticationHeader.split(" ")[1]; 
+            }
+            try {
                 user = await auth.verifyJwtToken(jwtToken);
-            } catch {
-                user = {};
+            } catch(error){
+                Logger.warn("User could not be authenticated: "+error.message)
             }
             return ({
                 user,

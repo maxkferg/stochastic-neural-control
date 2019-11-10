@@ -14,8 +14,6 @@ import { Vector3, HemisphericLight, DirectionalLight, CannonJSPlugin, ArcRotateC
     MeshBuilder, DefaultRenderingPipeline, ShadowGenerator, PhysicsImpostor } from 'babylonjs';
 import { AdvancedDynamicTexture, Button } from 'babylonjs-gui';
 import { Scene, Engine } from 'react-babylonjs';
-import { find } from 'lodash';
-
 import 'babylonjs-loaders';
 import * as BABYLON from 'babylonjs';
 import * as CANNON from 'cannon';
@@ -197,11 +195,12 @@ function isObjectValid(ob){
  * Ignores object width, height, depth, name and id
  */
 function isObjectChanged(ob1: any, ob2: any){
+    let tolerance = 0.001; // 1 millimeter
     return !(
-        ob1.x == ob2.x &&
-        ob1.y == ob2.y &&
-        ob1.z == ob2.z &&
-        ob1.theta == ob2.theta &&
+        Math.abs(ob1.x - ob2.x) < tolerance &&
+        Math.abs(ob1.y - ob2.y) < tolerance &&
+        Math.abs(ob1.z - ob2.z) < tolerance &&
+        Math.abs(ob1.theta - ob2.theta) < tolerance &&
         ob1.deleted == ob2.deleted &&
         JSON.stringify(ob1.physics) == JSON.stringify(ob2.physics) &&
         JSON.stringify(ob1.geometry) == JSON.stringify(ob2.geometry)
@@ -213,7 +212,7 @@ function isObjectChanged(ob1: any, ob2: any){
  * Return true if an object mesh has changed
  * or the object has been deleted
  */
-function isMeshChanged(ob1: any, ob2: any){
+function isMeshMetadataChanged(ob1: any, ob2: any){
     return !(
         ob1.deleted == ob2.deleted &&
         JSON.stringify(ob1.physics) == JSON.stringify(ob2.physics) &&
@@ -234,7 +233,7 @@ interface State {
   width: number
   height: number
   scene: null | BABYLON.Scene
-  renderedObjects: any[]
+  renderedObjects: object
   renderedMeshes: object
 }
 
@@ -249,7 +248,7 @@ class BabylonViewer extends React.Component<Props, State> {
           width: 0,
           height: 0,
           scene: null,
-          renderedObjects: [],
+          renderedObjects: {},
           renderedMeshes: {},
       };
       this.classes = props.classes;
@@ -280,7 +279,7 @@ class BabylonViewer extends React.Component<Props, State> {
             let objectsToBeDeleted: any[] = this.props.deleteMesh;
             for (let newObjectKey in this.props.geometry){
                 let newObject = this.props.geometry[newObjectKey];
-                let prevObject = find(this.state.renderedObjects, {id: newObject.id});
+                let prevObject = this.state.renderedObjects[newObject.id];
                 if (!isObjectValid(newObject)){
                     console.log("Ignoring invalid new object", newObject);
                 } else if (!prevObject){
@@ -289,7 +288,6 @@ class BabylonViewer extends React.Component<Props, State> {
                     console.log("Ignoring invalid prev object", prevObject);
                 } else if (isObjectChanged(newObject, prevObject)){
                     this.updateObject(prevObject, newObject, this.state.scene)
-                    console.log("Updated mesh:",newObject, prevObject);
                 }
             }
             if (objectsToBeCreated.length){
@@ -353,7 +351,7 @@ class BabylonViewer extends React.Component<Props, State> {
             }
         };
         this.state.renderedMeshes[newObject.id] = parent;
-        this.state.renderedObjects.push(newObject);
+        this.state.renderedObjects[newObject.id] = newObject;
         this.setState({
             renderedObjects: this.state.renderedObjects,
             renderedMeshes: this.state.renderedMeshes
@@ -388,15 +386,20 @@ class BabylonViewer extends React.Component<Props, State> {
      * Otherwise: delete the mesh and recreate it
      */
     updateObject = (prevObject: any, newObject: any, scene: BABYLON.Scene) => {
-        if (!isMeshChanged(newObject, prevObject)){
+        if (!isMeshMetadataChanged(newObject, prevObject)){
             //Update existing mesh
-            let axis = new BABYLON.Vector3(0, 1, 0);
             let prevMesh = this.state.renderedMeshes[newObject.id];
-            //@ts-ignore
-            prevMesh.rotationQuaternion = new BABYLON.Quaternion.RotationAxis(axis, newObject.theta);
+            if (prevMesh === null){
+                console.warn("Mesh ",newObject.id, "not rendered yet")
+                return
+            } 
+            prevMesh.rotation = new BABYLON.Vector3(0, -newObject.theta, 0);
             prevMesh.position = new BABYLON.Vector3(newObject.x, newObject.y, newObject.z);
             prevMesh.scaling = new BABYLON.Vector3(newObject.scale, newObject.scale, newObject.scale);
+            this.state.renderedObjects[newObject.id] = newObject;
+            console.log("Updated mesh:", newObject.id)
         } else {
+            console.warn("Replaced mesh:", newObject.id)
             // Delete and recreate mesh
             //this.deleteObject(newObject.id);
             //this.createObject(newObject, scene);

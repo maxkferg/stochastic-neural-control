@@ -1,5 +1,5 @@
-query building($ownerId: String!) {
-  building(ownerId: $ownerId) {
+query getBuilding($buildingId: String!) {
+  getBuilding(buildingId: $buildingId) {
     id
     name
     owner_id

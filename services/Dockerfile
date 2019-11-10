@@ -1,4 +1,4 @@
-FROM python:3.7.4-slim
+FROM maxkferg/pybullet:2.5.7
 
 RUN apt-get update && \
     apt-get -y install gcc mono-mcs && \
@@ -7,9 +7,9 @@ RUN apt-get update && \
 
 RUN pip install --upgrade pip
 RUN pip install trimesh==2.38.42 lxml svg.path
-RUN pip install pyyaml gym graphqlclient kafka-python numpy
-RUN pip install transforms3d plotly shapely rtree networkx pyquaternion
+RUN pip install pyyaml gym graphqlclient kafka-python numpy scikit-image opencv-python-headless
+RUN pip install transforms3d plotly shapely rtree networkx pyquaternion astar
 
 COPY . .
 
-CMD [ "python", "./main.py", "--headless"]
+CMD [ "python", "./main.py", "maps"]

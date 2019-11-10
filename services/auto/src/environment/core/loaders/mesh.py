@@ -160,7 +160,6 @@ class MeshLoader():
             return
         logging.debug("{} -> {}".format(url, local_filepath))
         os.makedirs(os.path.dirname(local_filepath), exist_ok=True)
-        print("MADE:",os.path.dirname(local_filepath), "from", os.getcwd() )
         with urllib.request.urlopen(url) as response, open(local_filepath, 'wb') as out_file:
             shutil.copyfileobj(response, out_file)
 

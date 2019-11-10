@@ -25,6 +25,7 @@ from kafka import KafkaProducer, KafkaConsumer
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
 
 KAFKA_HOST = 'kafka-0.digitalpoints.io:19092'
+KAFKA_GROUP_NAME = 'Observation service'
 NULL_ACTION = [0,0]
 
 ODOM_READ_TOPIC = 'robot.events.odom'
@@ -44,7 +45,9 @@ class KafkaBuffer():
         self.robot_ids = robot_ids
         self.msg_buffer = {}
         self.msg_received = {}
-        self.consumer = KafkaConsumer(topic, bootstrap_servers=KAFKA_HOST)
+        self.consumer = KafkaConsumer(topic, 
+            bootstrap_servers=KAFKA_HOST, 
+            group_id=KAFKA_GROUP_NAME)
 
 
     def get_last_message(self, robot_id):
@@ -68,6 +71,7 @@ class KafkaBuffer():
                 if robot_id in self.robot_ids:
                     self.msg_buffer[robot_id] = message
                     self.msg_received[robot_id] = time.time()
+
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -94,13 +98,14 @@ class ObservationGenerator():
         @min_timestep: The minimum time between observations
         """
         self.verbosity = 0
-        self.robot_ids = []
         self.building_id = building_id
         self.min_timestep = min_timestep
         self.kafka_producer = self._setup_kafka_producer(KAFKA_HOST)
         self.env = self._setup_simulator(building_id)
+        self.robot_ids = [robot.id for robot in self.robots]
         self.odom_buffer = KafkaBuffer(ODOM_READ_TOPIC, self.robot_ids)
         #self.pointcloud_buffer = KafkaBuffer(ODOM_READ_TOPIC, self.robot_ids)
+        logging.info("Generating observations for robots %s"%self.robot_ids)
 
 
     def _setup_kafka_producer(self, bootstrap_servers):
@@ -132,8 +137,18 @@ class ObservationGenerator():
         for env in self.env.values():
             self.odom_buffer.tick()
             message, _ = self.odom_buffer.get_last_message(env.robot.id)
-            position = message["pose"]["pose"]["position"]
-            orientation = message["pose"]["pose"]["orientation"]
+            pose = message["pose"]["pose"]
+            position = [
+                pose['position']['x'],
+                pose['position']['y'],
+                pose['position']['z'],
+            ]
+            orientation = [
+                pose['orientation']['x'],
+                pose['orientation']['y'],
+                pose['orientation']['z'],
+                pose['orientation']['w'],
+            ]
             env.robot.set_pose(position, orientation)
 
 

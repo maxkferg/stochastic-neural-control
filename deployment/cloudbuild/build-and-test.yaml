@@ -29,12 +29,11 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'gcr.io/$PROJECT_ID/digital-points-ui:$BUILD_ID']
   id: 'push-ui'
-  waitFor: ['build-ui']
 
+# Push latest
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'gcr.io/$PROJECT_ID/digital-points-ui:latest']
   id: 'push-ui-latest'
-  waitFor: ['build-ui']
 
 
 ######################## API #########################
@@ -62,39 +61,35 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'gcr.io/$PROJECT_ID/digital-points-api:$BUILD_ID']
   id: 'push-api'
-  waitFor: ['build-api']
 
+# Push latest
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'gcr.io/$PROJECT_ID/digital-points-api:latest']
   id: 'push-api-latest'
-  waitFor: ['build-api']
 
 
-# Build services
-#- name: 'gcr.io/cloud-builders/docker'
-#  dir: services/simulator
-#  args:
-#  - 'build'
-#  - '--tag=gcr.io/$PROJECT_ID/digital-points-services:$BUILD_ID'
-#  - '--cache-from=gcr.io/$PROJECT_ID/digital-points-services'
-#  - '--file=Dockerfile'
-#  - '.'
-#  id: 'build-services'
-#  waitFor: ['-']
+######################## SERVICES #########################
+# Build
+- name: 'gcr.io/cloud-builders/docker'
+  dir: services
+  args:
+  - 'build'
+  - '--tag=gcr.io/$PROJECT_ID/digital-points-services:$BUILD_ID'
+  - '--tag=gcr.io/$PROJECT_ID/digital-points-services:latest'
+  - '--cache-from=gcr.io/$PROJECT_ID/digital-points-services'
+  - '.'
+  id: 'build-services'
+  waitFor: ['-']
 
+# Push
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/digital-points-services:$BUILD_ID']
+  id: 'push-services'
 
-# Push Services to GKE
-#- name: 'gcr.io/cloud-builders/kubectl'
-#  id: 'deploy-services'
-#  args:
-#  - set
-#  - image
-#  - deployment/services-deployment
-#  - api=gcr.io/$PROJECT_ID/digital-points-services:$BUILD_ID
-#  env:
-#  - 'CLOUDSDK_COMPUTE_ZONE=us-west2-c'
-#  - 'CLOUDSDK_CONTAINER_CLUSTER=digital-building-model'
-#  waitFor: ['build-services']
+# Push latest
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/digital-points-services:latest']
+  id: 'push-services-latest'
 
 
 images:
@@ -102,6 +97,7 @@ images:
 - 'gcr.io/$PROJECT_ID/digital-points-ui:$BUILD_ID'
 - 'gcr.io/$PROJECT_ID/digital-points-api:latest'
 - 'gcr.io/$PROJECT_ID/digital-points-api:$BUILD_ID'
-#- 'gcr.io/$PROJECT_ID/digital-points-services:production'
+- 'gcr.io/$PROJECT_ID/digital-points-services:latest'
+- 'gcr.io/$PROJECT_ID/digital-points-services:$BUILD_ID'
 
-timeout: '30m'
+timeout: '20m'

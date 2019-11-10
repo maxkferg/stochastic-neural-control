@@ -72,7 +72,7 @@ class Simulator():
                 logging.info('Ignoring real robot with name'+mesh['name'])
             else:
                 url = os.path.join(self.geometry_endpoint, relative_url)
-                fp = os.path.join('tmp/', relative_url)
+                fp = os.path.join('/tmp/', relative_url)
                 self._download_geometry_resource(url, fp)
                 self.env.load_geometry(fp, position, scale=mesh["scale"], stationary=is_stationary)
 
@@ -143,7 +143,6 @@ class Simulator():
 
             # Push robot position at about 20 Hz
             if steps%24==0:
-                logging.info("Publishing robot state")
                 self._publish_robot_states()
 
             # Try and maintain 240 FPS to match the bullet simulation speed

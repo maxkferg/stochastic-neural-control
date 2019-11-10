@@ -7,14 +7,14 @@ const UpdatePolicy = require('./updatePolicy');
 const Logger = require('../logger');
 
 
-const Consumer = kafka.Consumer;
-const kafkaHost = config.get("Kafka.host");
-Logger.info("Creating Kafka Consumer (robot IMU): ", kafkaHost);
-const client = new kafka.KafkaClient({kafkaHost: kafkaHost});
 const MIN_UPDATE_INTERVAL = 1*1000 // Never update faster than 1 Hz
 const MAX_UPDATE_INTERVAL = 10*1000 // Always update every 10s
 
-const consumer = new Consumer(
+
+const kafkaHost = config.get("Kafka.host");
+Logger.info("Creating Kafka Consumer (robot IMU): ", kafkaHost);
+const client = new kafka.KafkaClient({kafkaHost: kafkaHost});
+const consumer = new kafka.Consumer(
     client,
     [{ topic: 'robot.sensors.imu', partition: 0 }],
     { autoCommit: true }
@@ -31,8 +31,9 @@ function setupConsumer(updatePolicy){
 	let euler;
 
 	consumer.on('message', function(message){
-		if (!updatePolicy.mightUpdate()) return;
-		message = JSON.parse(message.value);
+		let message = JSON.parse(message.value);
+		let robotId = message.robot.id;
+		if (!updatePolicy.mightUpdate(robotId)) return;
 		if (!message.frame_id == "gyro_link") return;
 		let imuData = {
 			linear_acceleration: {
@@ -46,9 +47,9 @@ function setupConsumer(updatePolicy){
 				z: message.angular_velocity.z,
 			}
 		}
-		if (updatePolicy.shouldUpdate(imuData)){
-			updatePolicy.willUpdate(imuData);
-			updateRobotImu(imuData);
+		if (updatePolicy.shouldUpdate(robotId, imuData)){
+			updatePolicy.willUpdate(robotId, imuData);
+			updateRobotImu(robotId, imuData);
 		}
 	});
 };
@@ -60,7 +61,7 @@ function setupConsumer(updatePolicy){
  * Update the robot acceleration in influx
  * Copies the last available tags to the new object
  */
-function updateRobotImu(imuData){
+function updateRobotImu(_robotId, imuData){
 	const robotId = config.get('Robot.name');
 	const robotName = config.get('Robot.name');
 	let query = influx.writePoints([{

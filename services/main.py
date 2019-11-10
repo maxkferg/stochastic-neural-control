@@ -1,20 +1,5 @@
 """
-Robot Simulator 
-    Run simulators for every environment in the database.
-    - Simulators push observations at 50 ms intervals or directly after an action is received. 
-    - At each step, the robot fetches the most recent action. 
-    - If there are no more actions, the null action is applied. 
-    - Target locations are randomly selected.
-    - One simulator is created for each building
-
-    - Observations are published to sim.events.observations
-    - Odometry is published to sim.events.odom
-
-    Example Usage:
-        python main.py auto simulate --all
-
-
-Robot Controller
+Control:
     Execute a learned policy. Takes the most recent observation from mobile robot,
     computes a response and sends it to the robot.
 
@@ -22,14 +7,15 @@ Robot Controller
         python main.py auto control --all
 
 
-Map Generator (maps):
+Maps:
     Generate maps based on 3D building geometry
 
     Example Usage:
         python main.py maps
 
 
-Observation Generator (observe):
+Observe:
+    Observation Generator
     Generate observations for a particular building
     Observations are published as fast soon as they are generated (10Hz)
     Observations are publised to 'robots.events.observation'
@@ -38,6 +24,16 @@ Observation Generator (observe):
         python main.py observe 5dc3dee819dfb1717a23fad9
         python main.py observe 5dc3dee819dfb1717a23fad9 --verbosity=1
 
+
+Simulate:
+    Building Simulator
+    Generate observations for a particular building
+    Observations are published as fast soon as they are generated (10Hz)
+    Observations are publised to 'robots.events.observation'
+
+    Example Usage:
+        python main.py simulate 5dc3dee819dfb1717a23fad9
+        python main.py simulate 5dc3dee819dfb1717a23fad9 --verbosity=1 --render
 """
 
 import os
@@ -50,6 +46,8 @@ import shutil
 import logging
 import argparse
 from config import config
+from simulate.simulator import Simulator
+from simulate.environment import Environment as SimulatorEnvironment
 from auto.src.services.observation import ObservationGenerator
 from maps.main import MapBuilder
 
@@ -68,8 +66,13 @@ map_parser.add_argument('--height', type=float, default=0.1, help='height to gen
 map_parser.add_argument('--config', type=str, default="prod", help='Api Configuration')
 map_parser.add_argument('--verbosity', type=int, default=0, help='Logging verbosity')
 
+simulate_parser = subparsers.add_parser('simulate', help='Simulate the movement of robots in the building')
+simulate_parser.add_argument('building_id', type=str, help='Building Id')
+simulate_parser.add_argument('--config', type=str, default="prod", help='Api Configuration')
+simulate_parser.add_argument('--render', action="store_true", default=False, help='Display the environment')
 
-def observe(args, api_config):
+
+def observe_subcommand(args, api_config):
     """
     Observe Subcommand
     """
@@ -78,7 +81,7 @@ def observe(args, api_config):
     service.run()
 
 
-def maps(args, api_config):
+def maps_subcommand(args, api_config):
     """
     Maps Subcommand
     """
@@ -87,12 +90,27 @@ def maps(args, api_config):
     builder.run()
 
 
+def simulate_subcommand(args, api_config):
+    """
+    Simulate Subcommand
+    """
+    print("Simulation subcommand")
+    headless = not args.render
+    env = SimulatorEnvironment(args.building_id, headless=headless)
+    simulator = Simulator(env, api_config)
+    simulator.run()
+
+
+
+
+
 def main():
     """
     Main entrypoint
     """
-    observe_parser.set_defaults(function=observe)
-    map_parser.set_defaults(function=maps)
+    observe_parser.set_defaults(function=observe_subcommand)
+    map_parser.set_defaults(function=maps_subcommand)
+    simulate_parser.set_defaults(function=simulate_subcommand)
     args = parser.parse_args()
     
     if args.config == "prod":

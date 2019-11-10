@@ -6,13 +6,13 @@ import time
 
 class Environment():
 
-    def __init__(self, headless=False):
+    def __init__(self, building_id, headless=False):
         """
         A environment for simulating robot movement
         @headless: Does not show a GUI if headless is True
         """
-
         #choose connection method: GUI, DIRECT, SHARED_MEMORY
+        self.building_id = building_id
         if headless:
           pybullet.connect(pybullet.DIRECT)
         else:

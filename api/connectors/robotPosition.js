@@ -7,41 +7,46 @@ const UpdatePolicy = require('./updatePolicy');
 const logger = require('../logger');
 const pubSub = require('./pubSub');
 const validator = require('./validator');
-const debounce = require('lodash/debounce');
 
-const Consumer = kafka.Consumer;
-const kafkaHost = config.get("Kafka.host");
-logger.info("Creating Kafka Consumer (robot position): "+kafkaHost);
-const client = new kafka.KafkaClient({kafkaHost: kafkaHost});
 
-const MIN_UPDATE_INTERVAL = 1*1000 // Never update faster than 1 Hz
-const MAX_UPDATE_INTERVAL = 10*1000 // Always update every 10s
+const SOCKET_UPDATE_MIN = 10 // Never update more than every 10 ms
+const SOCKET_UPDATE_MAX = 1000 // Always update every second
+const INFLUX_UPDATE_MIN = 1*1000 // Never update faster than 1 Hz
+const INFLUX_UPDATE_MAX = 10*1000 // Always update every 10s
 const MESH_POSITION_TOPIC = "mesh_position";
+const SocketUpdatePolicy = new UpdatePolicy(SOCKET_UPDATE_MIN, SOCKET_UPDATE_MAX);
+const InfluxUpdatePolicy = new UpdatePolicy(INFLUX_UPDATE_MIN, INFLUX_UPDATE_MAX);
 
-const consumer = new Consumer(
+
+const kafkaHost = config.get("Kafka.host");
+logger.info("Creating Kafka Consumer (robot position): " + kafkaHost);
+const client = new kafka.KafkaClient({kafkaHost: kafkaHost});
+const consumer = new kafka.Consumer(
     client,
     [{ topic: 'robot.events.odom', partition: 0 }],
     { autoCommit: true }
 );
 
 
+/**
+ * isString
+ * Return true if @message is a string
+ */
 function isString(message){
     return (typeof message === 'string' || message instanceof String);
 }
 
 
-
 /**
  * setupConsumer
  * Setup a consumer that copies data from Kafka to Influx
+ * New 
  */
-function setupConsumer(updatePolicy){
+function setupConsumer(){
     let x = 0;
     let y = 0;
     let z = 0;
     let euler;
-    const debouncePeriod = 100; // ms
-    const publishRobotPositionDebounced = debounce(publishRobotPosition, debouncePeriod)
 
     consumer.on('message', function(message){
         message = JSON.parse(message.value);
@@ -63,21 +68,59 @@ function setupConsumer(updatePolicy){
             message.pose.pose.orientation.z,
             message.pose.pose.orientation.w,
         ]);
-        theta = euler[0]+Math.PI/2; // Mesh is wrong
-        publishRobotPositionDebounced(message.robot.id, x, y, z, theta)
+        let robotId = message.robot.id;
+        let theta = euler[0]+Math.PI/2; // Mesh is wrong
+
+        let state = {
+            x: x,
+            y: y,
+            z: z,
+            theta: theta
+        }
+
+        // Do not even compute a diff if we still need to wait a while
+        if (!SocketUpdatePolicy.mightUpdate(robotId)){
+            return
+        }
+
+        // Update socket intermittently 
+        if (SocketUpdatePolicy.shouldUpdate(robotId, state, isChanged)){
+            SocketUpdatePolicy.willUpdate(robotId, state);
+            updateRobotPositionSocket(robotId, x, y, z, theta);
+        }
+
+        // Update influxdb intermittently 
+        if (InfluxUpdatePolicy.shouldUpdate(robotId, state, isChanged)){
+            InfluxUpdatePolicy.willUpdate(robotId, state);
+            updateRobotPositionInflux(robotId, x, y, z, theta);
+            logger.debug("Wrote new robot pos data");
+        }
     });
 };
 
 
+/**
+ * isChanged
+ * Return true if prevState is different from currentState
+ */
+function isChanged(prevState, currentState){
+    const tol = 0.005;
+    return (
+        Math.abs(prevState.x - currentState.x) > tol ||
+        Math.abs(prevState.y - currentState.y) > tol ||
+        Math.abs(prevState.z - currentState.z) > tol ||
+        Math.abs(prevState.theta - currentState.theta) > 10*tol
+    )
+}
+
+
 
 /**
- * publishRobotPosition
- * Publish robot position to the websocket and database
- * - Publishes every message to the websocket
- * _ Only publishes messages to Influx if they change
+ * updateRobotPositionSocket
+ * Update the robot position on the websocket
+ * Copies the last available tags to the new object
  */
-function publishRobotPosition(robotId, x, y, z, theta){
-    // Update the robot position at every step (pubSub)
+function updateRobotPositionSocket(robotId, x, y, z, theta){
     pubSub.publish(MESH_POSITION_TOPIC, {
         id: robotId,
         position: {
@@ -87,25 +130,12 @@ function publishRobotPosition(robotId, x, y, z, theta){
             theta
         }
     });
-
-    let state = {
-        x: x,
-        y: y,
-        z: z,
-        theta: theta
-    }
-
-    // Update influxdb intermittently 
-    if (updatePolicy.shouldUpdate(state)){
-        updatePolicy.willUpdate(state);
-        updateRobotPositionInflux(robotId, x, y, z, theta);
-        logger.debug("Wrote new robot pos data");
-    }
 }
 
 
+
 /**
- * updateRobotPosition
+ * updateRobotPositionInflux
  * Update the robot position in influx
  * Copies the last available tags to the new object
  */
@@ -158,5 +188,4 @@ function updateRobotPositionInflux(robotId, x, y, z, theta){
 
 
 // Run the consumer
-const updatePolicy = new UpdatePolicy(MIN_UPDATE_INTERVAL, MAX_UPDATE_INTERVAL);
-setupConsumer(updatePolicy);
+setupConsumer();

@@ -349,9 +349,6 @@ class CreateGeometryForm extends React.Component<Props, State> {
           onChange={this.handleChange}
           margin="normal"
           variant="outlined"
-          inputProps={{
-            labelWidth: 150
-          }}
         />
         <Button size="large" variant="outlined" onClick={this.handlePrev} className={this.classes.button}>
           Back

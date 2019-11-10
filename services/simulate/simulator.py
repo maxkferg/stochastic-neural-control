@@ -1,23 +1,18 @@
 import os
 import math
 import time
-import yaml
 import json
 import urllib
 import shutil
 import logging
-import argparse
 from graphqlclient import GraphQLClient
-from graphql import getCurrentGeometry
-from environment import Environment
 from kafka import KafkaProducer, KafkaConsumer
-from robots.robot_models import Turtlebot
-from robots.robot_messages import get_odom_message
+from .robots.robot_models import Turtlebot
+from .robots.robot_messages import get_odom_message
+from .graphql import getCurrentGeometry
+
 
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
-
-parser = argparse.ArgumentParser(description='Simulate robot movement.')
-parser.add_argument('--headless', action='store_true', help='run without GUI components')
 
 
 
@@ -34,11 +29,16 @@ class Simulator():
     def __init__(self, env, config):
         self.env = env
         self.robots = {}
+        self.building_id = env.building_id
         self.graphql_endpoint = config["API"]["host"]
         self.geometry_endpoint = config["Geometry"]["host"]
         self.graphql_client = GraphQLClient(self.graphql_endpoint)
         self.kafka_consumer = self._setup_kafka_consumer(config["Kafka"]["host"])
         self.kafka_producer = self._setup_kafka_producer(config["Kafka"]["host"])
+        logging.info("Created TurtleBot Simulator")
+        logging.info("Reading building geometry from: " + self.graphql_endpoint)
+        logging.info("Reading geometry mesh files from: " + self.geometry_endpoint)
+        logging.info("Reading/writing robot position from: " + config["Kafka"]["host"])
         self._setup_geometry()
         self.env.start()
 
@@ -53,9 +53,12 @@ class Simulator():
 
 
     def _setup_geometry(self):
-        result = self.graphql_client.execute(getCurrentGeometry)
+        params = dict(building_id=self.building_id)
+        print(params)
+        result = self.graphql_client.execute(getCurrentGeometry, params)
         result = json.loads(result)
-        for mesh in result['data']['meshesCurrent']:
+        print(result['data'],'-----????-----')
+        for mesh in result['data']['meshesOfBuilding']:
             logging.info('Loading {}'.format(mesh['name']))
             relative_url = os.path.join(mesh['geometry']['directory'], mesh['geometry']['filename'])
             relative_url = relative_url.strip('./')
@@ -153,16 +156,6 @@ class Simulator():
                 time.sleep(max(0, steps/240-duration))
             if steps%240==0:
                 logging.info("Current simulation speed  {:.3f}".format(fps))
-
-
-
-if __name__=="__main__":
-    args = parser.parse_args()
-    with open('config.yaml') as cfg:
-        config = yaml.load(cfg, Loader=yaml.Loader)
-    env = Environment(headless=args.headless)
-    simulator = Simulator(env, config)
-    simulator.run()
 
 
 

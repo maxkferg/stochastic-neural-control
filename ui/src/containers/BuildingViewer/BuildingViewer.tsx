@@ -9,6 +9,7 @@ import apollo from '../../apollo';
 import { withRouter } from 'react-router-dom';
 import SubscriptionClient from '../../apollo/websocket';
 import { loader } from 'graphql.macro';
+import { difference } from 'lodash';
 const SUBSCRIBE_MESH_POSITION = loader('../../graphql/subscribeMesh.gql');
 const GET_MESH_BUILDING_QUERY = loader('../../graphql/getMeshesBuilding.gql');
 
@@ -51,11 +52,19 @@ class BuildingViewer extends React.Component<Props, State> {
     }
 
     async componentDidMount(){
-      this.subScription = apollo.watchQuery({query: GET_MESH_BUILDING_QUERY, pollInterval: 1000, variables : { buildingId: this.props.match.params.buildingId }}).subscribe(data => {
+      const POLL_INTERVAL = 5000 // 5 seconds
+      this.subScription = apollo.watchQuery({
+        query: GET_MESH_BUILDING_QUERY, 
+        pollInterval: POLL_INTERVAL, 
+        variables : { buildingId: this.props.match.params.buildingId }}
+      ).subscribe(data => {
         // @ts-ignore
         let self = this;
         let meshesCurrent = data.data.meshesOfBuilding;
-        const deleteMesh = this.state.meshesCurrent.filter(el => meshesCurrent.indexOf(el) === -1).map(el => el.id)
+        const meshIdsFromAPI = meshesCurrent.map(el => el.id);
+        const meshIdsFromState = this.state.meshesCurrent.map(el => el.id);
+        const deleteMesh = difference(meshIdsFromState, meshIdsFromAPI);
+
         this.setState({
           loading: false,
           meshesCurrent,

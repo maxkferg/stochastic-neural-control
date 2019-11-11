@@ -16,6 +16,8 @@ const MapGeometry = require('./types/MapGeometry');
 const MeshPosition = require('./types/MeshPosition');
 const VelocityHistory = require('./types/VelocityHistory');
 const Building = require('./types/Building');
+const Robot = require('./types/Robot');
+
 
 const Subscription = new GraphQLObjectType({
     name: 'RootSubscription',
@@ -40,6 +42,7 @@ const Query = new GraphQLObjectType({
         verifyToken: new resolvers.User.verifyToken(User, "Verify Token", true),
         users: new resolvers.User.getAllUsers(new GraphQLList(User), "Get all users", true),
         user: new resolvers.User.getUser(User, "Get user by id", true),
+        robot: new resolvers.Robot.getRobot(Robot, "Get robot by id", false),
         meshesCurrent: new resolvers.Mesh.getCurrentMeshes(new GraphQLList(Mesh), "Get current meshes", false),
         meshes: new resolvers.Mesh.getAllMeshes(new GraphQLList(Mesh), "Get all meshes", false),
         meshesOfBuilding: new resolvers.Mesh.getMeshBuilding(new GraphQLList(Mesh), "Get all meshes", false),
@@ -61,6 +64,7 @@ const Mutation = new GraphQLObjectType({
         signInUser: new mutations.UserMutations.userSignin(User, "Sign in user", false),
         signInUserGoogle: new mutations.UserMutations.userSigninGoogle(User, "Sign in user", false),
         user: new mutations.UserMutations.user(User, "Updates current user", true),
+        robot: new mutations.RobotMutations.updateRobot(Robot, "Update robot by id", false),
         createMesh: new mutations.MeshMutations.meshCreate(Mesh, "Creates a mesh object", false),
         createMeshBuilding: new mutations.MeshMutations.meshBuildingCreate(Mesh, "Creates a mesh building object", false),
         mesh: new mutations.MeshMutations.mesh(Mesh, "Updates current mesh object", true),

@@ -85,72 +85,7 @@ class MeshCreateMutation extends BaseResolver {
     }
 
     async resolve(parentValue, args, ctx) {
-        let id = ObjectId();
-
-        // Todo: id, geometry, and physics should be stored in mongo
-        let query = ctx.influx.writePoints([
-          {
-            measurement: 'mesh_position',
-            tags: {
-                id: id,
-                name: args.name,
-                type: args.type,
-                deleted: args.deleted || false,
-            },
-            fields: {
-                x: args.x,
-                y: args.y,
-                z: args.z,
-                theta: args.theta || 0,
-                scale: args.scale || 1,
-                height: args.height,
-                width: args.width,
-                depth: args.depth,
-                geometry_filetype: args.geometry.filetype,
-                geometry_filename: args.geometry.filename,
-                geometry_directory: args.geometry.directory,
-                physics_stationary: args.physics.stationary,
-                physics_collision: args.physics.collision,
-                physics_simulated: args.physics.simulated,
-            },
-          }
-        ]).then(() => {
-          return ctx.influx.query(`
-            select * from mesh_position
-            where id = ${Influx.escape.stringLit(id)}
-            order by time asc
-            limit 1
-          `)
-        }).then(datas => {
-          let data = datas[0];
-          console.log('DATAS:',datas)
-          return {
-            id: id,
-            x: data.x,
-            y: data.y,
-            z: data.z,
-            type: data.type,
-            name: data.name,
-            theta: data.theta,
-            height: data.height,
-            width: data.width,
-            depth: data.depth,
-            scale: data.scale,
-            deleted: data.deleted == "true",
-            geometry: {
-                filetype: data.geometry_filetype,
-                filename: data.geometry_filename,
-                directory: data.geometry_directory,
-            },
-            physics: {
-                stationary: data.physics_stationary,
-                collision: data.physics_collision,
-                simulated: data.physics_simulated,
-            },
-            time: data.time,
-          }
-        });
-        return await query
+        throw new Error("Mesh Create Depreciated")
     }
 }
 

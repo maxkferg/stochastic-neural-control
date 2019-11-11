@@ -1,0 +1,17 @@
+mutation UpdateRobot($id: String!, $name: String, $validControlTopics: [String]) {
+  robot(
+  	id: $id,
+  	name: $name, 
+  	validControlTopics: $validControlTopics, 
+  ) {
+  	id
+    name
+    mesh_id
+    building_id
+    validControlTopics
+    lastCommandReceived
+    lastPositionReceived
+    createdAt
+  	updatedAt
+  }
+}

@@ -27,7 +27,7 @@ export default makeStyles(theme => ({
     marginLeft: theme.spacing(2),
   },
   logotypeIcon: {
-    width: 70,
+    width: 200,
     marginRight: theme.spacing(2),
   },
   paperRoot: {
@@ -35,7 +35,7 @@ export default makeStyles(theme => ({
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    paddingTop: theme.spacing(8),
+    paddingTop: theme.spacing(2),
     paddingBottom: theme.spacing(8),
     paddingLeft: theme.spacing(6),
     paddingRight: theme.spacing(6),

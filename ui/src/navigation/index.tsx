@@ -38,8 +38,9 @@ class Routers extends React.Component {
 				<Route exact path="/sign-up" component={SignUp} />
 				<Route exact path="/no-match" component={NoMatch} />
 				<AuthenticationRoute exact path="/buildings" component={Building} /> 
-				<AuthenticationRoute path="/:buildingId" component={App}/>
-				<Route path="/" component={Landing} /> 
+				<AuthenticationRoute path="/building/:buildingId" component={App}/>
+				<Route exact path="/" component={Landing} /> 
+				<Route component={NoMatch} />
 			</Switch>
 		)
 	}

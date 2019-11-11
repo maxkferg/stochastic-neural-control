@@ -10,7 +10,6 @@ import { withRouter } from 'react-router-dom';
 import SubscriptionClient from '../../apollo/websocket';
 import { loader } from 'graphql.macro';
 import { difference } from 'lodash';
-import { getBuilding } from '../../services/BuildingServices';
 const SUBSCRIBE_MESH_POSITION = loader('../../graphql/subscribeMesh.gql');
 const GET_MESH_BUILDING_QUERY = loader('../../graphql/getMeshesBuilding.gql');
 const POLL_INTERVAL = 5000 // 5 seconds
@@ -53,19 +52,6 @@ class BuildingViewer extends React.Component<Props, State> {
     }
 
     async componentDidMount(){
-      try {
-        const building = await getBuilding({ 
-          buildingId: this.props.match.params.buildingId
-        });
-        console.log(building)
-        if (!building.data.getBuilding.id) {
-          throw new Error('Building not found');
-        }
-      } catch(error) {
-        //@ts-ignore
-        this.props.history.push('/no-match');
-      }   
-     
       this.subScription = apollo.watchQuery({
         query: GET_MESH_BUILDING_QUERY, 
         pollInterval: POLL_INTERVAL, 

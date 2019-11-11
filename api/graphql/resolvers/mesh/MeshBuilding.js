@@ -51,7 +51,6 @@ class MeshBuilding extends BaseResolver {
       ).then(rows => {
         if (rows.length==0) return;
         // Filtering rows
-        console.log(rows)
         if (args.deleted===true && rows[0].deleted!=="true") return;
         if (args.deleted===false && rows[0].deleted!=="false") return;
         if (args.simulated===true && rows[0].physics_simulated!=="true") return;

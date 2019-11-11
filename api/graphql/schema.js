@@ -51,7 +51,8 @@ const Query = new GraphQLObjectType({
         mapGeometry: new resolvers.MapGeometry.getMapGeometry(new GraphQLList(MapGeometry), "Get all Map Geometry", false),
         trajectory: new resolvers.Trajectory.getTrajectory(Trajectory, "Get a single trajectory", false),
         trajectories: new resolvers.Trajectory.getTrajectoryList(new GraphQLList(Trajectory), "Get a list of trajectories", false),
-        building: new resolvers.Building.getBuilding(new GraphQLList(Building), "Get all building", true)
+        building: new resolvers.Building.getUserBuildings(new GraphQLList(Building), "Get all building", true),
+        getBuilding: new resolvers.Building.getBuilding(Building, "Get building", true)
     })
 });
 

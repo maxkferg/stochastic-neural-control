@@ -5,9 +5,9 @@ class BuildingResolver extends BaseResolver {
 
     get args() {
         return {
-            buildingId: {
+            ownerId: {
                 type: new GraphQLNonNull(GraphQLString),
-                description: 'Id for the building'
+                description: 'Id for the user.'
             }
         };
     }
@@ -16,8 +16,8 @@ class BuildingResolver extends BaseResolver {
         //calling super method to check authentication if applicable
         super.resolve(parentValue, args, ctx);
         try {
-            const building = await ctx.db.Building.findOne({ _id: args.buildingId });
-            return building;
+            const buildings = await ctx.db.Building.find({owner_id: args.ownerId});
+            return buildings;
         } catch (e) {
             throw new Error(e);
         }

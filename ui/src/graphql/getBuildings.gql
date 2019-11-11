@@ -1,0 +1,7 @@
+query building($ownerId: String!) {
+  building(ownerId: $ownerId) {
+    id
+    name
+    owner_id
+  }
+}

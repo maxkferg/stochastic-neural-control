@@ -12,7 +12,7 @@ import { loader } from 'graphql.macro';
 import { difference } from 'lodash';
 const SUBSCRIBE_MESH_POSITION = loader('../../graphql/subscribeMesh.gql');
 const GET_MESH_BUILDING_QUERY = loader('../../graphql/getMeshesBuilding.gql');
-
+const POLL_INTERVAL = 5000 // 5 seconds
 const styles = (theme: Theme) => ({
   fab: {
     margin: theme.spacing(),
@@ -52,7 +52,6 @@ class BuildingViewer extends React.Component<Props, State> {
     }
 
     async componentDidMount(){
-      const POLL_INTERVAL = 5000 // 5 seconds
       this.subScription = apollo.watchQuery({
         query: GET_MESH_BUILDING_QUERY, 
         pollInterval: POLL_INTERVAL, 
@@ -97,7 +96,9 @@ class BuildingViewer extends React.Component<Props, State> {
       })
      }
     componentWillUnmount() {
-      this.subScription.unsubscribe();
+      if (this.subScription) {
+        this.subScription.unsubscribe();
+      }
     }
     public render() {
       if (this.state.loading) return 'Loading...';

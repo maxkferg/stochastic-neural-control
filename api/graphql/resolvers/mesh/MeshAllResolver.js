@@ -20,7 +20,6 @@ class MeshAllResolver extends BaseResolver {
   async resolve(parentValue, args, ctx) {
     //calling super method to check authentication if applicable
     // super.resolve(parentValue, args, ctx);
-    console.log(args);
     let limit = args.limit || 1000;
     let geometryType = args.type || "wall";
 

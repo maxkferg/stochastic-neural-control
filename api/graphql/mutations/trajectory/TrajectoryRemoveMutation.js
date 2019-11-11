@@ -58,8 +58,6 @@ class TrajectoryRemoveMutation extends BaseResolver {
       if (err) console.error("Error sending trajectory build command:",err);
     });
 
-    console.log(trajectory)
-
     return {
       id: trajectory._id,
       points: trajectory.points,

@@ -75,7 +75,7 @@ class Building extends React.Component<any, State> {
     }
 
     handleNavigateBuilding(buildingId) {
-        this.props.history.push(`/${buildingId}/model`);
+        this.props.history.push(`/building/${buildingId}/model`);
     }
 
     generateListBuilding() {

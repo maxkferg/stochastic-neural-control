@@ -101,7 +101,7 @@ function NavDrawer(props) {
     function handleIconClick(key){
       const { history, match } = props; 
       const { params } = match;
-      history.push(`/${params.buildingId}/` + key);
+      history.push(`/building/${params.buildingId}/` + key);
     }
 
     return (

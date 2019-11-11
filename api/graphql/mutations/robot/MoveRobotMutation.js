@@ -103,7 +103,7 @@ class RobotVelocityProducer {
       }
     }
     let payload = [{
-      topic: 'robot.commands.velocity',
+      topic: 'robot.commands.velocity_human',
       attributes: 1,
       timestamp: Date.now(),
       messages: [JSON.stringify(message)],

@@ -1,0 +1,10 @@
+query GetRobotById($id: String!) {
+  robot(id: $id){
+    mesh_id
+    name
+    isRealRobot
+    validControlTopics
+    createdAt
+    updatedAt
+  }
+}

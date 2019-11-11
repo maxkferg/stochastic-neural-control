@@ -6,15 +6,18 @@ import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import { loader } from 'graphql.macro';
 import apollo from '../../apollo';
+import Chip from '@material-ui/core/Chip';
 import Divider from '@material-ui/core/Divider';
 import ArrowUpward from '@material-ui/icons/ArrowUpward';
 import ArrowDownward from '@material-ui/icons/ArrowDownward';
 import RotateLeft from '@material-ui/icons/RotateLeft';
 import RotateRight from '@material-ui/icons/RotateRight';
 import Grid from '@material-ui/core/Grid';
+import RobotTopicChip from '../RobotTopicChip/RobotTopicChip';
 
 
 const MESH_BY_ID_QUERY = loader('../../graphql/getMeshById.gql');
+const ROBOT_BY_ID_QUERY = loader('../../graphql/getRobotById.gql');
 const MOVE_ROBOT = loader('../../graphql/moveRobot.gql');
 const ROBOT_LINEAR_SPEED = 0.3;
 const ROBOT_ANGULAR_SPEED = 0.6;
@@ -55,8 +58,24 @@ const styles = (theme: any) => ({
   toolbar: theme.mixins.toolbar,
   hide: {
     display: 'none',
-  }
+  },
+  chip: {
+    color: "white",
+    backgroundColor: "#1f9238",
+    marginRight: "10px",
+    marginTop: "6px",
+    height: "20px",
+    fontSize: "12px",
+    float: 'right' as 'right',
+  },
+  paddedItem: {
+    marginTop: theme.spacing(2),
+    marginLeft: theme.spacing(2),
+    marginRight: theme.spacing(2),
+  },
 });
+
+
 
 
 export interface Props extends WithStyles<typeof styles> {
@@ -74,10 +93,22 @@ interface Mesh {
   theta: number
 }
 
+interface Robot {
+  id: number
+  name: string
+  isRealRobot: boolean
+  validControlTopics: [string]
+  lastCommandReceived: string
+  lastPositionReceived: string
+}
+
 interface State {
   mesh: Mesh | null
+  robot: Robot | null
   loading: boolean
 }
+
+
 
 
 class EditObjectForm extends React.Component<Props, State> {
@@ -85,6 +116,7 @@ class EditObjectForm extends React.Component<Props, State> {
   classes: any
   state: State = {
     mesh: null,
+    robot: null,
     loading: true,
   };
 
@@ -95,6 +127,7 @@ class EditObjectForm extends React.Component<Props, State> {
 
   componentDidMount(){
     this.subscribeToObjectData(this.props.objectId);
+    this.fetchRobotData(this.props.objectId);
   }
 
   componentDidUpdate(prevProps){
@@ -116,6 +149,18 @@ class EditObjectForm extends React.Component<Props, State> {
     });
   }
 
+  async fetchRobotData(objectId){
+    const apolloResp = await apollo.query<any>({
+      query: ROBOT_BY_ID_QUERY,
+      variables: {id: objectId}
+    })
+    if (apolloResp) {
+      this.setState({
+        robot: apolloResp.data.robot || null
+      });
+    };
+  }
+
   async moveRobot(linear, angular){
     if (!this.state.mesh){
       console.log("Can not move robot until robot_id is known");
@@ -135,13 +180,45 @@ class EditObjectForm extends React.Component<Props, State> {
     this.querySubscription.unsubscribe();
   }
 
+
+  renderSimulatedChip(){
+    if (!this.state.robot){
+      return 
+    }
+    let realRobotText = "Real Robot";
+    if (!this.state.robot.isRealRobot){
+      realRobotText = "Simulated"
+    }
+    return <Chip className={this.classes.chip} size="small" label={realRobotText} />
+  }
+
+
+  renderConnectedChip(){
+    if (!this.state.robot){
+      return 
+    }
+    let connectedText = "Connected";
+    //if (!this.state.robot.lastPositionReceived<Date.now(){
+    //  realRobotText = "Simulated"
+    //}
+    return <Chip 
+      className={this.classes.chip} 
+      size="small" 
+      label={connectedText} />
+  }
+
+
   renderRobotForm(){
     if (this.state.loading){
       return "<p>loading...</p>";
     }
     return (
       <form className={this.classes.container} noValidate autoComplete="off">
-        <Typography className={this.classes.formTitle} variant="h5" gutterBottom >{this.state.mesh!.name}</Typography>
+        <Typography className={this.classes.formTitle} variant="h5" gutterBottom >
+          { this.state.mesh!.name } 
+          { this.renderSimulatedChip() }
+          { this.renderConnectedChip() }
+        </Typography>
         <TextField
           id="outlined-id"
           name="id"
@@ -190,6 +267,17 @@ class EditObjectForm extends React.Component<Props, State> {
           margin="normal"
           variant="outlined"
         />
+        <Grid container direction="column">
+          <Grid item className={this.classes.paddedItem} >
+            <Typography variant="caption">
+              Control Topics
+            </Typography>
+          </Grid>
+          <Grid item className={this.classes.paddedItem} >
+            <RobotTopicChip objectId={this.props.objectId} topic='robot.commands.velocity_pred' />
+            <RobotTopicChip objectId={this.props.objectId} topic='robot.commands.velocity_human' />
+          </Grid>
+        </Grid>
         <Divider className={this.classes.controlDivider} />
         <div>
           <Grid container direction="row" justify="center" alignItems="center">

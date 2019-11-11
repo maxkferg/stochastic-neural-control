@@ -2,6 +2,7 @@ const Influx = require('influx');
 const BaseResolver = require('../../BaseResolver');
 const { GraphQLNonNull, GraphQLString, GraphQLBoolean, GraphQLFloat, GraphQLInputObjectType} = require('graphql');
 const ObjectId = require('objectid');
+const logger = require('../../../logger');
 
 
 const MeshGeometryCreateBuildingInput= new GraphQLInputObjectType({
@@ -91,8 +92,20 @@ class MeshCreateMutation extends BaseResolver {
     async resolve(parentValue, args, ctx) {
         let id = ObjectId();
 
+        console.log("SIM",!args.physics.simulated)
+
+        if (args.type === "robot"){
+            await ctx.db.Robot.create({
+                _id: id,
+                mesh_id: id,
+                name: args.name,
+                building_id: args.buildingId,
+                isRealRobot: !args.physics.simulated,
+            });
+        }
+
         // Todo: id, geometry, and physics should be stored in mongo
-        console.log(id,args)
+        logger.info("Creating new mesh", id, args)
         let query = ctx.influx.writePoints([
           {
             measurement: 'mesh_position',

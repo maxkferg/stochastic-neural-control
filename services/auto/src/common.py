@@ -1,12 +1,12 @@
 import colored_traceback
 from ray import tune
 from pprint import pprint
-from agents.sacq import SACQAgent
-from learning.robot import RobotModel
-from learning.sensor import SensorModel
 from ray.rllib.models import ModelCatalog
-from environment.sensor import SensorEnvironment # Env type
-from environment.multi import MultiEnvironment # Env type
+from .agents.sacq import SACQAgent
+from .learning.robot import RobotModel
+from .learning.sensor import SensorModel
+from .environment.sensor import SensorEnvironment # Env type
+from .environment.multi import MultiEnvironment # Env type
 colored_traceback.add_hook()
     
 
@@ -29,6 +29,7 @@ def train_env_factory():
 
 
 # Register all the custom env
+print("Registering SACQAgent and custom environments")
 ModelCatalog.register_custom_model("robot", RobotModel)
 ModelCatalog.register_custom_model("sensor", SensorModel)
 tune.register_trainable("SACQ", SACQAgent)

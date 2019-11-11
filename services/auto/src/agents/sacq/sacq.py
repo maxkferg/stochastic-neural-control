@@ -4,7 +4,7 @@ from __future__ import print_function
 
 from ray.rllib.agents.trainer import with_common_config
 from ray.rllib.agents.dqn.dqn import GenericOffPolicyTrainer
-from agents.sacq.sacq_policy import SACQTFPolicy
+from .sacq_policy import SACQTFPolicy
 
 OPTIMIZER_SHARED_CONFIGS = [
     "buffer_size", "prioritized_replay", "prioritized_replay_alpha",

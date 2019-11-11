@@ -8,7 +8,7 @@
  */
 class UpdatePolicy {
 
-	constructor(minUpdateInterval, maxUpdateInterval){
+	constructor(minUpdateInterval, maxUpdateInterval) {
 		this.minUpdateInterval = minUpdateInterval;
 		this.maxUpdateInterval = maxUpdateInterval;
 		this.lastState = {};
@@ -25,13 +25,13 @@ class UpdatePolicy {
 	 */
 	shouldUpdate(uid, state, hasChangedTest) {
 		let now = new Date().getTime();
-		if (!hasChangedTest){
+		if (!hasChangedTest) {
 			hasChangedTest = defaultHasChangedTest;
 		}
-		if (!this.lastUpdated[uid]){
+		if (!this.lastUpdated[uid]) {
 			return true
 		}
-		if (now > this.lastUpdated[uid] + this.maxUpdateInterval){
+		if (now > this.lastUpdated[uid] + this.maxUpdateInterval) {
 			return true
 		}
 		return (
@@ -47,9 +47,9 @@ class UpdatePolicy {
 	 * 	 @string uid: The unique identifier of this object
 	 *
      */
-	mightUpdate(uid){
+	mightUpdate(uid) {
 		let now = new Date().getTime();
-		if (this.lastUpdated[uid]){
+		if (this.lastUpdated[uid]) {
 			return now > this.lastUpdated[uid] + this.minUpdateInterval;
 		}
 		return true
@@ -63,7 +63,7 @@ class UpdatePolicy {
      * 	 @object state: The new state to test against prevState
      *
 	 */
-	willUpdate(uid, state){
+	willUpdate(uid, state) {
 		this.lastUpdated[uid] = new Date().getTime();
 		this.lastState[uid] = state;
 	}
@@ -77,10 +77,10 @@ class UpdatePolicy {
  *     @object lastState: Old system state
  *     @object newState: New system state
  */
-function defaultHasChangedTest(lastState, newState){
-	let newState = JSON.stringify(newState);
-	let lastState = JSON.stringify(lastState);
-	return newState !== lastState;
+function defaultHasChangedTest(lastState, newState) {
+	let cloneNewState = JSON.stringify(newState);
+	let cloneLastState = JSON.stringify(lastState);
+	return cloneNewState !== cloneLastState;
 }
 
 

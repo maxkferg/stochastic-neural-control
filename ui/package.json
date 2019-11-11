@@ -40,6 +40,7 @@
     "redux-saga": "^1.0.2",
     "redux-thunk": "^2.3.0",
     "subscriptions-transport-ws": "^0.9.16",
+    "tinycolor2": "^1.4.1",
     "todomvc-app-css": "^2.1.0",
     "typescript": "^3.4.4"
   },

@@ -6,7 +6,7 @@ function AuthenticationRoute({component: Component, ...rest}) {
         if (localStorage.getItem('token')) {
           return <Component {...props} {...rest} />  
         }
-        return <Redirect to='/sign-in'/>
+        return <Redirect to='/auth'/>
       }
     }
     />

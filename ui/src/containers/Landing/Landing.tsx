@@ -89,7 +89,7 @@ export default function Pricing(props) {
               Buildings
             </Link>
           </nav>
-          <Button onClick={() => props.history.push('/sign-in')} color="primary" variant="outlined" className={classes.link}>
+          <Button onClick={() => props.history.push('/auth')} color="primary" variant="outlined" className={classes.link}>
             Login
           </Button>
         </Toolbar>

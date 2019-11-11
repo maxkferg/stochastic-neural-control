@@ -5,13 +5,9 @@ class UserAllResolver extends BaseResolver {
 
     get args() {
         return {
-            firstName: {
+            fullName: {
                 type: GraphQLString,
-                description: 'First name for the user.'
-            },
-            lastName: {
-                type: GraphQLString,
-                description: 'Last name for the user.'
+                description: 'full name for the user.'
             },
             // age: {
             //     type: GraphQLInt,

@@ -3,9 +3,8 @@ import { Route, Switch } from 'react-router';
 import AuthenticationRoute from './AuthenticationRoute';
 import App from '../containers/App/App';
 import About from '../containers/About';
-import NoMatch from '../containers/NoMatch';
-import SignUp from '../containers/SignUp';
-import SignIn from '../containers/SignIn';
+import Error from '../pages/error/Error';
+import Auth from '../pages/login/Login'
 import Landing from '../containers/Landing';
 import Building from '../containers/Building';
 import Alert from '../components/ALert';
@@ -36,13 +35,11 @@ class Routers extends React.Component {
 			<div>
 				<Switch>
 					<Route exact path="/about" component={About} />
-					<Route exact path="/sign-in" component={SignIn} />
-					<Route exact path="/sign-up" component={SignUp} />
-					<Route exact path="/no-match" component={NoMatch} />
+					<Route exact path="/auth" component={Auth} />
+					<Route exact path="/" component={Landing} /> 
 					<AuthenticationRoute exact path="/buildings" component={Building} />
 					<AuthenticationRoute path="/building/:buildingId" component={App} />
-					<Route exact path="/" component={Landing} />
-					<Route component={NoMatch} />
+					<Route component={Error} />
 				</Switch>
 				<Alert />
 			</div>

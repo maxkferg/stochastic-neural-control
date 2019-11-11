@@ -1,5 +1,5 @@
-mutation createUser($email: String!, $password: String!, $firstName: String!, $lastName: String!) {
-  createUser(email: $email, password: $password, firstName: $firstName, lastName: $lastName) {
+mutation createUser($email: String!, $password: String!, $fullName: String!) {
+  createUser(email: $email, password: $password, fullName: $fullName) {
     id
     authToken
   }

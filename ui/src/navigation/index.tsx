@@ -8,6 +8,7 @@ import SignUp from '../containers/SignUp';
 import SignIn from '../containers/SignIn';
 import Landing from '../containers/Landing';
 import Building from '../containers/Building';
+import Alert from '../components/ALert';
 import { verifyToken } from '../services/AuthServices';
 // import { customHistory } from '../index';
 import { connect } from 'react-redux';
@@ -32,16 +33,19 @@ class Routers extends React.Component {
 	}
 	render() {
 		return (
-			<Switch>
-				<Route exact path="/about" component={About} />
-				<Route exact path="/sign-in" component={SignIn} />
-				<Route exact path="/sign-up" component={SignUp} />
-				<Route exact path="/no-match" component={NoMatch} />
-				<AuthenticationRoute exact path="/buildings" component={Building} /> 
-				<AuthenticationRoute path="/building/:buildingId" component={App}/>
-				<Route exact path="/" component={Landing} /> 
-				<Route component={NoMatch} />
-			</Switch>
+			<div>
+				<Switch>
+					<Route exact path="/about" component={About} />
+					<Route exact path="/sign-in" component={SignIn} />
+					<Route exact path="/sign-up" component={SignUp} />
+					<Route exact path="/no-match" component={NoMatch} />
+					<AuthenticationRoute exact path="/buildings" component={Building} />
+					<AuthenticationRoute path="/building/:buildingId" component={App} />
+					<Route exact path="/" component={Landing} />
+					<Route component={NoMatch} />
+				</Switch>
+				<Alert />
+			</div>
 		)
 	}
 }

@@ -7,8 +7,12 @@ RUN apt-get update && \
 
 RUN pip install --upgrade pip
 RUN pip install trimesh==2.38.42 lxml svg.path
-RUN pip install pyyaml gym graphqlclient kafka-python numpy scikit-image opencv-python-headless
+RUN pip install pyyaml gym graphqlclient kafka-python numpy scikit-image opencv-python-headless colored_traceback
 RUN pip install transforms3d plotly shapely rtree networkx pyquaternion astar
+
+# Reinforcement learning dependencies
+RUN pip install https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-0.8.0.dev6-cp37-cp37m-manylinux1_x86_64.whl
+RUN pip install ray[rllib] tensorflow
 
 COPY . .
 

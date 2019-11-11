@@ -78,6 +78,11 @@ class MapBuilder():
             mesh_id = map_object["mesh_id"]
             if map_object["is_deleted"] == "true":
                 continue
+            if mesh_id in mesh_lookup and mesh_lookup[mesh_id]["type"]=="robot":
+                print("Deleting robot from map (%s)"%map_object["name"])
+                self.graphql_client.execute(deleteMapGeometry,
+                    {"id": map_object["id"]}
+                )                
             if mesh_id not in mesh_lookup or mesh_lookup[mesh_id]["deleted"]:
                 print("Deleting map geometry for %s"%map_object["name"])
                 self.graphql_client.execute(deleteMapGeometry,
@@ -231,7 +236,7 @@ class MapBuilder():
                 print(80 * "-")
 
                 if ob["type"]=="robot":
-                    pass
+                    continue
                 if ob["type"]=="floor":
                     continue
                 if ob['geometry']['filename'] is None:

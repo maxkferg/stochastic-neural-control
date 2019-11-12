@@ -62,12 +62,12 @@ import shutil
 import logging
 import argparse
 from config import config
-from simulate.simulator import Simulator
-from simulate.environment import Environment as SimulatorEnvironment
-from maps.main import MapBuilder
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(ROOT, "auto", "src"))
+
+from maps.main import MapBuilder
+from simulate.simulator import Simulator
 from services.observation import ObservationGenerator
 from services.control import ControlGenerator
 
@@ -124,14 +124,14 @@ def maps_subcommand(args, api_config):
     builder.run()
 
 
-def simulate_subcommand(args, api_config):
+def simulate_subcommand(args, env_config):
     """
     Simulate Subcommand
     """
     print("Simulation subcommand")
-    headless = not args.render
-    env = SimulatorEnvironment(args.building_id, headless=headless)
-    simulator = Simulator(env, api_config)
+    env_config['building_id'] = args.building_id
+    env_config['headless'] = not args.render
+    simulator = Simulator(env_config)
     simulator.run()
 
 

@@ -55,8 +55,8 @@ class ControlGenerator():
         self.checkpoint_path = checkpoint_path
         self.kafka_producer = self._setup_kafka_producer(kafka_host)
         self.kafka_consumer = KafkaConsumer(
-            OBSERVATION_TOPIC, 
-            bootstrap_servers=kafka_host, 
+            OBSERVATION_TOPIC,
+            bootstrap_servers=kafka_host,
             group_id=KAFKA_GROUP_NAME)
         # Seek to the end of the kafka stream
         self.kafka_consumer.poll()
@@ -72,16 +72,15 @@ class ControlGenerator():
         """
         Publish RL observation to kafka
         """
-        linear = float(action[0])
-        rotation = float(action[1])
+        steer, throttle = action.tolist()
         message = {
           "robot": {
             "id": robot_id,
           },
           "time": time.time(),
           "velocity": {
-            "linear": dict(x=linear, y=0, z=0),
-            "angular": dict(x=0, y=0, z=rotation),
+            "linear": dict(x=throttle, y=0, z=0),
+            "angular": dict(x=0, y=0, z=steer),
           }
         }
         if self.verbosity>0:

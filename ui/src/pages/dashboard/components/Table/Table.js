@@ -18,7 +18,7 @@ const tableHeader = ['name', 'owner', 'status', 'action']
 
 function handleClickBuilding(event, buildingId, history) {
   event.stopPropagation()
-  history.push(`/building/${buildingId}/model`)
+  history.push(`/app/building/${buildingId}/model`)
 }
 
 export default function TableComponent({ buildings, classes, history }) {

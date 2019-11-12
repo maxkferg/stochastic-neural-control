@@ -34,19 +34,22 @@ function genStructureSideBar(buildingId) {
       label: "Model",
       link: `/app/building/${buildingId}/model`,
       icon: <LocationCityIcon />,
+      disabled: !buildingId
     },
-    { id: 2, label: "Map", link: `/app/building/${buildingId}/building-map`, icon: <MapIcon /> },
+    { id: 2, label: "Map", link: `/app/building/${buildingId}/building-map`, icon: <MapIcon />, disabled: !buildingId },
     {
       id: 3,
       label: "Slam",
       link: `/app/building/${buildingId}/slam`,
       icon: <SlamIcon />,
+      disabled: !buildingId
     },
     {
       id: 4,
       label: "Point Cloud",
       link: `/app/building/${buildingId}/point-cloud`,
       icon: <PointCloudIcon />,
+      disabled: !buildingId
     },
     { id: 5, type: "divider" },
     { id: 6, label: "Settings", link: "/app/setting", icon: <SettingIcon /> },

@@ -27,6 +27,7 @@ export default function SidebarLink({
   isSidebarOpened,
   nested,
   type,
+  disabled
 }) {
   var classes = useStyles();
   // local
@@ -52,6 +53,7 @@ export default function SidebarLink({
     return (
       <ListItem
         button
+        disabled={disabled}
         component={link && Link}
         to={link}
         className={classes.link}

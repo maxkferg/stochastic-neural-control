@@ -85,7 +85,7 @@ export default function Pricing(props) {
             Robotics
           </Typography>
           <nav>
-            <Link to='/buildings' className={classes.link}>
+            <Link to='/app/buildings' className={classes.link}>
               Buildings
             </Link>
           </nav>

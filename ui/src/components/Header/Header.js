@@ -18,7 +18,8 @@ import {
   ArrowBack as ArrowBackIcon,
 } from "@material-ui/icons";
 import classNames from "classnames";
-
+import { connect } from 'react-redux';
+import { withRouter } from 'react-router-dom';
 // styles
 import useStyles from "./styles";
 
@@ -33,7 +34,7 @@ import {
   useLayoutDispatch,
   toggleSidebar,
 } from "../../context/LayoutContext";
-import { useUserDispatch, signOut } from "../../context/UserContext";
+import { getCurrentUser } from '../../redux/selectors/currentUser'
 
 const messages = [
   {
@@ -88,21 +89,25 @@ const notifications = [
   },
 ];
 
-export default function Header(props) {
-  var classes = useStyles();
+function onClickSignOut(history) {
+  localStorage.removeItem('token');
+  history.push('/')
+}
 
+function Header(props) {
+  const classes = useStyles();
+  const { currentUser, history } = props;
   // global
-  var layoutState = useLayoutState();
-  var layoutDispatch = useLayoutDispatch();
-  var userDispatch = useUserDispatch();
+  const layoutState = useLayoutState();
+  const layoutDispatch = useLayoutDispatch();
 
   // local
-  var [mailMenu, setMailMenu] = useState(null);
-  var [isMailsUnread, setIsMailsUnread] = useState(true);
-  var [notificationsMenu, setNotificationsMenu] = useState(null);
-  var [isNotificationsUnread, setIsNotificationsUnread] = useState(true);
-  var [profileMenu, setProfileMenu] = useState(null);
-  var [isSearchOpen, setSearchOpen] = useState(false);
+  const [mailMenu, setMailMenu] = useState(null);
+  const [isMailsUnread, setIsMailsUnread] = useState(true);
+  const [notificationsMenu, setNotificationsMenu] = useState(null);
+  const [isNotificationsUnread, setIsNotificationsUnread] = useState(true);
+  const [profileMenu, setProfileMenu] = useState(null);
+  const [isSearchOpen, setSearchOpen] = useState(false);
 
   return (
     <AppBar position="fixed" className={classes.appBar}>
@@ -287,18 +292,10 @@ export default function Header(props) {
         >
           <div className={classes.profileMenuUser}>
             <Typography variant="h4" weight="medium">
-              John Smith
-            </Typography>
-            <Typography
-              className={classes.profileMenuLink}
-              component="a"
-              color="primary"
-              href="https://flatlogic.com"
-            >
-              Flalogic.com
+             {currentUser.fullName ? currentUser.fullName : 'Anonymous'} 
             </Typography>
           </div>
-          <MenuItem
+          {/* <MenuItem
             className={classNames(
               classes.profileMenuItem,
               classes.headerMenuItem,
@@ -321,12 +318,12 @@ export default function Header(props) {
             )}
           >
             <AccountIcon className={classes.profileMenuIcon} /> Messages
-          </MenuItem>
+          </MenuItem> */}
           <div className={classes.profileMenuUser}>
             <Typography
               className={classes.profileMenuLink}
               color="primary"
-              onClick={() => signOut(userDispatch, props.history)}
+              onClick={() => onClickSignOut(history)}
             >
               Sign Out
             </Typography>
@@ -336,3 +333,10 @@ export default function Header(props) {
     </AppBar>
   );
 }
+
+
+const mapStateToProps = state => ({
+  currentUser: getCurrentUser(state)
+})
+
+export default connect(mapStateToProps)(withRouter(Header))

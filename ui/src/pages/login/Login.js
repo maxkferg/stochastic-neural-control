@@ -32,6 +32,7 @@ function Login(props) {
   const [error, setError] = useState(null);
   const [activeTabId, setActiveTabId] = useState(0);
   const [fullName, setFullName] = useState("");
+
   const handleAuthenticationGoogle = async function (googleResponse, props) {
     const { tokenId } = googleResponse;
     try {
@@ -40,7 +41,7 @@ function Login(props) {
       if (data.signInUserGoogle.authToken) {
         props.setCurrentUser(data.signInUserGoogle);
         localStorage.setItem('token', data.signInUserGoogle.authToken);
-        props.history.push('/buildings');
+        props.history.push('/app/buildings');
       }
     } catch {
       setError('error when login')
@@ -59,7 +60,7 @@ function Login(props) {
     const { data } = response;
     if (data.createUser.authToken) {
       localStorage.setItem('token', data.createUser.authToken);
-      props.history.push('/123132/model');
+      props.history.push('/app/buildings');
     }
   }
   
@@ -74,7 +75,7 @@ function Login(props) {
       if (data.signInUser.authToken) {
         props.setCurrentUser(data.signInUser);
         localStorage.setItem('token', data.signInUser.authToken);
-        props.history.push('/buildings');
+        props.history.push('/app/buildings');
       }
     } catch {
       setError('error when login')

@@ -3,5 +3,6 @@ mutation signInUserGoogle($tokenId: String!) {
     id
     authToken
     email
+    fullName
   }
 }

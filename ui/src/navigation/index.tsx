@@ -8,8 +8,9 @@ import Auth from '../pages/login/Login'
 import Landing from '../containers/Landing';
 import Building from '../containers/Building';
 import Alert from '../components/ALert';
+import DashBoard from '../pages/dashboard/Dashboard';
 import { verifyToken } from '../services/AuthServices';
-// import { customHistory } from '../index';
+import { LayoutProvider } from "../context/LayoutContext";
 import { connect } from 'react-redux';
 import { setCurrentUser } from '../redux/actions/currentUser';
 class Routers extends React.Component {
@@ -32,17 +33,16 @@ class Routers extends React.Component {
 	}
 	render() {
 		return (
-			<div>
+			<LayoutProvider>
 				<Switch>
-					<Route exact path="/about" component={About} />
-					<Route exact path="/auth" component={Auth} />
-					<Route exact path="/" component={Landing} /> 
-					<AuthenticationRoute exact path="/buildings" component={Building} />
-					<AuthenticationRoute path="/building/:buildingId" component={App} />
-					<Route component={Error} />
+				<Route exact path="/auth" component={Auth} />
+				<Route exact path="/about" component={About} />
+				<Route exact path="/" component={Landing} /> 
+				<AuthenticationRoute exact path="/app/buildings" component={DashBoard} /> 
+				<AuthenticationRoute path="/app/building/:buildingId" component={App}/>
+				<Route component={Error} />
 				</Switch>
-				<Alert />
-			</div>
+			</LayoutProvider>
 		)
 	}
 }

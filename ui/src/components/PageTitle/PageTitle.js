@@ -20,7 +20,7 @@ export default function PageTitle(props) {
           classes={{ root: classes.button }}
           variant="contained"
           size="large"
-          color="secondary"
+          color="primary"
         >
           {props.button}
         </Button>

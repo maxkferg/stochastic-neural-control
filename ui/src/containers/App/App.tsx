@@ -11,7 +11,6 @@ import Divider from '@material-ui/core/Divider';
 import AppBar from '../AppBar/AppBar';
 import EditObjectForm from '../EditObjectForm/EditObjectForm';
 import CreateGeometryForm from '../CreateGeometryForm/CreateGeometryForm';
-import NavDrawer from '../NavDrawer';
 import AppNavigation from '../../navigation/AppNavigation';
 import PointCloudSetting from '../PointCloudSetting/PointCloudSetting';
 const drawerWidth = 340;
@@ -192,12 +191,13 @@ class PersistentDrawerRight extends React.Component <{
 
   render() {
     // @ts-ignore
-    const { classes, theme, history } = this.props;
+    const { classes, theme } = this.props;
     const { open } = this.state;
     console.log(this.props.history)
     return (
       <div className={classes.root}>
         <CssBaseline />
+<<<<<<< HEAD
         <AppBar
           position="fixed"
           leftOpen={this.state.navMenuOpen}
@@ -214,6 +214,8 @@ class PersistentDrawerRight extends React.Component <{
           open={this.state.navMenuOpen}
           onClose={this.handleLeftDrawerClose}
         />
+=======
+>>>>>>> change style of buildings page WIP
         <main
           className={classNames(classes.content, {
             [classes.contentShift]: open,

@@ -3,5 +3,6 @@ query building($ownerId: String!) {
     id
     name
     owner_id
+    isDeleted
   }
 }

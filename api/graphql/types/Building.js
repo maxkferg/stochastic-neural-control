@@ -15,6 +15,9 @@ const Building = new GraphQLObjectType({
         },
         owner_id: {
             type: GraphQLString
+        },
+        isDeleted: {
+            type: GraphQLString
         }
     })
 });

@@ -1,6 +1,9 @@
 import { makeStyles } from "@material-ui/styles";
 
 export default makeStyles(theme => ({
+  container: {
+    marginTop: "100px"
+  },
   card: {
     minHeight: "100%",
     display: "flex",
@@ -111,5 +114,12 @@ export default makeStyles(theme => ({
   mainChartLegentElement: {
     fontSize: "18px !important",
     marginLeft: theme.spacing(1),
+  },
+  moreButton: {
+    margin: -theme.spacing(1),
+    padding: 0,
+    width: 40,
+    height: 40,
+    color: theme.palette.text.hint,
   },
 }));

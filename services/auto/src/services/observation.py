@@ -19,9 +19,11 @@ import logging
 import argparse
 import numpy as np
 from kafka import KafkaProducer
+from common import train_env_factory
+from environment.multi import MultiEnvironment
+from environment.sensor import SensorEnvironment
+from environment.core.env.base import BaseEnvironment
 from .utils import KafkaBuffer, NumpyEncoder
-from ..environment.sensor import SensorEnvironment
-from ..environment.core.env.base import BaseEnvironment
 
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
 
@@ -107,6 +109,16 @@ class ObservationGenerator():
             env.robot.set_pose(position, orientation)
 
 
+    #def _normalize_observation(self, observation, time_passed):
+    #    """
+    #    Normalize the observation.
+    #    If we are using a really long timestep, then we should
+    #    """
+    #    adjustment = REFERENCE_TIMESTEP / time_passed
+    #    observation[0]["robot_velocity"] *= adjustment
+    #    return observation
+
+
     def _publish_robot_observation(self, robot_id, observation):
         """
         Publish RL observation to kafka
@@ -141,6 +153,8 @@ class ObservationGenerator():
                 continue
             for env in self.env.values():
                 observation = env.observe()
+                #time_passed = time.time() - started
+                #observation = self._normalize_observation(observation, time_passed)
                 self._publish_robot_observation(env.robot.id, observation)
             time_remaining = self.min_timestep - (time.time() - started)
             if time_remaining>0:

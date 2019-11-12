@@ -88,7 +88,7 @@ class Simulator():
             "target_pos": [0,0,0],
             "resolution": 0.05,
             "power": 1.0,
-            "linear_power": float(os.environ.get('LINEAR_SPEED', 20)),
+            "linear_power": float(os.environ.get('LINEAR_SPEED', 50)),
             "angular_power": float(os.environ.get('ANGULAR_SPEED', 10)),
         }
         logging.info("Creating Turtlebot at: {}".format(position))

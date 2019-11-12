@@ -6,6 +6,7 @@ gcloud compute --project "stanford-projects" scp --zone "us-west1-b" --recurse "
 
 ray rsync-down cluster.yaml ray_results ~/
 
+export CHECKPOINT=../checkpoints/SACQ_MultiRobot-v0_1b51c0e3_2019-11-05_09-10-27g6ibizk2/checkpoint_4000/checkpoint-4000
 
 python rollout.py --steps 1000 \
     --checkpoint=checkpoints/October2c/checkpoint_120/checkpoint-120
@@ -31,6 +32,7 @@ import logging
 import argparse
 import collections
 import colored_traceback
+from ray import tune
 from pprint import pprint
 from matplotlib import cm
 from gym.spaces import Discrete, Box
@@ -45,6 +47,10 @@ from ray.rllib.models.preprocessors import get_preprocessor
 from ray.rllib.policy.sample_batch import DEFAULT_POLICY_ID
 from common import train_env_factory
 from environment.core.utils.config import extend_config
+from agents.sacq import SACQAgent
+
+logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
+tune.register_trainable("SACQ", SACQAgent)
 
 
 EXAMPLE_USAGE = """
@@ -73,12 +79,12 @@ video = cv2.VideoWriter(filename, video_FourCC, fps=20, frameSize=(RENDER_WIDTH,
 viridis = cm.get_cmap('viridis')
 
 
-OVERIDES = {
+ENV_OVERIDES = {
     'headless': False,
     'timestep': 0.1,
     'creation_delay': 0,
     'reset_on_target': False,
-    'building_id': '5d984a7c6f1886dacf9c730d'
+    'building_id': '5dc3fefb14921a7c18cff7e9'
 }
 
 
@@ -103,7 +109,7 @@ def create_parser(parser_creator=None):
         "--run",
         type=str,
         required=False,
-        default="SAC",
+        default="SACQ",
         help="The algorithm or model to train. This may refer to the name "
         "of a built-on algorithm (e.g. RLLib's DQN or PPO), or a "
         "user-defined trainable function or class registered in the "
@@ -322,8 +328,8 @@ def rollout(agent, env_name, num_steps, out=None, no_render=True, render_q=False
                     prev_actions[agent_id] = a_action
 
                     # Custom code for getting Q values
-                    q = get_q_value(env, agent, policy_id, a_obs)
-                    print("Q",q)
+                    #q = get_q_value(env, agent, policy_id, a_obs)
+                    #print("Q",q)
 
             action = action_dict
 
@@ -378,6 +384,8 @@ def run(args, parser):
     config['num_workers'] = 0
     config['evaluation_interval'] = 0
     config['exploration_enabled'] = False
+    config = extend_config(config, dict(env_config=ENV_OVERIDES))
+
 
     ray.init()
 
@@ -385,7 +393,7 @@ def run(args, parser):
         config["monitor"] = True
 
     pprint(config)
-    cls = get_agent_class(args.run)
+    cls = SACQAgent
     print(args.env)
     print(config)
     agent = cls(env=args.env, config=config)

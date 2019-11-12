@@ -10,3 +10,7 @@ Geometry:
 # Kafka config
 Kafka:
   host: 'kafka-0.digitalpoints.io:19092'
+
+# Building
+Building:
+  id: '5dc3fefb14921a7c18cff7e9'

@@ -125,7 +125,7 @@ class ObservationGenerator():
 
 
 
-    def run(self):       
+    def run(self):
         """
         Continuously poll Kafka for new actions and apply them immediately
         to their environment. After a timestep observe the environment and publish

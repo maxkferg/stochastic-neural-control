@@ -12,7 +12,7 @@ RUN pip install transforms3d plotly shapely rtree networkx pyquaternion astar
 
 # Reinforcement learning dependencies
 RUN pip install https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-0.8.0.dev6-cp37-cp37m-manylinux1_x86_64.whl
-RUN pip install ray[rllib] tensorflow
+RUN pip install ray[rllib] tensorflow tensorflow-probability psutil
 
 COPY . .
 

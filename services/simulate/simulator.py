@@ -15,6 +15,9 @@ from .graphql import getCurrentGeometry
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
 
 
+NULL_ACTION = [0,0]
+MAX_ACTION_LIFE = 0.4 # seconds
+
 
 class Simulator():
     """
@@ -57,7 +60,6 @@ class Simulator():
         print(params)
         result = self.graphql_client.execute(getCurrentGeometry, params)
         result = json.loads(result)
-        print(result['data'],'-----????-----')
         for mesh in result['data']['meshesOfBuilding']:
             logging.info('Loading {}'.format(mesh['name']))
             relative_url = os.path.join(mesh['geometry']['directory'], mesh['geometry']['filename'])
@@ -87,7 +89,7 @@ class Simulator():
             "resolution": 0.05,
             "power": 1.0,
             "linear_power": float(os.environ.get('LINEAR_SPEED', 20)),
-            "angular_power": float(os.environ.get('ANGULAR_SPEED', 5)),
+            "angular_power": float(os.environ.get('ANGULAR_SPEED', 10)),
         }
         logging.info("Creating Turtlebot at: {}".format(position))
         turtlebot = Turtlebot(physics, config)
@@ -119,6 +121,7 @@ class Simulator():
         logging.info("\n\n --- Starting simulation loop --- \n")
         linear_velocity = 0
         angular_velocity = 0
+        last_message_time = {}
         start = time.time()
         steps = 0
 
@@ -131,12 +134,20 @@ class Simulator():
                     linear_velocity = command["velocity"]["linear"]["x"]
                     angular_velocity = command["velocity"]["angular"]["z"]
                     action = (angular_velocity, linear_velocity)
+                    last_message_time[robot_id] = time.time()
                     if not robot_id in self.robots:
                         logging.error("No robot with id %s"%robot_id)
                     else:
                         robot = self.robots[robot_id]
                         robot.applyAction(action)
                         logging.info("Robot {} action {}".format(robot_id, action))
+
+            # Stop moving the robot if messages are not flowing
+            for robot_id in self.robots:
+                last_message_received = last_message_time.get(robot_id, 0)
+                if time.time() - last_message_received > MAX_ACTION_LIFE:
+                    robot = self.robots[robot_id]
+                    robot.applyAction(NULL_ACTION)
 
             self.env.step()
             steps+=1

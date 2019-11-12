@@ -5,8 +5,8 @@ import tensorflow as tf
 from ray.rllib.models import ModelCatalog
 from ray.rllib.models.tf.tf_modelv2 import TFModelV2
 from ray.rllib.utils import try_import_tf, try_import_tfp
-from ray.rllib.agents.sac.sac_model import SACModel
 from ray.rllib.models.tf.misc import flatten
+from ..agents.sacq.sacq_model import SACQModel
 
 POINTCLOUD_MEAN = 4
 POINTCLOUD_STD = 4
@@ -21,7 +21,7 @@ class Box():
         self.shape = shape
 
 
-class SensorModel(SACModel):
+class SensorModel(SACQModel):
 
     def __init__(self, obs_space, action_space, num_outputs, *args, **kwargs):
         super().__init__(obs_space, action_space, num_outputs, *args, **kwargs)
@@ -57,7 +57,7 @@ class SensorModel(SACModel):
         robot_theta = tf.keras.layers.GaussianNoise(stddev=0.01)(target_input)
         target = tf.keras.layers.GaussianNoise(stddev=0.01)(target_input)
         ckpt = tf.keras.layers.GaussianNoise(stddev=0.01)(ckpt)
-        
+
         # Concatenate all inputs together
         sensors = [
             (pointcloud-POINTCLOUD_MEAN)/POINTCLOUD_STD,
@@ -76,7 +76,7 @@ class SensorModel(SACModel):
         output_layer = x
 
         # Metrics to print
-        metrics = [            
+        metrics = [
             tf.reduce_mean(x),
             tf.math.reduce_std(x),
             tf.reduce_mean(output_layer),
@@ -87,7 +87,7 @@ class SensorModel(SACModel):
         self.base_model = tf.keras.Model(inputs, [output_layer, metrics])
         self.register_variables(self.base_model.variables)
         #self.base_model.summary()
-        
+
 
     def forward(self, input_dict, state, seq_lens=None):
         model_out, metrics = self.base_model([

@@ -146,7 +146,7 @@ class TopicProxy{
     this.consumer = new kafka.Consumer(
         client,
         [{ topic: fromTopic }],
-        { 
+        {
           autoCommit: true,
           groupId: 'robot-topic-proxy'
         }
@@ -154,7 +154,7 @@ class TopicProxy{
     this.consumer.on('message', function(message){
       console.log(message)
       const payload = {
-        topic: toTopic, 
+        topic: toTopic,
         messages: [message.value]
       }
       producer.send([payload], function(err,data){

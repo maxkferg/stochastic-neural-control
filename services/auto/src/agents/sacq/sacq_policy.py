@@ -8,7 +8,6 @@ import logging
 
 import ray
 import ray.experimental.tf_utils
-from ray.rllib.agents.sac.sac_model import SACModel
 from ray.rllib.agents.ddpg.noop_model import NoopModel
 from ray.rllib.agents.dqn.dqn_policy import _postprocess_dqn, PRIO_WEIGHTS
 from ray.rllib.policy.sample_batch import SampleBatch
@@ -19,6 +18,7 @@ from ray.rllib.utils.error import UnsupportedSpaceException
 from ray.rllib.utils import try_import_tf, try_import_tfp
 from ray.rllib.utils.annotations import override
 from ray.rllib.utils.tf_ops import minimize_and_clip, make_tf_callable
+from .sacq_model import SACQModel
 
 tf = try_import_tf()
 tfp = try_import_tfp()
@@ -55,7 +55,7 @@ def build_sac_model(policy, obs_space, action_space, config):
         num_outputs,
         config["model"],
         framework="tf",
-        model_interface=SACModel,
+        model_interface=SACQModel,
         default_model=default_model,
         name="sac_model",
         actor_hidden_activation=config["policy_model"]["hidden_activation"],
@@ -70,7 +70,7 @@ def build_sac_model(policy, obs_space, action_space, config):
         num_outputs,
         config["model"],
         framework="tf",
-        model_interface=SACModel,
+        model_interface=SACQModel,
         default_model=default_model,
         name="target_sac_model",
         actor_hidden_activation=config["policy_model"]["hidden_activation"],

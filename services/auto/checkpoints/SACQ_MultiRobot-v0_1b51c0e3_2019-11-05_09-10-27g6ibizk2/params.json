@@ -1,0 +1,37 @@
+{
+  "buffer_size": 2000000,
+  "callbacks": {
+    "on_episode_end": "<function on_episode_end at 0x7f38ae918400>",
+    "on_episode_start": "<function on_episode_start at 0x7f38ae9182f0>",
+    "on_episode_step": "<function on_episode_step at 0x7f38ae918378>"
+  },
+  "compress_observations": true,
+  "env": "MultiRobot-v0",
+  "env_config": {
+    "building_id": "5d97edec93a71c81fb0fbbf1",
+    "creation_delay": 10,
+    "headless": true,
+    "reset_on_target": true
+  },
+  "evaluation_interval": 10,
+  "evaluation_num_episodes": 20,
+  "horizon": 100,
+  "learning_starts": 10000,
+  "min_iter_time_s": 60,
+  "model": {
+    "custom_model": "sensor",
+    "use_lstm": false
+  },
+  "num_gpus": 0,
+  "num_gpus_per_worker": 0,
+  "num_workers": 4,
+  "optimization": {
+    "actor_learning_rate": 0.0002,
+    "critic_learning_rate": 0.0002,
+    "entropy_learning_rate": 0.0002
+  },
+  "target_network_update_freq": 1,
+  "tau": 0.005,
+  "train_batch_size": 256,
+  "use_state_preprocessor": true
+}

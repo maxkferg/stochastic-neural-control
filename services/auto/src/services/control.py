@@ -92,6 +92,17 @@ class ControlGenerator():
         logging.info(f"Sent {CONTROL_PUBLISH_TOPIC} message for robot %s"%robot_id)
 
 
+    def _rebuild_observation(self, observation):
+        """
+        Rebuild the observation
+        """
+        for key, value in observation.items():
+            if type(value)==list:
+                observation[key] = np.array(value)
+        return observation
+
+
+
     def rollout(self, agent):
         """
         Rollout the agent on the observation stream
@@ -104,6 +115,7 @@ class ControlGenerator():
                 robot_id = message["robot_id"]
                 observation = message["observation"]
                 obs, reward, done, info = observation
+                obs = self._rebuild_observation(obs)
                 print("----", reward, "----")
                 a_action = agent.compute_action(
                     obs,
@@ -146,7 +158,7 @@ class ControlGenerator():
 
         # Merge in API configuration from the command line
         config['env_config'].update(self.api_config)
-        config['env_config']['building_id'] = '5dc75e99d46ec9139d26a61f'
+        config['env_config']['building_id'] = self.api_config["Building"]["id"]
 
         ray.init()
         cls = SACQAgent#get_agent_class(algorithm)

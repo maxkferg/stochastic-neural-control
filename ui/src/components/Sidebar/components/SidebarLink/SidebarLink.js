@@ -29,7 +29,6 @@ export default function SidebarLink({
   type,
 }) {
   var classes = useStyles();
-
   // local
   var [isOpen, setIsOpen] = useState(false);
   var isLinkActive =

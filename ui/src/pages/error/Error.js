@@ -30,8 +30,6 @@ export default function Error() {
         </Typography>
         <Typography
           variant="h6"
-          color="text"
-          colorBrightness="secondary"
           className={classnames(classes.textRow, classes.safetyText)}
         >
           But we're here to bring you back to safety

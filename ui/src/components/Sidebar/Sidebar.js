@@ -26,42 +26,44 @@ import {
   toggleSidebar,
 } from "../../context/LayoutContext";
 
-const structure = [
-  { id: 0, label: "Buildings", link: "/app/buildings", icon: <BuildingIcon /> },
-  {
-    id: 1,
-    label: "Model",
-    link: "/app/building/model",
-    icon: <LocationCityIcon />,
-  },
-  { id: 2, label: "Map", link: "/app/building/building-map", icon: <MapIcon /> },
-  {
-    id: 3,
-    label: "Slam",
-    link: "/app/building/slam",
-    icon: <SlamIcon />,
-  },
-  {
-    id: 4,
-    label: "Point Cloud",
-    link: "/app/building/point-cloud",
-    icon: <PointCloudIcon />,
-  },
-  { id: 5, type: "divider" },
-  { id: 6, label: "Settings", link: "/app/setting", icon: <SettingIcon /> },
-];
+function genStructureSideBar(buildingId) {
+  const structure = [
+    { id: 0, label: "Buildings", link: `/app/buildings`, icon: <BuildingIcon /> },
+    {
+      id: 1,
+      label: "Model",
+      link: `/app/building/${buildingId}/model`,
+      icon: <LocationCityIcon />,
+    },
+    { id: 2, label: "Map", link: `/app/building/${buildingId}/building-map`, icon: <MapIcon /> },
+    {
+      id: 3,
+      label: "Slam",
+      link: `/app/building/${buildingId}/slam`,
+      icon: <SlamIcon />,
+    },
+    {
+      id: 4,
+      label: "Point Cloud",
+      link: `/app/building/${buildingId}/point-cloud`,
+      icon: <PointCloudIcon />,
+    },
+    { id: 5, type: "divider" },
+    { id: 6, label: "Settings", link: "/app/setting", icon: <SettingIcon /> },
+  ];
+  return structure
+}
 
-function Sidebar({ location }) {
-  var classes = useStyles();
-  var theme = useTheme();
-
+function Sidebar({ location, match }) {
+  const classes = useStyles();
+  const theme = useTheme();
   // global
-  var { isSidebarOpened } = useLayoutState();
-  var layoutDispatch = useLayoutDispatch();
+  const { isSidebarOpened } = useLayoutState();
+  const layoutDispatch = useLayoutDispatch();
 
   // local
-  var [isPermanent, setPermanent] = useState(true);
-
+  const [isPermanent, setPermanent] = useState(true);
+  const [buildingId, setBuildingId] = useState();
   useEffect(function() {
     window.addEventListener("resize", handleWindowWidthChange);
     handleWindowWidthChange();
@@ -70,6 +72,9 @@ function Sidebar({ location }) {
     };
   });
 
+  useEffect(function() {
+    setBuildingId(match.params.buildingId)
+  }, [match.params])
   return (
     <Drawer
       variant={isPermanent ? "permanent" : "temporary"}
@@ -96,7 +101,7 @@ function Sidebar({ location }) {
         </IconButton>
       </div>
       <List className={classes.sidebarList}>
-        {structure.map(link => (
+        {genStructureSideBar(buildingId).map(link => (
           <SidebarLink
             key={link.id}
             location={location}

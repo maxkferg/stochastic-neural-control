@@ -82,6 +82,7 @@ export interface Props extends WithStyles<typeof styles> {
   objectId: null | string
   onSuccess: Function
   onCancel: Function
+  type: null | string
 }
 
 interface Mesh {
@@ -274,8 +275,8 @@ class EditObjectForm extends React.Component<Props, State> {
             </Typography>
           </Grid>
           <Grid item className={this.classes.paddedItem} >
-            <RobotTopicChip objectId={this.props.objectId} topic='robot.commands.velocity_pred' />
-            <RobotTopicChip objectId={this.props.objectId} topic='robot.commands.velocity_human' />
+            <RobotTopicChip type={this.props.type} objectId={this.props.objectId} topic='robot.commands.velocity_pred' />
+            <RobotTopicChip type={this.props.type} objectId={this.props.objectId} topic='robot.commands.velocity_human' />
           </Grid>
         </Grid>
         <Divider className={this.classes.controlDivider} />

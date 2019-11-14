@@ -131,6 +131,12 @@ class EditObjectForm extends React.Component<Props, State> {
     this.fetchRobotData(this.props.objectId);
   }
 
+  // handleChangePositionObject = (axis, newPosotion) => {
+  //     const { mesh } = this.state;
+  //     const newMesh = JSON.parse(JSON.stringify(mesh));
+  //     newMesh[axis] = newPosotion;
+  // }
+
   componentDidUpdate(prevProps){
     if (prevProps.objectId!==this.props.objectId){
       this.querySubscription.unsubscribe();
@@ -193,7 +199,58 @@ class EditObjectForm extends React.Component<Props, State> {
     return <Chip className={this.classes.chip} size="small" label={realRobotText} />
   }
 
-
+  renderControlBot() {
+    return <React.Fragment>
+      <Grid container direction="column">
+    <Grid item className={this.classes.paddedItem} >
+      <Typography variant="caption">
+        Control Topics
+      </Typography>
+    </Grid>
+    <Grid item className={this.classes.paddedItem} >
+      <RobotTopicChip type={this.props.type} objectId={this.props.objectId} topic='robot.commands.velocity_pred' />
+      <RobotTopicChip type={this.props.type} objectId={this.props.objectId} topic='robot.commands.velocity_human' />
+    </Grid>
+  </Grid>
+  <Divider className={this.classes.controlDivider} />
+  <div>
+    <Grid container direction="row" justify="center" alignItems="center">
+      <Grid item>
+        <Button size="small" color="primary" variant="contained" name="up" className={this.classes.button}
+          onClick={() => this.moveRobot(ROBOT_LINEAR_SPEED, 0)}
+        >
+          <ArrowUpward className={this.classes.extendedIcon} />
+        </Button>
+      </Grid>
+    </Grid>
+    <Grid container direction="row" justify="space-around" alignItems="center">
+      <Grid item>
+        <Button size="small" variant="contained" name="left" className={this.classes.button}
+          onClick={() => this.moveRobot(0, ROBOT_ANGULAR_SPEED)}
+        >
+           <RotateLeft className={this.classes.extendedIcon} />
+        </Button>
+      </Grid>
+      <Grid item>
+        <Button size="small" variant="contained" name="right" className={this.classes.button}
+          onClick={() => this.moveRobot(0, -ROBOT_ANGULAR_SPEED)}
+        >
+          <RotateRight className={this.classes.extendedIcon} />
+        </Button>
+      </Grid>
+    </Grid>
+    <Grid container direction="row" justify="center" alignItems="center">
+      <Grid item>
+        <Button size="small" color="primary" variant="contained" name="up" className={this.classes.button}
+          onClick={() => this.moveRobot(-ROBOT_LINEAR_SPEED, 0)}
+        >
+          <ArrowDownward className={this.classes.extendedIcon} />
+        </Button>
+      </Grid>
+    </Grid>
+  </div>
+    </React.Fragment>
+  }
   renderConnectedChip(){
     if (!this.state.robot){
       return 
@@ -213,6 +270,7 @@ class EditObjectForm extends React.Component<Props, State> {
     if (this.state.loading){
       return "<p>loading...</p>";
     }
+    console.log(this.state.mesh)
     return (
       <form className={this.classes.container} noValidate autoComplete="off">
         <Typography className={this.classes.formTitle} variant="h5" gutterBottom >
@@ -268,56 +326,8 @@ class EditObjectForm extends React.Component<Props, State> {
           margin="normal"
           variant="outlined"
         />
-        <Grid container direction="column">
-          <Grid item className={this.classes.paddedItem} >
-            <Typography variant="caption">
-              Control Topics
-            </Typography>
-          </Grid>
-          <Grid item className={this.classes.paddedItem} >
-            <RobotTopicChip type={this.props.type} objectId={this.props.objectId} topic='robot.commands.velocity_pred' />
-            <RobotTopicChip type={this.props.type} objectId={this.props.objectId} topic='robot.commands.velocity_human' />
-          </Grid>
-        </Grid>
-        <Divider className={this.classes.controlDivider} />
-        <div>
-          <Grid container direction="row" justify="center" alignItems="center">
-            <Grid item>
-              <Button size="small" color="primary" variant="contained" name="up" className={this.classes.button}
-                onClick={() => this.moveRobot(ROBOT_LINEAR_SPEED, 0)}
-              >
-                <ArrowUpward className={this.classes.extendedIcon} />
-              </Button>
-            </Grid>
-          </Grid>
-          <Grid container direction="row" justify="space-around" alignItems="center">
-            <Grid item>
-              <Button size="small" variant="contained" name="left" className={this.classes.button}
-                onClick={() => this.moveRobot(0, ROBOT_ANGULAR_SPEED)}
-              >
-                 <RotateLeft className={this.classes.extendedIcon} />
-              </Button>
-            </Grid>
-            <Grid item>
-              <Button size="small" variant="contained" name="right" className={this.classes.button}
-                onClick={() => this.moveRobot(0, -ROBOT_ANGULAR_SPEED)}
-              >
-                <RotateRight className={this.classes.extendedIcon} />
-              </Button>
-            </Grid>
-          </Grid>
-          <Grid container direction="row" justify="center" alignItems="center">
-            <Grid item>
-              <Button size="small" color="primary" variant="contained" name="up" className={this.classes.button}
-                onClick={() => this.moveRobot(-ROBOT_LINEAR_SPEED, 0)}
-              >
-                <ArrowDownward className={this.classes.extendedIcon} />
-              </Button>
-            </Grid>
-          </Grid>
-        </div>
+        { this.props.type === 'robot' && this.renderControlBot()}
       </form>
-
     )
   }
 

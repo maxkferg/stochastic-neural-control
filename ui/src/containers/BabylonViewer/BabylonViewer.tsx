@@ -278,11 +278,14 @@ class BabylonViewer extends React.Component<Props, State> {
         const sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {
             diameter: 0.1
         }, scene);
-        sphere.position = new BABYLON.Vector3(...position);
+        sphere.position = new BABYLON.Vector3(
+            position.x,
+            position.y,
+            position.z
+        );
     }   
     
     componentDidUpdate(){
-       
         // TODO: Detect whether we have extra geometry as well
         // We can not render geometry until the scene is ready
         if (this.state.scene !== null){
@@ -302,6 +305,7 @@ class BabylonViewer extends React.Component<Props, State> {
                 }
             }
             if (this.props.points) {
+                console.log(this.props.points)
                 this.props.points.forEach(point => {
                     this.createSphere(point.position)
                 })

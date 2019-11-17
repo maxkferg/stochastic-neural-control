@@ -7,33 +7,35 @@ console.info("Creating Kafka producer (robot control): "+ kafkaHost);
 const client = new kafka.KafkaClient({kafkaHost: kafkaHost});
 const producer = new kafka.HighLevelProducer(client);
 
-const message = {
-    points: [
-        {
-            position: {
-                x: 1,
-                y: 2,
-                z: 3,
-            }, 
-            attribute: {
-                r: 255,
-                b: 255,
-                g: 255
+function getRandomInt(max) {
+    return Math.floor(Math.random() * Math.floor(max));
+}
+
+
+function generatePayload() {
+    const message = {
+        points: [
+            [getRandomInt(10),1,1,255,255,255], [getRandomInt(10),1,1,255,255,255], [getRandomInt(10),1,1,255,255,255], [getRandomInt(10),1,1,255,255,255], [getRandomInt(10),1,1,255,255,255], [getRandomInt(10),1,1,255,255,255], [getRandomInt(10),1,1,255,255,255], [getRandomInt(10),1,1,255,255,255], [getRandomInt(10),1,1,255,255,255], [getRandomInt(10),1,1,255,255,255], [getRandomInt(10),1,1,255,255,255], [getRandomInt(10),1,1,255,255,255], [getRandomInt(10),1,1,255,255,255]
+        ],
+        robot: {
+            id: "5dc5e024a201cd0100000001",
+        },
+        header: {
+            stamp : {
+                nsecs : 123123123,
+                nsecs: 81313113
             }
         }
-    ],
-    building_id: "5d9e01a923cf82bd7c9ae330",
-    robot_id: "5d9e01a923cf82bd7c9ae331",
-    t: 123123123
+    }
+    const payload = [{
+        topic: "robot.sensors.pointcloud",
+        attributes: 1,
+        timestamp: Date.now(),
+        messages: [JSON.stringify(message)]
+    }];
+    return payload
 }
-const payload = [{
-    topic: 'robots.sensors.pointcloud',
-    attributes: 1,
-    timestamp: Date.now(),
-    messages: [JSON.stringify(message)]
-}];
   
-producer.send(payload, function(err, data) {
+setInterval(() => producer.send(generatePayload(), function(err, data) {
     if (err) console.error("Error sending robot control:",err);
-    console.log(data);
-  });
+  }), 100)

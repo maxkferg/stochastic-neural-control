@@ -26,6 +26,7 @@ function setupConsumer() {
         const messagesData = JSON.parse(message.value);
         const { points, header, robot } = messagesData;
         try {
+            console.log(messagesData)
             const pointsGroup = await pointService.addPointsOfRobot(robot, header, points);
             // change after receive data structure from kafa
             pubSub.publish(POINT_CLOUD_TOPIC, {

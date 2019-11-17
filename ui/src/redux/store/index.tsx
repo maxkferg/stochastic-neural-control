@@ -3,12 +3,20 @@ import thunk from 'redux-thunk';
 import logger from 'redux-logger'
 import createRootReducer from '../reducers';
 
+
+const PLAN_POINT_CLOUD = 'default';
+const LIMIT_POINT = 1000;
 export interface ApplicationState {
 
 }
 
 
-const initialState = {};
+const initialState = {
+  pointCloudSetting: {
+    strategy: PLAN_POINT_CLOUD,
+    limit: LIMIT_POINT
+  }
+};
 
 
 const middleware = [

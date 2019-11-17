@@ -7,8 +7,8 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import { withStyles } from '@material-ui/core/styles';
 import { withRouter } from 'react-router-dom';
-
-
+import { connect, batch } from 'react-redux';
+import { setPointCloudStrategy, setPointCloudLimit } from '../../redux/actions/pointCloudSetting';
 const styles = (theme: any) => ({
     root: {
       display: 'flex',
@@ -58,6 +58,9 @@ const styles = (theme: any) => ({
 class PointCloudSetting extends React.Component <{
     onSuccess: Function
     onCancel: Function
+    setPointCloudSettingStrategy: Function
+    setPointCloudLimit: Function
+
 }, {
   pointSampling: String
   showModelGeometry: Boolean
@@ -70,7 +73,7 @@ class PointCloudSetting extends React.Component <{
         this.state = {
           pointSampling: 'random',
           showModelGeometry: true,
-          pointsLimit: 0,
+          pointsLimit: 1000,
         }
     }
 
@@ -89,6 +92,15 @@ class PointCloudSetting extends React.Component <{
     handleChangePointsLimit = (e) => {
       this.setState({
         pointsLimit: e.target.value
+      })
+    }
+    submitPointCloudSetting = () => {
+      const { pointsLimit, pointSampling } = this.state;
+      const { setPointCloudSettingStrategy, setPointCloudLimit } = this.props;
+      
+      batch(() => {
+        setPointCloudSettingStrategy(pointSampling)
+        setPointCloudLimit(pointsLimit)
       })
     }
 
@@ -125,11 +137,16 @@ class PointCloudSetting extends React.Component <{
           value={pointsLimit}
           onChange={this.handleChangePointsLimit}
         />
-        <Button size="large" variant="contained" color="primary" className={this.classes.button}>
+        <Button size="large" variant="contained" color="primary" onClick={this.submitPointCloudSetting} className={this.classes.button}>
           Change Setting
         </Button>
       </form> 
     }
 }
 
-export default withStyles(styles)(withRouter(PointCloudSetting));
+const mapDispatchToProps = dispatch => ({
+  setPointCloudSettingStrategy: strategy => dispatch(setPointCloudStrategy(strategy)),
+  setPointCloudLimit: limit => dispatch(setPointCloudLimit(limit)),
+})
+
+export default connect(null, mapDispatchToProps)(withStyles(styles)(withRouter(PointCloudSetting)));

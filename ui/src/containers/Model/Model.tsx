@@ -8,7 +8,10 @@ function Model(props) {
     return (
     <div>
         <div className={classes.drawerHeader} />
-        <BuildingViewer onSelectedObject={onSelectedObject} />
+        {
+          //@ts-ignore
+          <BuildingViewer onSelectedObject={onSelectedObject} />
+        }
         <Fab color="primary" aria-label="Add" className={classes.fab} onClick={onClickAddBtn()}>
           <AddIcon />
         </Fab>

@@ -108,7 +108,6 @@ class MeshMutation extends BaseResolver {
     async resolve(parentValue, args, ctx) {
 
         // Todo: id, geometry, and physics should be stored in mongo
-        console.log(args)
         if (args.id.length==0){
             throw new Error("Invalid object id");
         }

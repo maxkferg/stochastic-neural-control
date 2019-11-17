@@ -305,7 +305,6 @@ class BabylonViewer extends React.Component<Props, State> {
                 }
             }
             if (this.props.points) {
-                console.log(this.props.points)
                 this.props.points.forEach(point => {
                     this.createSphere(point.position)
                 })

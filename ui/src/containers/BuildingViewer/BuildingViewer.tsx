@@ -12,6 +12,7 @@ import { difference } from 'lodash';
 const SUBSCRIBE_MESH_POSITION = loader('../../graphql/subscribeMesh.gql');
 import { connect } from 'react-redux';
 
+const BUFFER_POINT = 10000;
 const GET_MESH_BUILDING_QUERY = loader('../../graphql/getMeshesBuilding.gql');
 const POLL_INTERVAL = 5000 // 5 seconds
 const SUB_POINTS_ROBOT = loader('../../graphql/subscribePointsOfRobot.gql');
@@ -47,6 +48,8 @@ class BuildingViewer extends React.Component<Props, State> {
     subScription: any
     subPointCloud: any
     subscriptionPointCloud: any
+    prevPoints: any[]
+
     constructor(props: any) {
       super(props);
       this.state = {
@@ -56,6 +59,7 @@ class BuildingViewer extends React.Component<Props, State> {
         deleteMesh: [],
         points: []
       };
+      this.prevPoints = [];
       this.classes = props.classes;
     }
     
@@ -107,10 +111,13 @@ class BuildingViewer extends React.Component<Props, State> {
       }).subscribe({
         next(data) {
           const { pointCloud } = data.data;
-          console.log(pointCloud.pointsGroup)
-          self.setState({
-            points: pointCloud.pointsGroup
-          })
+          self.prevPoints = self.prevPoints.concat(pointCloud.pointsGroup);
+          if (self.prevPoints.length> BUFFER_POINT) {
+            self.setState({
+              points: pointCloud.pointsGroup
+            })
+            self.prevPoints = []
+          }
         }
       })
     }

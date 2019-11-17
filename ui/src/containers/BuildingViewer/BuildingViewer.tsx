@@ -64,13 +64,12 @@ class BuildingViewer extends React.Component<Props, State> {
     }
     
     async componentDidMount(){
+      let self = this;
       this.subScription = apollo.watchQuery({
         query: GET_MESH_BUILDING_QUERY, 
         pollInterval: POLL_INTERVAL, 
         variables : { buildingId: this.props.match.params.buildingId }}
       ).subscribe(data => {
-        // @ts-ignore
-        let self = this;
         let meshesCurrent = data.data.meshesOfBuilding;
         const meshIdsFromAPI = meshesCurrent.map(el => el.id);
         const meshIdsFromState = this.state.meshesCurrent.map(el => el.id);

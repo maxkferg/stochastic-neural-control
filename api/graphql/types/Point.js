@@ -37,8 +37,8 @@ const PointAttribute = new GraphQLObjectType({
 })
 
 const Robot = new GraphQLObjectType({
-    name: 'Robot',
-    description: 'Robot', 
+    name: 'RobotPoint',
+    description: 'Robot Point', 
     fields: () => ({
         id: ({ type: GraphQLString}) 
     })

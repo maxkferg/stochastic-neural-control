@@ -309,15 +309,6 @@ class BabylonViewer extends React.Component<Props, State> {
                     this.createSphere(point.position)
                 })
             }
-            if (this.props.toggleGeo) {
-                let assetManager = new BABYLON.AssetsManager(this.state.scene);
-                for (let newObject of this.state.renderedObjects) {
-                    if (this.state.scene){
-                        this.createObject(newObject, this.state.scene, assetManager);
-                    }
-                };
-                assetManager.load();
-            }
             if (objectsToBeCreated.length){
                 let assetManager = new BABYLON.AssetsManager(this.state.scene);
                 for (let newObject of objectsToBeCreated) {

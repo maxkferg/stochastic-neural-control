@@ -9,7 +9,7 @@ export const createBuilding = async function(variables) {
 }
 
 export const getBuildings = async function(variables) {
-    return apollo.query({query: GET_BUILDINGS_QUERY, variables});
+    return apollo.query({query: GET_BUILDINGS_QUERY, variables, fetchPolicy: 'network-only'});
 }
 
 type getUserBuilding = {

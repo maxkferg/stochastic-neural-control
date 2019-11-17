@@ -8,8 +8,8 @@ import useStyles from "./styles";
 import { Typography } from "../Wrappers";
 
 export default function PageTitle(props) {
-  var classes = useStyles();
-
+  const classes = useStyles();
+  const { onClick } = props;
   return (
     <div className={classes.pageTitleContainer}>
       <Typography className={classes.typo} variant="h1" size="sm">
@@ -21,6 +21,7 @@ export default function PageTitle(props) {
           variant="contained"
           size="large"
           color="primary"
+          onClick={onClick}
         >
           {props.button}
         </Button>

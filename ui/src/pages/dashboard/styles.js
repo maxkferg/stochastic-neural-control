@@ -1,5 +1,4 @@
 import { makeStyles } from "@material-ui/styles";
-
 export default makeStyles(theme => ({
   container: {
     marginTop: "100px"
@@ -49,6 +48,30 @@ export default makeStyles(theme => ({
   },
   progressBar: {
     backgroundColor: theme.palette.warning.main,
+  },
+  paper: {
+    padding: '10px',
+    outline: 'none',
+    position: 'absolute',
+    width: 400,
+    top: "40%",
+    left: "35%",
+    borderRadius: theme.modal.border.borderRadius,
+    backgroundColor: theme.palette.background.paper,
+    boxShadow: theme.shadows[5],
+    display: 'flex',
+    justifyContent: 'center',
+    flexDirection: 'column'
+  },
+  paperHeader: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    height: '70px',
+    fontSize: '20px',
+    color: 'white',
+    backgroundColor: theme.palette.primary.main
   },
   performanceLegendWrapper: {
     display: "flex",
@@ -114,6 +137,9 @@ export default makeStyles(theme => ({
   mainChartLegentElement: {
     fontSize: "18px !important",
     marginLeft: theme.spacing(1),
+  },
+  button: {
+    display: 'inline-block'
   },
   moreButton: {
     margin: -theme.spacing(1),

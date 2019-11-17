@@ -1,6 +1,7 @@
 const {
     GraphQLObjectType,
     GraphQLString,
+    GraphQLBoolean
 } = require('graphql');
 
 const Building = new GraphQLObjectType({
@@ -17,7 +18,7 @@ const Building = new GraphQLObjectType({
             type: GraphQLString
         },
         isDeleted: {
-            type: GraphQLString
+            type: GraphQLBoolean
         }
     })
 });

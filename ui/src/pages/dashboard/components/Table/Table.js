@@ -43,7 +43,7 @@ export default function TableComponent({ buildings, classes, history }) {
             <TableCell>
               <Button
                 onClick={e => e.stopPropagation()}
-                color={isDeleted ? 'error' : 'active'}
+                color={isDeleted ? 'error' : 'success'}
                 size="small"
                 className="px-2"
                 variant="contained"

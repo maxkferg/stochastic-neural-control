@@ -225,8 +225,10 @@ function isMeshMetadataChanged(ob1: any, ob2: any){
 //@ts-ignore
 export interface Props extends WithStyles<typeof styles>{
     geometry: any[]
-    onSelectedObject: Function,
+    onSelectedObject: Function
     deleteMesh: any[]
+    toggleGeo: boolean
+    points: any[]
 }
 
 interface State {
@@ -271,7 +273,16 @@ class BabylonViewer extends React.Component<Props, State> {
       window.removeEventListener('resize', this.updateWindowDimensions);
     }
 
+    createSphere(position) {
+        const { scene } = this.state;
+        const sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {
+            diameter: 0.1
+        }, scene);
+        sphere.position = new BABYLON.Vector3(...position);
+    }   
+    
     componentDidUpdate(){
+       
         // TODO: Detect whether we have extra geometry as well
         // We can not render geometry until the scene is ready
         if (this.state.scene !== null){
@@ -289,6 +300,20 @@ class BabylonViewer extends React.Component<Props, State> {
                 } else if (isObjectChanged(newObject, prevObject)){
                     this.updateObject(prevObject, newObject, this.state.scene)
                 }
+            }
+            if (this.props.points) {
+                this.props.points.forEach(point => {
+                    this.createSphere(point.position)
+                })
+            }
+            if (this.props.toggleGeo) {
+                let assetManager = new BABYLON.AssetsManager(this.state.scene);
+                for (let newObject of this.state.renderedObjects) {
+                    if (this.state.scene){
+                        this.createObject(newObject, this.state.scene, assetManager);
+                    }
+                };
+                assetManager.load();
             }
             if (objectsToBeCreated.length){
                 let assetManager = new BABYLON.AssetsManager(this.state.scene);
@@ -319,6 +344,9 @@ class BabylonViewer extends React.Component<Props, State> {
      * Stores the parent mesh  as state.renderedMeshes[id]
      */
     createObject = (newObject: any, scene: BABYLON.Scene, assetManager?: BABYLON.AssetsManager) => {
+        if (this.props.toggleGeo || (newObject.type !== "floor" && newObject.type !== "wall")) {
+            return 
+        }
         let self = this;
         let manager = assetManager || new BABYLON.AssetsManager(scene);
         let task = manager.addMeshTask(newObject.name, null, newObject.geometry.directory, newObject.geometry.filename);
@@ -481,6 +509,7 @@ class BabylonViewer extends React.Component<Props, State> {
         );
     }
 }
+
 
 //@ts-ignore
 BabylonViewer.propTypes = {

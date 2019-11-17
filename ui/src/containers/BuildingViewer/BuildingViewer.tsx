@@ -7,12 +7,13 @@ import BabylonViewer from '../BabylonViewer/BabylonViewer';
 import { withStyles, WithStyles, Theme } from '@material-ui/core/styles';
 import apollo from '../../apollo';
 import { withRouter } from 'react-router-dom';
-// import SubscriptionClient from '../../apollo/websocket';
+import SubscriptionClient from '../../apollo/websocket';
 import { loader } from 'graphql.macro';
 import { difference } from 'lodash';
 const SUBSCRIBE_MESH_POSITION = loader('../../graphql/subscribeMesh.gql');
 const GET_MESH_BUILDING_QUERY = loader('../../graphql/getMeshesBuilding.gql');
 const POLL_INTERVAL = 5000 // 5 seconds
+const SUB_POINTS_ROBOT = loader('../../graphql/subscribePointsOfRobot.gql');
 const styles = (theme: Theme) => ({
   fab: {
     margin: theme.spacing(),
@@ -33,6 +34,7 @@ interface State {
   loading: boolean,
   meshesCurrent: any,
   deleteMesh: any[],
+  points: any[]
 }
 
 
@@ -40,6 +42,7 @@ interface State {
 class BuildingViewer extends React.Component<Props, State> {
     classes: any
     subScription: any
+    subPointCloud: any
     constructor(props: any) {
       super(props);
       this.state = {
@@ -47,10 +50,11 @@ class BuildingViewer extends React.Component<Props, State> {
         loading: true,
         meshesCurrent: [],
         deleteMesh: [],
+        points: []
       };
       this.classes = props.classes;
     }
-
+    
     async componentDidMount(){
       this.subScription = apollo.watchQuery({
         query: GET_MESH_BUILDING_QUERY, 
@@ -70,16 +74,31 @@ class BuildingViewer extends React.Component<Props, State> {
           deleteMesh
         });
       })
+      SubscriptionClient.subscribe({
+        query: SUB_POINTS_ROBOT,
+        variables: {
+          id: "5dc5e024a201cd0100000001"
+        }
+      }).subscribe({
+        next(data) {
+          const { pointsGroup } = data;
+          self.setState({
+            points: pointsGroup
+          })
+        }
+      })
      }
+    
     componentWillUnmount() {
       if (this.subScription) {
         this.subScription.unsubscribe();
       }
     }
+
     public render() {
       if (this.state.loading) return 'Loading...';
       if (this.state.error) return `Error! ${this.state.error}`;
-      return <BabylonViewer geometry={this.state.meshesCurrent} deleteMesh={this.state.deleteMesh} onSelectedObject={this.props.onSelectedObject} />
+      return <BabylonViewer points={this.state.points} geometry={this.state.meshesCurrent} deleteMesh={this.state.deleteMesh} onSelectedObject={this.props.onSelectedObject} />
     }
 }
 

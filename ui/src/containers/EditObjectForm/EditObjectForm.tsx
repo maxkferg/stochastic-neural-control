@@ -190,6 +190,7 @@ class EditObjectForm extends React.Component<Props, State> {
       x: this.state.mesh!.x,
       y: this.state.mesh!.y,
       z: this.state.mesh!.z,
+      theta: this.state.mesh!.theta
     }
 
     apollo.mutate({
@@ -379,6 +380,12 @@ class EditObjectForm extends React.Component<Props, State> {
           value={this.state.mesh!.theta}
           margin="normal"
           variant="outlined"
+          onChange={e => {
+            this.state.mesh!.theta = +e.target.value
+            this.setState({
+              mesh: this.state.mesh
+            })
+          }}
         />
         {this.props.type === 'robot' && this.renderControlBot()}
         {this.props.type === 'object' && this.renderUpdateButton()}

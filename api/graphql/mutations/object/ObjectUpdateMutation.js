@@ -21,6 +21,10 @@ class ObjectUpdateMutation extends BaseResolver {
         type: GraphQLFloat,
         description: 'Z position of this object.'
       },
+      theta: {
+        type: GraphQLFloat,
+        description: 'Rotation of this object.'
+      },
     }
   }
 
@@ -54,7 +58,7 @@ class ObjectUpdateMutation extends BaseResolver {
       x: args.x === 'undefined' ? object.x : args.x,
       y: args.y === 'undefined' ? object.y : args.y,
       z: args.z === 'undefined' ? object.z : args.z,
-      theta: object.theta,
+      theta: args.theta === 'undefined' ? object.theta : args.theta,
       scale: object.scale,
       height: object.height,
       width: object.width,

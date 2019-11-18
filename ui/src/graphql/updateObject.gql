@@ -1,0 +1,31 @@
+mutation UpdateObject($id: String!, $x: Float!, $y: Float!, $z: Float!) {
+  updateObject(
+  	id: $id,
+    x: $x,
+    y: $y,
+    z: $z
+  ) {
+  	 id,
+    x,
+    y,
+    z,
+    type,
+    name,
+    theta,
+    scale,
+    height,
+    width,
+    depth,
+    deleted,
+    geometry {
+    	filetype,
+      filename,
+      directory,
+  	},
+    physics {
+      stationary,
+      collision,
+      simulated,
+    },
+  }
+}

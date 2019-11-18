@@ -31,6 +31,7 @@ const styles = (theme: any) => ({
 interface Props extends WithStyles<typeof styles> {
   objectId: string | null
   topic: string
+  type: string | null
 }
 
 
@@ -71,13 +72,13 @@ class RobotTopicChip extends React.Component<Props, State> {
   }
 
   componentDidMount(){
-    if (this.props.objectId){
+    if (this.props.objectId && this.props.type === 'robot'){
       this.fetchRobotData()
     }
   }
 
   componentWillUpdate(prevProps){
-    if (this.props.objectId !== prevProps.objectId) {
+    if (this.props.objectId !== prevProps.objectId && this.props.type === 'robot') {
       this.fetchRobotData()
     }
   }

@@ -163,7 +163,7 @@ function setupObjectButton(objectData: any, parentMesh: any, scene: BABYLON.Scen
     button1.fontSize = 100;
     button1.background = 'green';
     button1.onPointerUpObservable.add(function() {
-        onClick(objectData.id);
+        onClick(objectData.id, objectData.type);
     });
     advancedTexture.addControl(button1);
 }
@@ -410,8 +410,8 @@ class BabylonViewer extends React.Component<Props, State> {
      * onSelectedObject
      * Called when an object in the scene is selected
      */
-    onSelectedObject = (objectId: string) => {
-      this.props.onSelectedObject(objectId);
+    onSelectedObject = (objectId: string, type: string) => {
+      this.props.onSelectedObject(objectId, type);
     }
 
     onSceneMount = (e: SceneEventArgs) => {

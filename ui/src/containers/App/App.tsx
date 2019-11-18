@@ -36,12 +36,12 @@ const styles = theme => ({
     marginRight: drawerWidth,
   },
   appBarShiftLeft: {
-      marginLeft: leftDrawWidth,
-      width: `calc(100% - ${leftDrawWidth}px)`,
-      transition: theme.transitions.create(['width', 'margin'], {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.enteringScreen,
-      }),
+    marginLeft: leftDrawWidth,
+    width: `calc(100% - ${leftDrawWidth}px)`,
+    transition: theme.transitions.create(['width', 'margin'], {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
   },
   menuButton: {
     marginLeft: 12,
@@ -52,10 +52,10 @@ const styles = theme => ({
   },
   fab: {
     margin: theme.spacing(),
-    position: 'absolute'  as 'absolute',
+    position: 'absolute' as 'absolute',
     bottom: 30 + "px",
     right: 30 + "px",
-  } ,
+  },
   drawer: {
     width: drawerWidth,
     flexShrink: 0,
@@ -102,6 +102,7 @@ class PersistentDrawerRight extends React.Component {
     creatingGeometry: true,
     editingObject: false,
     selectedObjectId: "",
+    selectedType: "",
   };
 
   handleDrawerOpen = () => {
@@ -128,13 +129,14 @@ class PersistentDrawerRight extends React.Component {
     });
   }
 
-  onSelectedObject = (objectId: string) => {
+  onSelectedObject = (objectId: string, type: string) => {
     this.setState({
       open: true,
       navMenuOpen: false,
       editingObject: true,
       creatingGeometry: false,
       selectedObjectId: objectId,
+      selectedType: type,
     });
   }
 
@@ -144,14 +146,19 @@ class PersistentDrawerRight extends React.Component {
    * Called when the MiniNav button is clicked in the AppBar
    */
   handleNavMenuClick = () => {
-    this.setState({navMenuOpen: true})
+    this.setState({ navMenuOpen: true })
   }
 
-  renderRightForm(){
-    if (this.state.creatingGeometry){
+  renderRightForm() {
+    if (this.state.creatingGeometry) {
       return <CreateGeometryForm objectId={this.state.selectedObjectId} onSuccess={this.handleDrawerClose} onCancel={this.handleDrawerClose} />
-    } else if (this.state.editingObject){
-      return <EditObjectForm objectId={this.state.selectedObjectId} onSuccess={this.handleDrawerClose} onCancel={this.handleDrawerClose} />
+    } else if (this.state.editingObject) {
+      return <EditObjectForm
+        type={this.state.selectedType}
+        objectId={this.state.selectedObjectId}
+        onSuccess={this.handleDrawerClose}
+        onCancel={this.handleDrawerClose}
+      />
     } else {
       console.error("Should always be creating or editing an object");
       return <p>Edit or create an object</p>
@@ -165,28 +172,28 @@ class PersistentDrawerRight extends React.Component {
     return (
       <div className={classes.root}>
         <CssBaseline />
-        <AppBar 
+        <AppBar
           position="fixed"
           leftOpen={this.state.navMenuOpen}
           rightOpen={open}
-          onSelectedObject={this.onSelectedObject} 
+          onSelectedObject={this.onSelectedObject}
           onNavMenuClick={this.handleNavMenuClick}
           className={classNames(classes.appBar, {
-              [classes.appBarShift]: open,
-              [classes.appBarShiftLeft]: this.state.navMenuOpen,
-            })
+            [classes.appBarShift]: open,
+            [classes.appBarShiftLeft]: this.state.navMenuOpen,
+          })
           }>
         </AppBar>
-        <NavDrawer 
-          open={this.state.navMenuOpen} 
-          onClose={this.handleLeftDrawerClose} 
+        <NavDrawer
+          open={this.state.navMenuOpen}
+          onClose={this.handleLeftDrawerClose}
         />
         <main
           className={classNames(classes.content, {
             [classes.contentShift]: open,
           })}
         >
-          <AppNavigation classes={classes} onSelectedObject={this.onSelectedObject} createGeometry={this.createGeometry}/>
+          <AppNavigation classes={classes} onSelectedObject={this.onSelectedObject} createGeometry={this.createGeometry} />
         </main>
         <Drawer
           className={classes.drawer}
@@ -203,7 +210,7 @@ class PersistentDrawerRight extends React.Component {
             </IconButton>
           </div>
           <Divider />
-          { this.renderRightForm() }
+          {this.renderRightForm()}
         </Drawer>
       </div>
     );

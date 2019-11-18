@@ -30,6 +30,7 @@ export interface Props extends WithStyles<typeof styles>{
   onSelectedObject: Function
   match: any
   pointCloudLimit: any
+  history: any
   pointCloudStrategy: any
 }
 
@@ -47,7 +48,7 @@ class BuildingViewer extends React.Component<Props, State> {
     classes: any
     subScription: any
     subPointCloud: any
-    subscriptionPointCloud: any
+    subscriptionPointCloud: {}
     prevPoints: any[]
 
     constructor(props: any) {
@@ -60,6 +61,7 @@ class BuildingViewer extends React.Component<Props, State> {
         points: []
       };
       this.prevPoints = [];
+      this.subscriptionPointCloud = {};
       this.classes = props.classes;
     }
     
@@ -80,17 +82,27 @@ class BuildingViewer extends React.Component<Props, State> {
           meshesCurrent,
           deleteMesh
         });
-      })
-      this.subscriptionPointCloud = SubscriptionClient.subscribe({
-        query: SUB_POINTS_ROBOT,
-        variables: {
-          id: "5dc5e024a201cd0100000001"
-        }
-      }).subscribe({
-        next(data) {
-          const { pointsGroup } = data;
-          self.setState({
-            points: pointsGroup
+        if (this.props.history.location.pathname.includes("point-cloud")) {
+          meshesCurrent.forEach(mesh => {
+            if (mesh.type === 'robot') {
+              this.subscriptionPointCloud[mesh.id] = SubscriptionClient.subscribe({
+                query: SUB_POINTS_ROBOT,
+                variables: {
+                  id: mesh.id
+                }
+              }).subscribe({
+                next(data) {
+                  const { pointCloud } = data.data;
+                  self.prevPoints = self.prevPoints.concat(pointCloud.pointsGroup);
+                  if (self.prevPoints.length> BUFFER_POINT) {
+                    self.setState({
+                      points: pointCloud.pointsGroup
+                    })
+                    self.prevPoints = []
+                  }
+                }
+              })
+            }
           })
         }
       })
@@ -98,37 +110,45 @@ class BuildingViewer extends React.Component<Props, State> {
 
     componentDidUpdate() {
       const { pointCloudLimit } = this.props;
+      const { meshesCurrent } = this.state;
       let self = this;
-      if (this.subscriptionPointCloud) {
-        this.subscriptionPointCloud.unsubscribe()
-      }
-      this.subscriptionPointCloud = SubscriptionClient.subscribe({
-        query: SUB_POINTS_ROBOT,
-        variables: {
-          id: "5dc5e024a201cd0100000001"
-        }
-      }).subscribe({
-        next(data) {
-          const { pointCloud } = data.data;
-          self.prevPoints = self.prevPoints.concat(pointCloud.pointsGroup);
-          if (self.prevPoints.length> BUFFER_POINT) {
-            self.setState({
-              points: pointCloud.pointsGroup
+      if (this.props.history.location.pathname.includes("point-cloud")) {
+        meshesCurrent.forEach(mesh => {
+          if (mesh.type === 'robot') {
+            this.subscriptionPointCloud[mesh.id] = SubscriptionClient.subscribe({
+              query: SUB_POINTS_ROBOT,
+              variables: {
+                id: mesh.id
+              }
+            }).subscribe({
+              next(data) {
+                const { pointCloud } = data.data;
+                self.prevPoints = self.prevPoints.concat(pointCloud.pointsGroup);
+                if (self.prevPoints.length> BUFFER_POINT) {
+                  self.setState({
+                    points: pointCloud.pointsGroup
+                  })
+                  self.prevPoints = []
+                }
+              }
             })
-            self.prevPoints = []
           }
-        }
-      })
+        })
+      }
     }
 
     componentWillUnmount() {
       if (this.subScription) {
         this.subScription.unsubscribe();
       }
+      if (Object.keys(this.subscriptionPointCloud).length) {
+        for (const property in this.subscriptionPointCloud) {
+          this.subscriptionPointCloud[property].unsubscribe()
+        }
+      }
     }
 
     public render() {
-     
       if (this.state.loading) return 'Loading...';
       if (this.state.error) return `Error! ${this.state.error}`;
       return <BabylonViewer points={this.state.points} geometry={this.state.meshesCurrent} deleteMesh={this.state.deleteMesh} onSelectedObject={this.props.onSelectedObject} />

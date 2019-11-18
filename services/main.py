@@ -52,6 +52,7 @@ Control:
 """
 
 import os
+import sys
 import math
 import time
 import yaml
@@ -61,11 +62,15 @@ import shutil
 import logging
 import argparse
 from config import config
-from simulate.simulator import Simulator
-from simulate.environment import Environment as SimulatorEnvironment
-from auto.src.services.observation import ObservationGenerator
-from auto.src.services.control import ControlGenerator
+
+ROOT = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(ROOT, "auto", "src"))
+
 from maps.main import MapBuilder
+from simulate.simulator import Simulator
+from services.observation import ObservationGenerator
+from services.control import ControlGenerator
+
 
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
 
@@ -76,6 +81,7 @@ observe_parser = subparsers.add_parser('observe', help='Create observations for 
 observe_parser.add_argument('building_id', type=str, help='Building Id')
 observe_parser.add_argument('--config', type=str, default="prod", help='Api Configuration')
 observe_parser.add_argument('--render', action="store_true", default=False, help='Display the environment')
+observe_parser.add_argument('--min_timestep', type=float, default=0.2, help='Minimum time between observations')
 observe_parser.add_argument('--verbosity', type=int, default=0, help='Logging verbosity')
 
 map_parser = subparsers.add_parser('maps', help='Generate maps for every building')
@@ -100,7 +106,12 @@ def observe_subcommand(args, api_config):
     """
     print("Creating Observation generator for ", args.building_id)
     headless = not args.render
-    service = ObservationGenerator(args.building_id, api_config, headless=headless, verbosity=args.verbosity)
+    service = ObservationGenerator(
+        args.building_id,
+        api_config,
+        min_timestep=args.min_timestep,
+        headless=headless,
+        verbosity=args.verbosity)
     service.run()
 
 
@@ -113,14 +124,14 @@ def maps_subcommand(args, api_config):
     builder.run()
 
 
-def simulate_subcommand(args, api_config):
+def simulate_subcommand(args, env_config):
     """
     Simulate Subcommand
     """
     print("Simulation subcommand")
-    headless = not args.render
-    env = SimulatorEnvironment(args.building_id, headless=headless)
-    simulator = Simulator(env, api_config)
+    env_config['building_id'] = args.building_id
+    env_config['headless'] = not args.render
+    simulator = Simulator(env_config)
     simulator.run()
 
 
@@ -144,7 +155,7 @@ def main():
     simulate_parser.set_defaults(function=simulate_subcommand)
     control_parser.set_defaults(function=control_subcommand)
     args = parser.parse_args()
-    
+
     if args.config == "prod":
         api_config = config.prod
     elif args.config == "dev":

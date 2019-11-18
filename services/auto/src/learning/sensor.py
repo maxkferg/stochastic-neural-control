@@ -6,7 +6,7 @@ from ray.rllib.models import ModelCatalog
 from ray.rllib.models.tf.tf_modelv2 import TFModelV2
 from ray.rllib.utils import try_import_tf, try_import_tfp
 from ray.rllib.models.tf.misc import flatten
-from ..agents.sacq.sacq_model import SACQModel
+from agents.sacq.sacq_model import SACQModel
 
 POINTCLOUD_MEAN = 4
 POINTCLOUD_STD = 4

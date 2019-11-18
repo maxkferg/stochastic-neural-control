@@ -22,19 +22,18 @@ from pprint import pprint
 from kafka import KafkaProducer, KafkaConsumer
 from ray.rllib.agents.registry import get_agent_class
 from ray.rllib.policy.sample_batch import DEFAULT_POLICY_ID
+from common import train_env_factory
+from agents.sacq import SACQAgent
 from .utils import KafkaBuffer, NumpyEncoder
-from .. import common
-from ..agents.sacq import SACQAgent
-from ..environment.sensor import SensorEnvironment
-from ..environment.core.env.base import BaseEnvironment
+
 
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
-tune.register_trainable("SACQ", SACQAgent)
 
 NULL_ACTION = [0,0]
 KAFKA_GROUP_NAME = 'Auto control service'
 OBSERVATION_TOPIC = 'robot.events.observation'
 CONTROL_PUBLISH_TOPIC = 'robot.commands.velocity_pred'
+
 
 
 class ControlGenerator():
@@ -56,8 +55,8 @@ class ControlGenerator():
         self.checkpoint_path = checkpoint_path
         self.kafka_producer = self._setup_kafka_producer(kafka_host)
         self.kafka_consumer = KafkaConsumer(
-            OBSERVATION_TOPIC, 
-            bootstrap_servers=kafka_host, 
+            OBSERVATION_TOPIC,
+            bootstrap_servers=kafka_host,
             group_id=KAFKA_GROUP_NAME)
         # Seek to the end of the kafka stream
         self.kafka_consumer.poll()
@@ -73,16 +72,15 @@ class ControlGenerator():
         """
         Publish RL observation to kafka
         """
-        linear = float(action[0])
-        rotation = float(action[1])
+        steer, throttle = action.tolist()
         message = {
           "robot": {
             "id": robot_id,
           },
           "time": time.time(),
           "velocity": {
-            "linear": dict(x=linear, y=0, z=0),
-            "angular": dict(x=0, y=0, z=rotation),
+            "linear": dict(x=throttle, y=0, z=0),
+            "angular": dict(x=0, y=0, z=steer),
           }
         }
         if self.verbosity>0:
@@ -138,10 +136,9 @@ class ControlGenerator():
         if not os.path.exists(config_path):
             config_path = os.path.join(config_dir, "../params.pkl")
         if not os.path.exists(config_path):
-            if not args.config:
-                raise ValueError(
-                    "Could not find params.pkl in either the checkpoint dir or "
-                    "its parent directory.")
+            raise ValueError(
+                "Could not find params.pkl in either the checkpoint dir or "
+                "its parent directory.")
 
         with open(config_path, "rb") as f:
             config = pickle.load(f)

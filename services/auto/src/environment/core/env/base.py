@@ -43,7 +43,7 @@ class BaseEnvironment():
           self.physics = BulletClient(pybullet.GUI)
         self.timestep = timestep
         self.planner = planner
-        self.loader = GeometryLoader(config) 
+        self.loader = GeometryLoader(config)
         self.physics.setPhysicsEngineParameter(numSubSteps=substeps)
         self.physics.setTimeStep(timeStep=timestep)
         self.robots = []

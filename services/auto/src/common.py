@@ -2,13 +2,13 @@ import colored_traceback
 from ray import tune
 from pprint import pprint
 from ray.rllib.models import ModelCatalog
-from .agents.sacq import SACQAgent
-from .learning.robot import RobotModel
-from .learning.sensor import SensorModel
-from .environment.sensor import SensorEnvironment # Env type
-from .environment.multi import MultiEnvironment # Env type
+from agents.sacq import SACQAgent
+from learning.robot import RobotModel
+from learning.sensor import SensorModel
+from environment.sensor import SensorEnvironment # Env type
+from environment.multi import MultiEnvironment # Env type
 colored_traceback.add_hook()
-    
+
 
 def train_env_factory():
     """

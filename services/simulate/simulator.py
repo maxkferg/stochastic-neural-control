@@ -5,18 +5,19 @@ import json
 import urllib
 import shutil
 import logging
-from graphqlclient import GraphQLClient
+import pybullet
 from kafka import KafkaProducer, KafkaConsumer
-from .robots.robot_models import Turtlebot
-from .robots.robot_messages import get_odom_message
-from .graphql import getCurrentGeometry
+from environment.core.env.base import BaseEnvironment
+from environment.core.robots.robot_models import Turtlebot
+from environment.core.robots.robot_messages import get_odom_message
 
 
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
 
-
+KAFKA_ACTION_TOPIC = "robot.commands.velocity_pred"
+KAFKA_GROUP_NAME = "Simulator Service"
 NULL_ACTION = [0,0]
-MAX_ACTION_LIFE = 0.4 # seconds
+MAX_ACTION_LIFE = 0.3 # seconds
 
 
 class Simulator():
@@ -27,83 +28,32 @@ class Simulator():
     Listens to control commands for each object in Kafka
     Publishes updated object locations to Kafka
     """
-
-
-    def __init__(self, env, config):
-        self.env = env
+    def __init__(self, config, timestep=0.4):
         self.robots = {}
-        self.building_id = env.building_id
-        self.graphql_endpoint = config["API"]["host"]
-        self.geometry_endpoint = config["Geometry"]["host"]
-        self.graphql_client = GraphQLClient(self.graphql_endpoint)
-        self.kafka_consumer = self._setup_kafka_consumer(config["Kafka"]["host"])
+        self.timestep = timestep
         self.kafka_producer = self._setup_kafka_producer(config["Kafka"]["host"])
-        logging.info("Created TurtleBot Simulator")
-        logging.info("Reading building geometry from: " + self.graphql_endpoint)
-        logging.info("Reading geometry mesh files from: " + self.geometry_endpoint)
-        logging.info("Reading/writing robot position from: " + config["Kafka"]["host"])
-        self._setup_geometry()
+        self.kafka_consumer = self._setup_kafka_consumer(config["Kafka"]["host"])
+        self.kafka_consumer.poll()
+        self.kafka_consumer.seek_to_end()
+        logging.info("Created TurtleBot Simulator:")
+        logging.info(json.dumps(config, indent=2))
+        self.env = BaseEnvironment(config=config)
         self.env.start()
+        self.action_repeat = int(self.timestep / self.env.timestep)
+        logging.info("Using base timestep %.3f"%self.env.timestep)
+        logging.info("Using action_repeat %i"%self.action_repeat)
+        for robot in self.env.robots:
+            self.robots[robot.id] = robot
 
 
     def _setup_kafka_consumer(self, bootstrap_servers):
-        topic = "robot.commands.velocity"
-        return KafkaConsumer(topic, bootstrap_servers=bootstrap_servers)
+        return KafkaConsumer(KAFKA_ACTION_TOPIC,
+            bootstrap_servers=bootstrap_servers,
+            group_id=KAFKA_GROUP_NAME)
 
 
     def _setup_kafka_producer(self, bootstrap_servers):
         return KafkaProducer(bootstrap_servers=bootstrap_servers)
-
-
-    def _setup_geometry(self):
-        params = dict(building_id=self.building_id)
-        print(params)
-        result = self.graphql_client.execute(getCurrentGeometry, params)
-        result = json.loads(result)
-        for mesh in result['data']['meshesOfBuilding']:
-            logging.info('Loading {}'.format(mesh['name']))
-            relative_url = os.path.join(mesh['geometry']['directory'], mesh['geometry']['filename'])
-            relative_url = relative_url.strip('./')
-            position = [mesh['x'], mesh['y'], mesh['z']]
-            is_stationary = mesh['physics']['stationary']
-            is_simulated = mesh['physics']['simulated']
-            mesh_id = mesh['id']
-            if mesh['type']=='robot' and is_simulated:
-                self.robots[mesh_id] = self._setup_turtlebot(position)
-            elif mesh['type']=='robot':
-                logging.info('Ignoring real robot with name'+mesh['name'])
-            else:
-                url = os.path.join(self.geometry_endpoint, relative_url)
-                fp = os.path.join('/tmp/', relative_url)
-                self._download_geometry_resource(url, fp)
-                self.env.load_geometry(fp, position, scale=mesh["scale"], stationary=is_stationary)
-
-
-    def _setup_turtlebot(self, position):
-        position[2] = max(0,position[2])
-        physics = {}
-        config = {
-            "is_discrete": False,
-            "initial_pos": position,
-            "target_pos": [0,0,0],
-            "resolution": 0.05,
-            "power": 1.0,
-            "linear_power": float(os.environ.get('LINEAR_SPEED', 20)),
-            "angular_power": float(os.environ.get('ANGULAR_SPEED', 10)),
-        }
-        logging.info("Creating Turtlebot at: {}".format(position))
-        turtlebot = Turtlebot(physics, config)
-        turtlebot.set_position(position)
-        return turtlebot
-
-    def _download_geometry_resource(self, url, local_filepath):
-        """
-        Download the file from `url` and save it locally under `file_name`
-        """
-        logging.info("{} -> {}".format(url, local_filepath))
-        os.makedirs(os.path.dirname(local_filepath), exist_ok=True)
-        with urllib.request.urlopen(url) as response, open(local_filepath, 'wb') as out_file:
-            shutil.copyfileobj(response, out_file)
 
 
     def _publish_robot_states(self):
@@ -117,7 +67,53 @@ class Simulator():
             logging.info("Sent robot.events.odom message for robot %s"%robot_id)
 
 
+    def run_sync(self):
+        logging.info("\n\n --- Starting simulation loop (sync) --- \n")
+        linear_velocity = 0
+        angular_velocity = 0
+        last_message_time = {}
+        start = time.time()
+        steps = 0
+
+        while True:
+            result = self.kafka_consumer.poll()
+            for partition, messages in result.items():
+                for msg in messages:
+                    command = json.loads(msg.value)
+                    robot_id = command["robot"]["id"]
+                    linear_velocity = command["velocity"]["linear"]["x"]
+                    angular_velocity = command["velocity"]["angular"]["z"]
+                    action = (angular_velocity, linear_velocity)
+                    last_message_time[robot_id] = time.time()
+                    if not robot_id in self.robots:
+                        logging.error("No robot with id %s"%robot_id)
+                    else:
+                        robot = self.robots[robot_id]
+                        robot.applyAction(action)
+                        logging.info("Robot {} action {}".format(robot_id, action))
+
+            # Stop moving the robot if messages are not flowing
+            for robot_id in self.robots:
+                last_message_received = last_message_time.get(robot_id, 0)
+                if time.time() - last_message_received > MAX_ACTION_LIFE:
+                    robot = self.robots[robot_id]
+                    robot.applyAction(NULL_ACTION)
+
+            for i in range(self.action_repeat):
+                self.env.step()
+                print(".", end="")
+            print()
+            steps += 1
+
+            self._publish_robot_states()
+            time.sleep(0.4)
+
+
     def run(self):
+        self.run_sync()
+
+
+    def _run(self):
         logging.info("\n\n --- Starting simulation loop --- \n")
         linear_velocity = 0
         angular_velocity = 0
@@ -149,7 +145,9 @@ class Simulator():
                     robot = self.robots[robot_id]
                     robot.applyAction(NULL_ACTION)
 
-            self.env.step()
+            for i in self.action_repeat:
+                self.env.step()
+                print(".", end="", flush=True)
             steps+=1
 
             # Push robot position at about 20 Hz

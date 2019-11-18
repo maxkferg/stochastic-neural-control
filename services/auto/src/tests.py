@@ -3,6 +3,7 @@ python tests.py
 """
 import io
 import ray
+import time
 import yaml
 import numpy as np
 import gym
@@ -22,9 +23,8 @@ from common import train_env_factory
 
 
 ENV_CONFIG = {
-    'headless': True,
     'reset_on_target': True,
-    'building_id': '5d97edec93a71c81fb0fbbf1'
+    'building_id': '5dc3fefb14921a7c18cff7e9'
 }
 
 
@@ -58,9 +58,9 @@ def config_from_args(args):
     """
     config = {}
     if args.headless:
-        config["env_config"] = dict(headless=True)
+        config = dict(headless=True)
     if args.render:
-        config["env_config"] = dict(headless=False)
+        config = dict(headless=False)
     return config
 
 
@@ -184,6 +184,17 @@ def test_policy(env, policy):
 
 
 
+def rotate_policy(obs):
+    """
+    Collect checkpoints if they are close
+    """
+    steer = 0.5
+    throttle = 0.5
+    time.sleep(2)
+    return [steer, throttle]
+
+
+
 def checkpoint_policy(obs):
     """
     Collect checkpoints if they are close
@@ -248,6 +259,7 @@ if __name__=="__main__":
     parser = create_parser()
     args = parser.parse_args()
     cfg = extend_config(ENV_CONFIG, config_from_args(args))
+    print(cfg)
     env = train_env_factory()(cfg)
     #test_preprocessor(env)
     #test_random_actions(env)
@@ -258,5 +270,6 @@ if __name__=="__main__":
     #test_collect_target(env)
     #test_policy(env, simple_policy)
     #test_policy(env, safe_policy)
-    test_policy(env, noisey_policy)
+    #test_policy(env, noisey_policy)
     #test_noisey_policy(env)
+    test_policy(env, rotate_policy)

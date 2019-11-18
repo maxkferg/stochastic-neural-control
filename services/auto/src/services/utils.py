@@ -13,6 +13,7 @@ from kafka import KafkaProducer, KafkaConsumer
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
 
 
+
 class KafkaBuffer():
     """
     Keep track of the last message in a Kafka stream
@@ -23,8 +24,8 @@ class KafkaBuffer():
         self.robot_ids = robot_ids
         self.msg_buffer = {}
         self.msg_received = {}
-        self.consumer = KafkaConsumer(topic, 
-            bootstrap_servers=kafka_host, 
+        self.consumer = KafkaConsumer(topic,
+            bootstrap_servers=kafka_host,
             group_id=kafka_group_name)
         # Seek to the end of the kafka stream
         self.consumer.poll()

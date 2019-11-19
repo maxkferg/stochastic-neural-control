@@ -3,9 +3,9 @@ const bcrypt = require('bcrypt');
 const {OAuth2Client} = require('google-auth-library');
 const client = new OAuth2Client(process.env.CLIENT_ID);
 
-// if (typeof(process.env.JWT_SECRET)==="undefined") {
-//     throw Error("JWT_SECRET environment variable must be set")
-// }
+if (typeof(process.env.JWT_SECRET)==="undefined") {
+    throw Error("JWT_SECRET environment variable must be set")
+}
 
 exports.validate = async function (ctx, next) {
     //do your validation by fetching the user here or just return same context

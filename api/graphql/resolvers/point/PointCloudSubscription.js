@@ -26,7 +26,6 @@ class pointCloudSubscription extends BaseResolver {
   }
 
   async resolve (payload, args, context, info) {
-    console.log(args)
     if (args.strategy === 'random') {
       const points = await pointService.getRandomPointsOfRobot(args.id)
       return points[0];

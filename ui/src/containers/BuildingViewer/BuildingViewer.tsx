@@ -15,6 +15,7 @@ const BUFFER_POINT = 10000;
 const GET_MESH_BUILDING_QUERY = loader('../../graphql/getMeshesBuilding.gql');
 const POLL_INTERVAL = 5000 // 5 seconds
 const SUB_POINTS_ROBOT = loader('../../graphql/subscribePointsOfRobot.gql');
+const SUBSCRIBE_MESH_POSITION = loader('../../graphql/subscribeMesh.gql');
 const styles = (theme: Theme) => ({
   fab: {
     margin: theme.spacing(),
@@ -66,6 +67,7 @@ class BuildingViewer extends React.Component<Props, State> {
     }
     
     async componentDidMount(){
+      let self = this;
       this.subScription = apollo.watchQuery({
         query: GET_MESH_BUILDING_QUERY, 
         pollInterval: POLL_INTERVAL, 
@@ -81,6 +83,28 @@ class BuildingViewer extends React.Component<Props, State> {
           meshesCurrent,
           deleteMesh
         });
+        for (let i=0; i<meshesCurrent.length; i++) {
+          SubscriptionClient.subscribe({
+            query: SUBSCRIBE_MESH_POSITION,
+          }).subscribe({
+            next (data) {
+              for (let j=0; j<self.state.meshesCurrent.length; j++){
+                if (self.state.meshesCurrent[j].id==data.data.meshPosition.id){
+                  let meshCopy = Object.assign({}, self.state.meshesCurrent[j]);
+                  meshCopy.x = data.data.meshPosition.position.x
+                  meshCopy.y = data.data.meshPosition.position.y
+                  meshCopy.z = data.data.meshPosition.position.z
+                  meshCopy.theta = data.data.meshPosition.position.theta
+                  self.state.meshesCurrent[j] = meshCopy;
+                  self.setState({meshesCurrent: self.state.meshesCurrent});
+                  if (self.state.meshesCurrent[j].id=="5d3f7bf06e30e20100000004"){
+                    console.log(data.data.meshPosition.position.z)
+                  }
+                }
+              }
+            }
+          });
+        }
       })
      }
 

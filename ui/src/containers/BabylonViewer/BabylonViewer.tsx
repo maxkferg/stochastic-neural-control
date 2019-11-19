@@ -17,7 +17,7 @@ import { Scene, Engine } from 'react-babylonjs';
 import 'babylonjs-loaders';
 import * as BABYLON from 'babylonjs';
 import * as CANNON from 'cannon';
-
+import { connect } from 'react-redux'
 window.CANNON = CANNON;
 // @ts-ignore
 // @ts-ignore
@@ -229,14 +229,15 @@ export interface Props extends WithStyles<typeof styles>{
     deleteMesh: any[]
     toggleGeo: boolean
     points: any[]
+    pointCloudLimit: Number
 }
 
 interface State {
-  width: number
-  height: number
+  width: Number
+  height: Number
   scene: null | BABYLON.Scene
-  renderedObjects: object
-  renderedMeshes: object
+  renderedObjects: Object
+  renderedMeshes: Object
 }
 
 
@@ -244,6 +245,7 @@ interface State {
 
 class BabylonViewer extends React.Component<Props, State> {
     classes: any
+    renderedPoint: BABYLON.Mesh[]
     constructor(props: any) {
       super(props);
       this.state = {
@@ -252,7 +254,9 @@ class BabylonViewer extends React.Component<Props, State> {
           scene: null,
           renderedObjects: {},
           renderedMeshes: {},
+         
       };
+      this.renderedPoint = []
       this.classes = props.classes;
       this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
       // @ts-ignore
@@ -283,6 +287,7 @@ class BabylonViewer extends React.Component<Props, State> {
             position.y,
             position.z
         );
+        return sphere
     }   
     
     componentDidUpdate(){
@@ -305,8 +310,9 @@ class BabylonViewer extends React.Component<Props, State> {
                 }
             }
             if (this.props.points) {
+                this.removeOldPoints()
                 this.props.points.forEach(point => {
-                    this.createSphere(point.position)
+                    this.renderedPoint.push(this.createSphere(point.position))
                 })
             }
             if (objectsToBeCreated.length){
@@ -326,6 +332,13 @@ class BabylonViewer extends React.Component<Props, State> {
         }
     }
 
+    removeOldPoints = () => {
+        const { pointCloudLimit, points } = this.props;
+        if (this.renderedPoint.length + points.length> pointCloudLimit) {
+            this.renderedPoint.forEach(point => point.dispose())
+            this.renderedPoint = []
+        }
+    } 
 
     updateWindowDimensions() {
       this.setState({ width: window.innerWidth, height: window.innerHeight });
@@ -338,9 +351,9 @@ class BabylonViewer extends React.Component<Props, State> {
      * Stores the parent mesh  as state.renderedMeshes[id]
      */
     createObject = (newObject: any, scene: BABYLON.Scene, assetManager?: BABYLON.AssetsManager) => {
-        if (this.props.toggleGeo || (newObject.type !== "floor" && newObject.type !== "wall")) {
-            return 
-        }
+        // if (this.props.toggleGeo || (newObject.type !== "floor" && newObject.type !== "wall")) {
+        //     return 
+        // }
         let self = this;
         let manager = assetManager || new BABYLON.AssetsManager(scene);
         let task = manager.addMeshTask(newObject.name, null, newObject.geometry.directory, newObject.geometry.filename);
@@ -512,6 +525,10 @@ BabylonViewer.propTypes = {
     onSelectedObject: PropTypes.func.isRequired,
 };
 
+const mapStateToProps = state => ({
+    pointCloudLimit: state.pointCloudSetting.limit,
+    pointCloudStrategy: state.pointCloudSetting.strategy
+})
 //@ts-ignore
 
-export default withStyles(styles)(BabylonViewer);
+export default connect(mapStateToProps)(withStyles(styles)(BabylonViewer));

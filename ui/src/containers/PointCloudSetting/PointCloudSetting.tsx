@@ -1,4 +1,5 @@
 import React from 'react';
+import Switch from '@material-ui/core/Switch';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
@@ -8,7 +9,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import { withStyles } from '@material-ui/core/styles';
 import { withRouter } from 'react-router-dom';
 import { connect, batch } from 'react-redux';
-import { setPointCloudStrategy, setPointCloudLimit } from '../../redux/actions/pointCloudSetting';
+import { setPointCloudStrategy, setPointCloudLimit, togglePointCloudSub } from '../../redux/actions/pointCloudSetting';
 const styles = (theme: any) => ({
     root: {
       display: 'flex',
@@ -60,11 +61,13 @@ class PointCloudSetting extends React.Component <{
     onCancel: Function
     setPointCloudSettingStrategy: Function
     setPointCloudLimit: Function
+    togglePointCloudSub: Function
 
 }, {
   pointSampling: String
-  showModelGeometry: Boolean
+  showModelGeometry: boolean
   pointsLimit: Number
+  subPointCloud: boolean
 }> {
     classes: any
     constructor(props) {
@@ -74,6 +77,7 @@ class PointCloudSetting extends React.Component <{
           pointSampling: 'random',
           showModelGeometry: true,
           pointsLimit: 1000,
+          subPointCloud: true
         }
     }
 
@@ -104,10 +108,29 @@ class PointCloudSetting extends React.Component <{
       })
     }
 
+    handleChangeSubPointCloud = () => {
+      this.setState(state => ({
+        subPointCloud: !state.subPointCloud
+      }), () => this.props.togglePointCloudSub(this.state.subPointCloud))
+    }
+    
     render() {
-      const { pointSampling, pointsLimit, showModelGeometry } = this.state;
+      const { pointSampling, pointsLimit, showModelGeometry, subPointCloud } = this.state;
         return <form className={this.classes.container} onSubmit={(e) => e.preventDefault()} noValidate autoComplete="off">
         <Typography className={this.classes.formTitle} variant="h5" gutterBottom >Setting config pointCloud</Typography>
+        <FormControlLabel
+          value="modelGeometry"
+          control={<Switch
+            checked={subPointCloud}
+            onChange={this.handleChangeSubPointCloud}
+            color="primary"
+            value="checkedA"
+            inputProps={{ 'aria-label': 'secondary checkbox' }}
+          />}
+          label="Subscribe point cloud"
+          labelPlacement="start"
+        />
+        
         <FormControlLabel
           value="modelGeometry"
           control={<Checkbox onChange={this.handleChangeShowModelGeo} value={showModelGeometry} color="primary" />}
@@ -147,6 +170,7 @@ class PointCloudSetting extends React.Component <{
 const mapDispatchToProps = dispatch => ({
   setPointCloudSettingStrategy: strategy => dispatch(setPointCloudStrategy(strategy)),
   setPointCloudLimit: limit => dispatch(setPointCloudLimit(limit)),
+  togglePointCloudSub: value => dispatch(togglePointCloudSub(value))
 })
 
 export default connect(null, mapDispatchToProps)(withStyles(styles)(withRouter(PointCloudSetting)));

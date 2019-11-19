@@ -32,6 +32,7 @@ export interface Props extends WithStyles<typeof styles>{
   pointCloudLimit: any
   history: any
   pointCloudStrategy: any
+  subscribePointCloud: boolean
 }
 
 interface State {
@@ -66,7 +67,6 @@ class BuildingViewer extends React.Component<Props, State> {
     }
     
     async componentDidMount(){
-      let self = this;
       this.subScription = apollo.watchQuery({
         query: GET_MESH_BUILDING_QUERY, 
         pollInterval: POLL_INTERVAL, 
@@ -82,9 +82,17 @@ class BuildingViewer extends React.Component<Props, State> {
           meshesCurrent,
           deleteMesh
         });
-        if (this.props.history.location.pathname.includes("point-cloud")) {
-          meshesCurrent.forEach(mesh => {
-            if (mesh.type === 'robot') {
+      })
+     }
+
+    componentDidUpdate() {
+      const { subscribePointCloud } = this.props;
+      const { meshesCurrent } = this.state;
+      let self = this;
+      if (this.props.history.location.pathname.includes("point-cloud")) {
+        meshesCurrent.forEach(mesh => {
+          if (mesh.type === 'robot') {
+            if (subscribePointCloud && !this.subscriptionPointCloud[mesh.id]) {
               this.subscriptionPointCloud[mesh.id] = SubscriptionClient.subscribe({
                 query: SUB_POINTS_ROBOT,
                 variables: {
@@ -102,36 +110,12 @@ class BuildingViewer extends React.Component<Props, State> {
                   }
                 }
               })
+            } else {
+              if (!subscribePointCloud && this.subscriptionPointCloud[mesh.id]) {
+                this.subscriptionPointCloud[mesh.id].unsubscribe()
+                this.subscriptionPointCloud[mesh.id] = null
+              }
             }
-          })
-        }
-      })
-     }
-
-    componentDidUpdate() {
-      const { pointCloudLimit } = this.props;
-      const { meshesCurrent } = this.state;
-      let self = this;
-      if (this.props.history.location.pathname.includes("point-cloud")) {
-        meshesCurrent.forEach(mesh => {
-          if (mesh.type === 'robot') {
-            this.subscriptionPointCloud[mesh.id] = SubscriptionClient.subscribe({
-              query: SUB_POINTS_ROBOT,
-              variables: {
-                id: mesh.id
-              }
-            }).subscribe({
-              next(data) {
-                const { pointCloud } = data.data;
-                self.prevPoints = self.prevPoints.concat(pointCloud.pointsGroup);
-                if (self.prevPoints.length> BUFFER_POINT) {
-                  self.setState({
-                    points: pointCloud.pointsGroup
-                  })
-                  self.prevPoints = []
-                }
-              }
-            })
           }
         })
       }
@@ -151,13 +135,19 @@ class BuildingViewer extends React.Component<Props, State> {
     public render() {
       if (this.state.loading) return 'Loading...';
       if (this.state.error) return `Error! ${this.state.error}`;
+      //@ts-ignore
       return <BabylonViewer points={this.state.points} geometry={this.state.meshesCurrent} deleteMesh={this.state.deleteMesh} onSelectedObject={this.props.onSelectedObject} />
     }
 }
 
+//@ts-ignore
+BuildingViewer.defaultProps = {
+  subscribePointCloud: true
+}
 const mapStateToProps = state => ({
   pointCloudLimit: state.pointCloudSetting.limit,
-  pointCloudStrategy: state.pointCloudSetting.strategy
+  pointCloudStrategy: state.pointCloudSetting.strategy,
+  subscribePointCloud: state.pointCloudSetting.subscribePointCloud
 })
 //@ts-ignore
 export default connect(mapStateToProps)(withStyles(styles)(withRouter(BuildingViewer)));

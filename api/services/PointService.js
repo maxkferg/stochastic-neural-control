@@ -13,6 +13,10 @@ function countPointsGroupOfRobot(robotId) {
 function removePointsGroupOfRobot(robotId) {
     return PointModel.deleteMany({ "robot.id": robotId})
 }
+
+function getRandomPointsOfRobot(robotId) {
+    return PointModel.find({ "robot.id" : robotId}).limit(1)
+}
 function addPointsOfRobot(robot, header, points) {
     const insertPoints = points.map(point => {
         const newPoint = {
@@ -48,5 +52,6 @@ module.exports = {
     getPointsOfRobot,
     addPointsOfRobot,
     countPointsGroupOfRobot,
-    removePointsGroupOfRobot
+    removePointsGroupOfRobot,
+    getRandomPointsOfRobot
 }   

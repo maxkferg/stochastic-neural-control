@@ -9,7 +9,6 @@ import { withRouter } from 'react-router-dom';
 import SubscriptionClient from '../../apollo/websocket';
 import { loader } from 'graphql.macro';
 import { difference } from 'lodash';
-const SUBSCRIBE_MESH_POSITION = loader('../../graphql/subscribeMesh.gql');
 import { connect } from 'react-redux';
 
 const BUFFER_POINT = 10000;
@@ -85,18 +84,46 @@ class BuildingViewer extends React.Component<Props, State> {
       })
      }
 
-    componentDidUpdate() {
-      const { subscribePointCloud } = this.props;
+    componentDidUpdate(nextProps) {
+      const { subscribePointCloud, pointCloudStrategy } = this.props;
       const { meshesCurrent } = this.state;
       let self = this;
       if (this.props.history.location.pathname.includes("point-cloud")) {
         meshesCurrent.forEach(mesh => {
           if (mesh.type === 'robot') {
-            if (subscribePointCloud && !this.subscriptionPointCloud[mesh.id]) {
+
+            if (this.subscriptionPointCloud[mesh.id]) {
+              if (!subscribePointCloud) {
+                this.subscriptionPointCloud[mesh.id].unsubscribe()
+                this.subscriptionPointCloud[mesh.id] = null
+              } else if (pointCloudStrategy !== nextProps.pointCloudStrategy) {
+                this.subscriptionPointCloud[mesh.id].unsubscribe()
+                this.subscriptionPointCloud[mesh.id] = null
+                this.subscriptionPointCloud[mesh.id] = SubscriptionClient.subscribe({
+                  query: SUB_POINTS_ROBOT,
+                  variables: {
+                    id: mesh.id,
+                    strategy: pointCloudStrategy
+                  }
+                }).subscribe({
+                  next(data) {
+                    const { pointCloud } = data.data;
+                    self.prevPoints = self.prevPoints.concat(pointCloud.pointsGroup);
+                    if (self.prevPoints.length> BUFFER_POINT) {
+                      self.setState({
+                        points: pointCloud.pointsGroup
+                      })
+                      self.prevPoints = []
+                    }
+                  }
+                })
+              }
+            } else {
               this.subscriptionPointCloud[mesh.id] = SubscriptionClient.subscribe({
                 query: SUB_POINTS_ROBOT,
                 variables: {
-                  id: mesh.id
+                  id: mesh.id,
+                  strategy: pointCloudStrategy
                 }
               }).subscribe({
                 next(data) {
@@ -110,11 +137,6 @@ class BuildingViewer extends React.Component<Props, State> {
                   }
                 }
               })
-            } else {
-              if (!subscribePointCloud && this.subscriptionPointCloud[mesh.id]) {
-                this.subscriptionPointCloud[mesh.id].unsubscribe()
-                this.subscriptionPointCloud[mesh.id] = null
-              }
             }
           }
         })

@@ -4,7 +4,7 @@ import logger from 'redux-logger'
 import createRootReducer from '../reducers';
 
 
-const PLAN_POINT_CLOUD = 'default';
+const PLAN_POINT_CLOUD = 'latest';
 const LIMIT_POINT = 1000;
 const SUBSCRIBE_POINT_CLOUD = true
 export interface ApplicationState {

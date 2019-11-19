@@ -74,7 +74,7 @@ class PointCloudSetting extends React.Component <{
         super(props);
         this.classes = props.classes;
         this.state = {
-          pointSampling: 'random',
+          pointSampling: 'latest',
           showModelGeometry: true,
           pointsLimit: 1000,
           subPointCloud: true
@@ -130,7 +130,6 @@ class PointCloudSetting extends React.Component <{
           label="Subscribe point cloud"
           labelPlacement="start"
         />
-        
         <FormControlLabel
           value="modelGeometry"
           control={<Checkbox onChange={this.handleChangeShowModelGeo} value={showModelGeometry} color="primary" />}
@@ -146,8 +145,8 @@ class PointCloudSetting extends React.Component <{
           value={pointSampling}
           onChange={this.handleChangePointSampling}
         > 
-          <MenuItem value="random">Random</MenuItem>
           <MenuItem value="latest">Latest</MenuItem>
+          <MenuItem value="random">Random</MenuItem>
         </TextField>
         <TextField
           id="outlined-scale"

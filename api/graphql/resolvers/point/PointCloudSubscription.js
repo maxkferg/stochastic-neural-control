@@ -1,7 +1,7 @@
 const BaseResolver = require('../../BaseResolver');
 const { withFilter } = require('graphql-subscriptions');
 const POINT_CLOUD_TOPIC = "point_cloud_topic";
-
+const pointService = require('../../../services/PointService');
 const {
     GraphQLString,
 } = require('graphql');
@@ -17,11 +17,20 @@ class pointCloudSubscription extends BaseResolver {
       id: {
         type: GraphQLString,
         description: 'robot id for the object'
+      },
+      strategy: {
+        type: GraphQLString,
+        description: 'strategy for subs point cloud'
       }
     }
   }
 
-  resolve (payload, args, context, info) {
+  async resolve (payload, args, context, info) {
+    console.log(args)
+    if (args.strategy === 'random') {
+      const points = await pointService.getRandomPointsOfRobot(args.id)
+      return points[0];
+    }
     // Manipulate and return the new value
     return payload.points;
   }

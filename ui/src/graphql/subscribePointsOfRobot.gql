@@ -1,5 +1,5 @@
-subscription SubscribePointsOfRobot($id: String) {
-    pointCloud(id: $id) {
+subscription SubscribePointsOfRobot($id: String, $strategy: String) {
+    pointCloud(id: $id, strategy: $strategy) {
         pointsGroup {
             position {
                 x

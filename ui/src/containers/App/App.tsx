@@ -8,7 +8,6 @@ import IconButton from '@material-ui/core/IconButton';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import Divider from '@material-ui/core/Divider';
-import AppBar from '../AppBar/AppBar';
 import EditObjectForm from '../EditObjectForm/EditObjectForm';
 import CreateGeometryForm from '../CreateGeometryForm/CreateGeometryForm';
 import AppNavigation from '../../navigation/AppNavigation';
@@ -197,25 +196,6 @@ class PersistentDrawerRight extends React.Component <{
     return (
       <div className={classes.root}>
         <CssBaseline />
-<<<<<<< HEAD
-        <AppBar
-          position="fixed"
-          leftOpen={this.state.navMenuOpen}
-          rightOpen={open}
-          onSelectedObject={this.onSelectedObject}
-          onNavMenuClick={this.handleNavMenuClick}
-          className={classNames(classes.appBar, {
-            [classes.appBarShift]: open,
-            [classes.appBarShiftLeft]: this.state.navMenuOpen,
-          })
-          }>
-        </AppBar>
-        <NavDrawer
-          open={this.state.navMenuOpen}
-          onClose={this.handleLeftDrawerClose}
-        />
-=======
->>>>>>> change style of buildings page WIP
         <main
           className={classNames(classes.content, {
             [classes.contentShift]: open,

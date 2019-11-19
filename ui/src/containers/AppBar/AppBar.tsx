@@ -5,7 +5,6 @@ import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
-import Select from '@material-ui/core/Select';
 import Badge from '@material-ui/core/Badge';
 import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
@@ -41,6 +40,7 @@ const styles = (theme: Theme) =>
       marginRight: 20,
     },
     title: {
+      cursor: 'pointer',
       display: 'none',
       [theme.breakpoints.up('sm')]: {
         display: 'block',
@@ -282,9 +282,6 @@ class PrimaryAppBar extends React.Component<Props, State> {
             <Typography onClick={() => this.props.history.push('/buildings')} className={classes.title} variant="h6" color="inherit" noWrap>
               Building Geometry Server
             </Typography>
-            <Select>
-              <MenuItem>kaka</MenuItem>
-            </Select>
             <div className={classes.grow} />
             <div className={classes.sectionDesktop}>
               <IconButton

@@ -35,6 +35,7 @@ class AppNavigation extends React.Component <{
 			<Route path="/building/:buildingId/model" render={_ => <Model {...this.props} />}/>
 			<Route path="/building/:buildingId/building-map" render={() => <BuildingMap classes={classes}/>} />
 			<Route path="/building/:buildingId/slam" render={_ => <h1>In Progress</h1>}/>
+			<Route path="/building/:buildingId/point-cloud" render={() => <Model {...this.props} />} />
 			<Route component={NoMatch} />
 	  	</Switch>
 	)

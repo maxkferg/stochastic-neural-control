@@ -1,0 +1,19 @@
+subscription SubscribePointsOfRobot($id: String, $strategy: String) {
+    pointCloud(id: $id, strategy: $strategy) {
+        pointsGroup {
+            position {
+                x
+                y
+                z
+            }
+            attribute {
+                r
+                b
+                g 
+            }
+        }
+        robot {
+          id
+        }
+  }
+}

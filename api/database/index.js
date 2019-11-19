@@ -1,4 +1,3 @@
-const async = require('async');
 const path = require('path');
 const fs = require('fs');
 const mongoose = require('mongoose');
@@ -16,18 +15,23 @@ mongoose.Promise = global.Promise;
 function getMongooseModel(domainName, modelsDir) {
     let domain = require(path.join(modelsDir, domainName));
     let schema = mongoose.Schema(domain.schema);
-
+    
     //add all the index for the domain to schema
     domain.indexes.forEach((index) => {
         schema.index(index);
     });
 
+    if (domain.hooks) {
+        if (domain.hooks.type === 'pre') {
+            schema.post(domain.hooks.query, domain.hooks.callback(doc, next))
+        }
+    }
     //initialize the model
     let model = mongoose.model(domainName, schema);
     model.ensureIndexes(function (err) {
         if (err) console.log(err);
     });
-
+    
     return model;
 }
 
@@ -51,27 +55,24 @@ async function processDatabaseModels(modelsDir, databaseURI) {
         connection = await mongoose.connect(databaseURI, config);
         console.log("Database connected to instance at =>", databaseURI);
     } catch (e) {
-        return Promise.reject(e);
+        return e;
     }
 
     if (connection) {
         try {
             let files = fs.readdirSync(modelsDir);
-
             files.forEach(function (file) {
                 let name = file.replace(/\.js$/, '');
                 db[name] = getMongooseModel(name, modelsDir);
-
                 console.info('Loading MongoDB Model:', name);
             });
         } catch (e) {
-            return Promise.reject(e);
+            return e;
         }
     }
-
-    return Promise.resolve(db);
+    return db;
 }
 
 module.exports = {
-    start: processDatabaseModels
+    start: processDatabaseModels,
 };

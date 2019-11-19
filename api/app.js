@@ -1,10 +1,10 @@
+require('dotenv').config()
 const Koa = require('koa');
 const Router = require('koa-router');
 const cors = require('@koa/cors');
 const jwt = require('koa-jwt');
-const GraphQLHTTP = require('koa-graphql');
 const GraphQLSchema = require('./graphql/schema');
-const { ApolloServer, gql } = require('apollo-server-koa');
+const { ApolloServer } = require('apollo-server-koa');
 const startConnectors = require('./connectors')
 const pubSub = require('./connectors/pubSub');
 const Logger = require('./logger');
@@ -15,34 +15,36 @@ const config = require('config');
 const app = new Koa();
 const router = new Router();
 const PORT = config.get('Webserver.port');
-require('dotenv').config()
 
 async function init() {
     const database_schema = __dirname + '/database/mongo';
     const database_uri = config.get("Mongo.host");
     const db = await database.start(database_schema, database_uri);
     await startConnectors(db)
-
     const server = new ApolloServer({
         schema: GraphQLSchema,
         introspection: true,
         playground: true,
         cors: true,
-        context: async (request) => {
-            let user = {}
-            let authenticationHeader;
-            let jwtToken;
-            // Websockets do not have a context object
-            if (!request.ctx){
-                Logger.info("No request context (websocket)")
+        context: async (request)=> {
+            const { connection } = request;
+            let user;
+            if (connection) {
+                return {
+                    influx: influxdb,
+                    db,
+                    pubSub,
+                    ...connection.context
+                };
             } else {
-                authenticationHeader = request.ctx.req.headers.authorization || '';
-                jwtToken = authenticationHeader.split(" ")[1]; 
-            }
-            try {
-                user = await auth.verifyJwtToken(jwtToken);
-            } catch(error){
-                Logger.warn("User could not be authenticated: "+error.message)
+                const authenticationHeader = request.ctx.req.headers.authorization || '';
+                const jwtToken = authenticationHeader.split(" ")[1];
+                try {
+                    user = await auth.verifyJwtToken(jwtToken);
+                } catch(error) {
+                    user = {};
+                    console.log(error)
+                }
             }
             return ({
                 user,
@@ -65,10 +67,8 @@ async function init() {
     //cookie option has been passed to make auth work with graphiql
     router.use(jwt({secret: config.get('JWT.secret'), passthrough: true, cookie: "token"}));
 
-    // //custom method to use parsed token data to validate and populate user
     router.use(auth.validate);
 
-    // //other protected url
     router.get('/protected', (ctx, next) => {
         if (!ctx.user) {
             ctx.status = 401;
@@ -81,7 +81,7 @@ async function init() {
     app.use(router.routes()).use(router.allowedMethods());
 
     //global error logging
-    app.on("error", (err, ctx) => {
+    app.on("error", (err) => {
         console.log('error', err);
         Logger.error(err);
     });

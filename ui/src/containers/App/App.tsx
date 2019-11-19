@@ -13,7 +13,7 @@ import EditObjectForm from '../EditObjectForm/EditObjectForm';
 import CreateGeometryForm from '../CreateGeometryForm/CreateGeometryForm';
 import NavDrawer from '../NavDrawer';
 import AppNavigation from '../../navigation/AppNavigation';
-
+import PointCloudSetting from '../PointCloudSetting/PointCloudSetting';
 const drawerWidth = 340;
 const leftDrawWidth = 240;
 
@@ -95,12 +95,15 @@ const styles = theme => ({
 
 
 // @ts-ignore
-class PersistentDrawerRight extends React.Component {
+class PersistentDrawerRight extends React.Component <{
+  history: any
+}> {
   state = {
     open: false,
     navMenuOpen: false,
     creatingGeometry: true,
     editingObject: false,
+    editPointCloud: false,
     selectedObjectId: "",
     selectedType: "",
   };
@@ -125,7 +128,8 @@ class PersistentDrawerRight extends React.Component {
     this.setState({
       open: true,
       editingObject: false,
-      creatingGeometry: true
+      creatingGeometry: true,
+      editPointCloud: false,
     });
   }
 
@@ -135,11 +139,20 @@ class PersistentDrawerRight extends React.Component {
       navMenuOpen: false,
       editingObject: true,
       creatingGeometry: false,
+      editPointCloud: false,
       selectedObjectId: objectId,
       selectedType: type,
     });
   }
 
+  onEditPointCloud = () => {
+    this.setState({
+      open: true,
+      editingObject: false,
+      creatingGeometry: false,
+      editPointCloud: true,
+    });
+  }
   /** 
    * handleNavMenuClick
    * Expand the navigation draw
@@ -152,16 +165,28 @@ class PersistentDrawerRight extends React.Component {
   renderRightForm() {
     if (this.state.creatingGeometry) {
       return <CreateGeometryForm objectId={this.state.selectedObjectId} onSuccess={this.handleDrawerClose} onCancel={this.handleDrawerClose} />
-    } else if (this.state.editingObject) {
+    } else if (this.state.editingObject){
       return <EditObjectForm
         type={this.state.selectedType}
         objectId={this.state.selectedObjectId}
         onSuccess={this.handleDrawerClose}
         onCancel={this.handleDrawerClose}
       />
+    } else if (this.state.editPointCloud) {
+      return <PointCloudSetting onSuccess={this.handleDrawerClose} onCancel={this.handleDrawerClose} />
     } else {
       console.error("Should always be creating or editing an object");
       return <p>Edit or create an object</p>
+    }
+  }
+  
+  onClickAddBtn = () => {
+    if (this.props.history.location.pathname.includes('/model')) {
+      return this.createGeometry
+    } else if(this.props.history.location.pathname.includes('/point-cloud')) {
+      return this.onEditPointCloud
+    } else { 
+      return this.onSelectedObject
     }
   }
 
@@ -169,6 +194,7 @@ class PersistentDrawerRight extends React.Component {
     // @ts-ignore
     const { classes, theme, history } = this.props;
     const { open } = this.state;
+    console.log(this.props.history)
     return (
       <div className={classes.root}>
         <CssBaseline />
@@ -193,7 +219,7 @@ class PersistentDrawerRight extends React.Component {
             [classes.contentShift]: open,
           })}
         >
-          <AppNavigation classes={classes} onSelectedObject={this.onSelectedObject} createGeometry={this.createGeometry} />
+          <AppNavigation classes={classes} onSelectedObject={this.onSelectedObject} onClickAddBtn={this.onClickAddBtn}/>
         </main>
         <Drawer
           className={classes.drawer}

@@ -4,7 +4,7 @@ const MapGeometry = require('./map');
 const Trajectory = require('./trajectory');
 const Building = require('./building');
 const Robot = require('./robot');
-
+const Point = require('./point');
 
 module.exports = {
     User,
@@ -12,5 +12,6 @@ module.exports = {
     MapGeometry,
     Trajectory,
     Building,
-    Robot
+    Robot,
+    Point
 };

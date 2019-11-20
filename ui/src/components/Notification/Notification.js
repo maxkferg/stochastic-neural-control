@@ -14,6 +14,7 @@ import {
   AccountBox as CustomerIcon,
   Done as ShippedIcon,
   Publish as UploadIcon,
+  Delete as DeleteIcon
 } from "@material-ui/icons";
 import { useTheme } from "@material-ui/styles";
 import classnames from "classnames";
@@ -39,6 +40,7 @@ const typesIcons = {
   report: <ReportIcon />,
   upload: <UploadIcon />,
   disc: <DiscIcon />,
+  delete: <DeleteIcon />
 };
 
 export default function Notification({ variant, ...props }) {
@@ -46,6 +48,20 @@ export default function Notification({ variant, ...props }) {
   var theme = useTheme();
 
   const icon = getIconByType(props.type);
+  const iconDelete = getIconByType('delete');
+
+  const iconDeleteWithStyles = React.cloneElement(iconDelete, {
+    classes: {
+      root: classes.notificationIcon,
+    },
+    style: {
+      color:
+        variant !== "contained" &&
+        theme.palette[props.color] &&
+        theme.palette[props.color].main,
+    },
+  });
+
   const iconWithStyles = React.cloneElement(icon, {
     classes: {
       root: classes.notificationIcon,
@@ -97,13 +113,29 @@ export default function Notification({ variant, ...props }) {
         >
           {props.message}
         </Typography>
-        {props.extraButton && props.extraButtonClick && (
+        
+        {props.extraButtonClick && (
           <Button
             onClick={props.extraButtonClick}
             disableRipple
             className={classes.extraButton}
           >
-            {props.extraButton}
+            <div
+              className={classnames(classes.notificationIconContainer, {
+                [classes.notificationIconContainerContained]: variant === "contained",
+                [classes.notificationIconContainerRounded]: variant === "rounded",
+              })}
+              style={{
+                backgroundColor:
+                  variant === "rounded" &&
+                  theme.palette[props.color] &&
+                  tinycolor(theme.palette[props.color].main)
+                    .setAlpha(0.15)
+                    .toRgbString(),
+              }}
+            >
+              {iconDeleteWithStyles}
+            </div>
           </Button>
         )}
       </div>

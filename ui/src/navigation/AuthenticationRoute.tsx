@@ -14,7 +14,10 @@ function AuthenticationRoute({component: Component, ...rest}) {
         const paddingContent = props.history.location.pathname.includes('buildings');
         if (localStorage.getItem('token')) {
           return <div className={classes.root}>
-                  <Header history={props.history} />
+                  {
+                    //@ts-ignored
+                    <Header history={props.history} />
+                  }
                   <Sidebar />
                   <div
                   className={classnames(classes.content, {

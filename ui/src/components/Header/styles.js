@@ -70,6 +70,9 @@ export default makeStyles(theme => ({
     color: "inherit",
     width: "100%",
   },
+  iconDelete: {
+    color: 'black'
+  },
   inputInput: {
     height: 36,
     padding: 0,

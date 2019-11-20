@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   AppBar,
   Toolbar,
@@ -11,10 +11,14 @@ import {
   NotificationsNone as NotificationsIcon,
   Person as AccountIcon,
   ArrowBack as ArrowBackIcon,
+  Delete as DeleteIcon,
 } from "@material-ui/icons";
+import apollo from '../../apollo';
+import { loader } from 'graphql.macro';
 import classNames from "classnames";
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
 // styles
 import useStyles from "./styles";
 
@@ -30,27 +34,17 @@ import {
 } from "../../context/LayoutContext";
 import { getCurrentUser } from '../../redux/selectors/currentUser'
 
-const notifications = [
-  { id: 0, color: "warning", message: "Check out this awesome ticket" },
-  {
-    id: 1,
-    color: "success",
-    type: "info",
-    message: "What is the best way to get ...",
-  },
-  {
-    id: 2,
-    color: "secondary",
-    type: "notification",
-    message: "This is just a simple notification",
-  },
-  {
-    id: 3,
-    color: "primary",
-    type: "e-commerce",
-    message: "12 new orders has arrived today",
-  },
-];
+const GET_MESH_BUILDING_QUERY = loader('../../graphql/getMeshesBuilding.gql');
+const DELETE_QUERY = loader('../../graphql/deleteMesh.gql');
+
+function genNotification(noti) {
+  return {
+    id: noti.id,
+    color: 'success',
+    type: 'notification',
+    message: noti.name
+  }
+}
 
 function onClickSignOut(history) {
   localStorage.removeItem('token');
@@ -59,18 +53,48 @@ function onClickSignOut(history) {
 
 function Header(props) {
   const classes = useStyles();
+  let querySubscription;
   const { currentUser, history } = props;
   // global
   const layoutState = useLayoutState();
   const layoutDispatch = useLayoutDispatch();
-
+ 
+  
   // local
   const [notificationsMenu, setNotificationsMenu] = useState(null);
   const [isNotificationsUnread, setIsNotificationsUnread] = useState(true);
   const [profileMenu, setProfileMenu] = useState(null);
+  const [meshes, setMesh] = useState([]);
+
+  const handleDelete = async objectId => {
+    toast('Mesh is deleted')
+    try {
+      let vars = {id: objectId};
+      await apollo.mutate({mutation: DELETE_QUERY, variables:vars});
+    } catch(e) {
+      console.log("Failed to delete object",e);
+    }
+  }
+  useEffect(() => {
+    return () => {
+      querySubscription.unsubscribe()
+    }
+  }, [])
+  useEffect(() => {
+    if (!props.match.params.buildingId) {
+      return ;
+    }
+    querySubscription = apollo.watchQuery({
+      query: GET_MESH_BUILDING_QUERY,
+      variables : { buildingId: props.match.params.buildingId }
+    }).subscribe(({ data, loading }) => {
+      setMesh(data.meshesOfBuilding || [])
+    });
+  }, [props.match.params.buildingId]);
 
   return (
     <AppBar position="fixed" className={classes.appBar}>
+      <ToastContainer />
       <Toolbar className={classes.toolbar}>
         <IconButton
           color="inherit"
@@ -115,7 +139,7 @@ function Header(props) {
           className={classes.headerMenuButton}
         >
           <Badge
-            badgeContent={isNotificationsUnread ? notifications.length : null}
+            badgeContent={isNotificationsUnread ? meshes.length : null}
             color="warning"
           >
             <NotificationsIcon classes={{ root: classes.headerIcon }} />
@@ -130,7 +154,8 @@ function Header(props) {
         >
           <AccountIcon classes={{ root: classes.headerIcon }} />
         </IconButton>
-        <Menu
+
+        { meshes.length ? <Menu
           id="notifications-menu"
           open={Boolean(notificationsMenu)}
           anchorEl={notificationsMenu}
@@ -138,16 +163,17 @@ function Header(props) {
           className={classes.headerMenu}
           disableAutoFocusItem
         >
-          {notifications.map(notification => (
+          {meshes.map(mesh => (
             <MenuItem
-              key={notification.id}
+              key={mesh.id}
               onClick={() => setNotificationsMenu(null)}
               className={classes.headerMenuItem}
             >
-              <Notification {...notification} typographyVariant="inherit" />
+              <Notification extraButtonClick={() => handleDelete(mesh.id)} {...genNotification(mesh)} typographyVariant="inherit" />
             </MenuItem>
           ))}
-        </Menu>
+        </Menu> : null
+        }
         <Menu
           id="profile-menu"
           open={Boolean(profileMenu)}
@@ -162,30 +188,6 @@ function Header(props) {
              {currentUser.fullName ? currentUser.fullName : 'Anonymous'} 
             </Typography>
           </div>
-          {/* <MenuItem
-            className={classNames(
-              classes.profileMenuItem,
-              classes.headerMenuItem,
-            )}
-          >
-            <AccountIcon className={classes.profileMenuIcon} /> Profile
-          </MenuItem>
-          <MenuItem
-            className={classNames(
-              classes.profileMenuItem,
-              classes.headerMenuItem,
-            )}
-          >
-            <AccountIcon className={classes.profileMenuIcon} /> Tasks
-          </MenuItem>
-          <MenuItem
-            className={classNames(
-              classes.profileMenuItem,
-              classes.headerMenuItem,
-            )}
-          >
-            <AccountIcon className={classes.profileMenuIcon} /> Messages
-          </MenuItem> */}
           <div className={classes.profileMenuUser}>
             <Typography
               className={classes.profileMenuLink}

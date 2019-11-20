@@ -62,7 +62,6 @@ function Header(props) {
   
   // local
   const [notificationsMenu, setNotificationsMenu] = useState(null);
-  const [isNotificationsUnread, setIsNotificationsUnread] = useState(true);
   const [profileMenu, setProfileMenu] = useState(null);
   const [meshes, setMesh] = useState([]);
 
@@ -134,12 +133,11 @@ function Header(props) {
           aria-controls="mail-menu"
           onClick={e => {
             setNotificationsMenu(e.currentTarget);
-            setIsNotificationsUnread(false);
           }}
           className={classes.headerMenuButton}
         >
           <Badge
-            badgeContent={isNotificationsUnread ? meshes.length : null}
+            badgeContent={meshes.length}
             color="warning"
           >
             <NotificationsIcon classes={{ root: classes.headerIcon }} />

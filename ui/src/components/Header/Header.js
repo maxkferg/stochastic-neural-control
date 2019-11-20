@@ -11,7 +11,6 @@ import {
   NotificationsNone as NotificationsIcon,
   Person as AccountIcon,
   ArrowBack as ArrowBackIcon,
-  Delete as DeleteIcon,
 } from "@material-ui/icons";
 import apollo from '../../apollo';
 import { loader } from 'graphql.macro';
@@ -74,11 +73,15 @@ function Header(props) {
       console.log("Failed to delete object",e);
     }
   }
+
   useEffect(() => {
     return () => {
-      querySubscription.unsubscribe()
+      if (querySubscription) {
+        querySubscription.unsubscribe()
+      }
     }
   }, [])
+
   useEffect(() => {
     if (!props.match.params.buildingId) {
       return ;

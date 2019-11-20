@@ -14,13 +14,9 @@ class UserSignupMutation extends BaseResolver {
                 type: new GraphQLNonNull(GraphQLString),
                 description: 'Password for the user.'
             },
-            firstName: {
+            fullName: {
                 type: new GraphQLNonNull(GraphQLString),
-                description: 'First name of the user.'
-            },
-            lastName: {
-                type: new GraphQLNonNull(GraphQLString),
-                description: 'Last name for the user.'
+                description: 'Full name of the user.'
             },
         };
     }

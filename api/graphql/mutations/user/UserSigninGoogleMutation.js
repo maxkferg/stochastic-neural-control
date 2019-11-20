@@ -29,7 +29,7 @@ class UserSigninGoogleMutation extends BaseResolver {
                } else {
                     const newUserRecord = {
                         email,
-                        firstName: family_name
+                        fullName: family_name
                     }
                     const newUser = new ctx.db.User(newUserRecord);
                     let savedUser = await newUser.save();

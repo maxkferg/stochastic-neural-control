@@ -85,11 +85,11 @@ export default function Pricing(props) {
             Robotics
           </Typography>
           <nav>
-            <Link to='/buildings' className={classes.link}>
+            <Link to='/app/buildings' className={classes.link}>
               Buildings
             </Link>
           </nav>
-          <Button onClick={() => props.history.push('/sign-in')} color="primary" variant="outlined" className={classes.link}>
+          <Button onClick={() => props.history.push('/auth')} color="primary" variant="outlined" className={classes.link}>
             Login
           </Button>
         </Toolbar>

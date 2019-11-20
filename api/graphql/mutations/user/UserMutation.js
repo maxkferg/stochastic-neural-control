@@ -9,13 +9,9 @@ class UserMutation extends BaseResolver {
                 type: GraphQLString,
                 description: 'Password for the user.'
             },
-            firstName: {
+            fullName: {
                 type: GraphQLString,
-                description: 'First name of the user.'
-            },
-            lastName: {
-                type: GraphQLString,
-                description: 'Last name for the user.'
+                description: 'full name of the user.'
             },
             age: {
                 type: GraphQLInt,
@@ -31,8 +27,7 @@ class UserMutation extends BaseResolver {
         let user = await ctx.db.User.find({_id: ctx.user._id});
 
         user.password = args.password || user.password;
-        user.firstName = args.firstName || user.firstName;
-        user.lastName = args.lastName || user.lastName;
+        user.fullName = args.fullName || user.fullName;
         user.age = args.age || user.age;
 
         try {

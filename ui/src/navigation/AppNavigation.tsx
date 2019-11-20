@@ -2,10 +2,9 @@ import React from 'react';
 import { Route, Switch } from 'react-router'
 import Model from '../containers/Model';
 import BuildingMap from '../containers/BuildingMap';
-import NoMatch from '../containers/NoMatch';
 import { getBuilding } from '../services/BuildingServices';
 import { withRouter } from 'react-router-dom';
-   
+import errorPage from '../pages/error/Error';
      
 class AppNavigation extends React.Component <{
 	classes: any
@@ -18,7 +17,6 @@ class AppNavigation extends React.Component <{
 			const building = await getBuilding({ 
 				buildingId: this.props.match.params.buildingId
 			});
-			console.log(building)
 			if (!building.data.getBuilding.id) {
 				throw new Error('Building not found');
 			}
@@ -32,11 +30,11 @@ class AppNavigation extends React.Component <{
 		const { classes } = this.props;
 		return (
 		<Switch>
-			<Route path="/building/:buildingId/model" render={_ => <Model {...this.props} />}/>
-			<Route path="/building/:buildingId/building-map" render={() => <BuildingMap classes={classes}/>} />
-			<Route path="/building/:buildingId/slam" render={_ => <h1>In Progress</h1>}/>
-			<Route path="/building/:buildingId/point-cloud" render={() => <Model {...this.props} />} />
-			<Route component={NoMatch} />
+			<Route path="/app/building/:buildingId/model" render={_ => <Model {...this.props} />}/>
+			<Route path="/app/building/:buildingId/building-map" render={() => <BuildingMap classes={classes}/>} />
+			<Route path="/app/building/:buildingId/slam" render={_ => <h1>In Progress</h1>}/>
+			<Route path="/app/building/:buildingId/point-cloud" render={() => <Model {...this.props} />} />
+			<Route component={errorPage} />
 	  	</Switch>
 	)
 	}

@@ -3,5 +3,6 @@ mutation signInUser($email: String!, $password: String!) {
     authToken
     id
     email
+    fullName
   }
 }

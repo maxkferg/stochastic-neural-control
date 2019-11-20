@@ -21,8 +21,9 @@ class AppNavigation extends React.Component <{
 				throw new Error('Building not found');
 			}
 		} catch(error) {
+			const isGuest = localStorage.getItem('role') === 'guest';
 			//@ts-ignore
-			this.props.history.push('/no-match');
+			!isGuest && this.props.history.push('/no-match');
 		}
 	}
 	

@@ -12,7 +12,7 @@ function AuthenticationRoute({component: Component, ...rest}) {
     return (
       <Route {...rest} render={props =>  {
         const paddingContent = props.history.location.pathname.includes('buildings');
-        if (localStorage.getItem('token')) {
+        if (localStorage.getItem('token') || localStorage.getItem('role') === 'guest') {
           return <div className={classes.root}>
                   {
                     //@ts-ignored

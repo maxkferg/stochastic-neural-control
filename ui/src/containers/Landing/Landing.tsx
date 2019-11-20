@@ -1,10 +1,11 @@
 import React from 'react';
+import { Redirect } from 'react-router-dom'
 import CssBaseline from '@material-ui/core/CssBaseline';
 import { makeStyles } from '@material-ui/core/styles';
 import LandingHeader from '../../components/LandingHeader';
 import LandingContent from '../../components/LandingContent';
 const useStyles = makeStyles(theme => ({
-  'html,body' : {
+  'html,body': {
     height: '100%',
     margin: 0,
   },
@@ -28,14 +29,16 @@ const footers = [
 
 export default function Pricing(props) {
   const classes = useStyles();
-
-  return (
-    <React.Fragment>
-      <CssBaseline />
-      <div className={classes.LandingHeaderContainer}>
-      <LandingHeader />
-      <LandingContent />
-      </div>
-    </React.Fragment>
-  );
+  if (!localStorage.getItem('token')) {
+    return (
+      <React.Fragment>
+        <CssBaseline />
+        <div className={classes.LandingHeaderContainer}>
+          <LandingHeader />
+          <LandingContent />
+        </div>
+      </React.Fragment>
+    );
+  }
+  return <Redirect to='/app/buildings' />
 }

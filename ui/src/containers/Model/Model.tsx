@@ -5,16 +5,21 @@ import AddIcon from '@material-ui/icons/Add';
 
 function Model(props) {
     const { classes, onSelectedObject, onClickAddBtn} = props;
+    const isGuest = localStorage.getItem('role') === 'guest'
     return (
     <div>
         <div className={classes.drawerHeader} />
         {
           //@ts-ignore
-          <BuildingViewer onSelectedObject={onSelectedObject} />
+          <BuildingViewer onSelectedObject={!isGuest ? onSelectedObject : function():void{}} />
         }
-        <Fab color="primary" aria-label="Add" className={classes.fab} onClick={onClickAddBtn()}>
-          <AddIcon />
-        </Fab>
+        {
+          !isGuest
+            ? (<Fab color="primary" aria-label="Add" className={classes.fab} onClick={onClickAddBtn()}>
+                <AddIcon />
+              </Fab>)
+            : null
+        }
     </div>
     )
 }

@@ -60,6 +60,7 @@ function Login(props) {
     const { data } = response;
     if (data.createUser.authToken) {
       localStorage.setItem('token', data.createUser.authToken);
+      localStorage.removeItem('role')
       props.history.push('/app/buildings');
     }
   }
@@ -74,6 +75,7 @@ function Login(props) {
       const { data } = response;
       if (data.signInUser.authToken) {
         props.setCurrentUser(data.signInUser);
+        localStorage.removeItem('role')
         localStorage.setItem('token', data.signInUser.authToken);
         props.history.push('/app/buildings');
       }

@@ -17,11 +17,12 @@ import Table from "./components/Table/Table";
 
 // services
 import { getCurrentUser } from '../../redux/selectors/currentUser'
-import { getBuildings, createBuilding } from '../../services/BuildingServices';
+import { getBuildings, createBuilding, getGuestBuildings } from '../../services/BuildingServices';
 
 
 function Dashboard(props) {
   const classes = useStyles();
+  const isGuest = localStorage.getItem('role') === 'guest'
   const [buildings, setBuildings] = useState([]);
   const { currentUser, history } = props;
   const [open, setOpen] = React.useState(false);
@@ -58,21 +59,22 @@ function Dashboard(props) {
 
   useEffect(() => {
     async function fetchBuildings() {
-      if (currentUser.id) {
-        const responseApollo = await getBuildings({ ownerId: currentUser.id });
+      if (currentUser.id || isGuest) {
+        const responseApollo = isGuest ? await getGuestBuildings() : await getBuildings({ ownerId: currentUser.id });
         const { data } = responseApollo;
-        if (data.building.length) {
-          setBuildings(data.building)
+        const buildings = isGuest ? data.guestBuildings : data.building
+        if (buildings.length) {
+          setBuildings(buildings)
         }
       }
-    } 
+    }
     fetchBuildings()
   }, [currentUser.id])
 
   return (
     <div className={classes.container}>
       <ToastContainer />
-      <PageTitle title="Dashboard" onClick={handleOpen} button="Create Building" />
+      <PageTitle title="Dashboard" onClick={handleOpen} button={!isGuest ? "Create Building" : ''} />
       <Modal
         aria-labelledby="simple-modal-title"
         aria-describedby="simple-modal-description"
@@ -95,7 +97,9 @@ function Dashboard(props) {
             size="large"
             color="primary"
             onClick={handleCreateBuilding}
-          >Create Building</Button>
+          >
+            Create Building
+          </Button>
         </div>
       </Modal>
       <Grid container spacing={4}>

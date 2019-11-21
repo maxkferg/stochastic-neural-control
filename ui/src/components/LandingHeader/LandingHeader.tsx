@@ -50,7 +50,7 @@ export default withRouter(function LandingHeader(props) {
     const { history } = props;
     return (
         <div className={classes.landingHeader}>
-            <div>Robotic</div>
+            <div>Digital Points</div>
             <ul className={classes.navbarList}>
                 <li className={classes.navbarItem}>home</li>
                 <li className={classes.navbarItem}>pricing</li>

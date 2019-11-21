@@ -4,25 +4,26 @@ import logo from './logo.png';
 import { withRouter } from 'react-router-dom';
 const useStyles = makeStyles(theme => ({
     navbarList: {
-        display: 'flex',
+        display: 'inline-flex',
+        height: '20px',
         listStyle: 'none'
     },
     navbarItem: {
-        marginBottom: '25px',
         textTransform: 'uppercase',  
         paddingLeft: '32px',
         cursor: 'pointer',
     },
     landingHeader: {
-        paddingTop: '32px',
         fontSize: '13px',
         display: 'flex',
+        alignItems: 'center',
         fontWeight: 600,
         color: 'white',
         justifyContent: 'space-around',
         fontFamily: "'Open Sans', 'Helvetica', 'Arial', sans-serif"
     },
     logo: {
+        width: "150px"
     },
     loginBtn: {
         cursor: 'pointer',
@@ -50,7 +51,7 @@ export default withRouter(function LandingHeader(props) {
     const { history } = props;
     return (
         <div className={classes.landingHeader}>
-            <div>Digital Points</div>
+            <img className={classes.logo} src={logo} alt="kaka"/>
             <ul className={classes.navbarList}>
                 <li className={classes.navbarItem}>home</li>
                 <li className={classes.navbarItem}>pricing</li>

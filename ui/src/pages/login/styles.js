@@ -43,13 +43,14 @@ export default makeStyles(theme => ({
     height: "100%",
     display: "flex",
     flexDirection: "column",
-    justifyContent: "center",
+    // justifyContent: "center",
     alignItems: "center",
     [theme.breakpoints.down("md")]: {
       width: "50%",
     },
   },
   form: {
+    marginTop: '120px',
     width: 320,
   },
   tab: {

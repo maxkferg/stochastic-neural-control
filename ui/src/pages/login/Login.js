@@ -85,7 +85,7 @@ function Login(props) {
   
   return (
     <Grid container className={classes.container}>
-      <div className={classes.logotypeContainer}>
+      <div onClick={() => props.history.push('/')} className={classes.logotypeContainer}>
         <img src={robotLogo} alt="logo" className={classes.logotypeImage} />
       </div>
       <div className={classes.formContainer}>

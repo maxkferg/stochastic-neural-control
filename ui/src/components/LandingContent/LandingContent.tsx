@@ -1,6 +1,8 @@
 import React from 'react';
 import Hero from './hero.png';
 import { makeStyles } from '@material-ui/styles';
+import { Button } from '@material-ui/core'
+import { withRouter } from 'react-router-dom';
 
 const useStyles = makeStyles(theme => ({
     landingContentImage: {
@@ -27,20 +29,36 @@ const useStyles = makeStyles(theme => ({
     secDescription: {
         marginBottom: '30px',
         fontWeight: 300
+    },
+    guestBtn: {
+        color: 'white',
+        borderColor: 'white',
+        borderWidth: 0,
+        fontSize: 16
     }
 }));
 
-export default function LandingContent(props) {
+export default withRouter(function LandingContent(props) {
     const classes = useStyles();
     return (
         <div className={classes.landingContent}>
             <div className={classes.landingContentDescription}>
                 <div className={classes.firstDescription}>The Manage Building Auto</div>
                 <div className={classes.secDescription}>Easy manage building with automatic bot</div>
+                <Button
+                    variant="outlined"
+                    onClick={() => {
+                        localStorage.setItem('role', 'guest')
+                        props.history.push('/app/buildings')
+                    }}
+                    className={classes.guestBtn}
+                >
+                    View buildings as guest
+                </Button>
             </div>
             <div className={classes.landingContentImage}>
-                <img className={classes.contentImage} src={Hero} alt="hero"/>
+                <img className={classes.contentImage} src={Hero} alt="hero" />
             </div>
         </div>
     )
-}
+})

@@ -1,0 +1,8 @@
+query guestBuildings {
+  guestBuildings {
+    id
+    name
+    owner_id
+    isDeleted
+  }
+}

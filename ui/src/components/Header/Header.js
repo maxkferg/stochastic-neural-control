@@ -5,6 +5,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  Button
 } from "@material-ui/core";
 import {
   Menu as MenuIcon,
@@ -47,6 +48,7 @@ function genNotification(noti) {
 
 function onClickSignOut(history) {
   localStorage.removeItem('token');
+  localStorage.removeItem('role');
   history.push('/')
 }
 
@@ -57,7 +59,7 @@ function Header(props) {
   // global
   const layoutState = useLayoutState();
   const layoutDispatch = useLayoutDispatch();
- 
+  const isGuest = localStorage.getItem('role') === 'guest'
   
   // local
   const [notificationsMenu, setNotificationsMenu] = useState(null);
@@ -130,32 +132,52 @@ function Header(props) {
           Lumin Robotics Admin
         </Typography>
         <div className={classes.grow} />
-        <IconButton
-          color="inherit"
-          aria-haspopup="true"
-          aria-controls="mail-menu"
-          onClick={e => {
-            setNotificationsMenu(e.currentTarget);
-          }}
-          className={classes.headerMenuButton}
-        >
-          <Badge
-            badgeContent={meshes.length}
-            color="warning"
-          >
-            <NotificationsIcon classes={{ root: classes.headerIcon }} />
-          </Badge>
-        </IconButton>
-        <IconButton
-          aria-haspopup="true"
-          color="inherit"
-          className={classes.headerMenuButton}
-          aria-controls="profile-menu"
-          onClick={e => setProfileMenu(e.currentTarget)}
-        >
-          <AccountIcon classes={{ root: classes.headerIcon }} />
-        </IconButton>
-
+        {
+          !isGuest
+            ? (<IconButton
+                color="inherit"
+                aria-haspopup="true"
+                aria-controls="mail-menu"
+                onClick={e => {
+                  setNotificationsMenu(e.currentTarget);
+                }}
+                className={classes.headerMenuButton}
+              >
+                <Badge
+                  badgeContent={meshes.length}
+                  color="warning"
+                >
+                  <NotificationsIcon classes={{ root: classes.headerIcon }} />
+                </Badge>
+              </IconButton>)
+            : null
+        }
+        {
+          !isGuest
+            ? <IconButton
+                aria-haspopup="true"
+                color="inherit"
+                className={classes.headerMenuButton}
+                aria-controls="profile-menu"
+                onClick={e => setProfileMenu(e.currentTarget)}
+              >
+                <AccountIcon classes={{ root: classes.headerIcon }} />
+              </IconButton>
+            : null
+        }
+        {
+          isGuest
+            ? <Button
+                onClick={() => {
+                  localStorage.removeItem('role')
+                  props.history.push('/auth')
+                }}
+                className={classes.link}
+              >
+                Login
+              </Button>
+            : null
+        }
         { meshes.length ? <Menu
           id="notifications-menu"
           open={Boolean(notificationsMenu)}

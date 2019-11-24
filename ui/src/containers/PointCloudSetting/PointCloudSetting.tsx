@@ -9,7 +9,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import { withStyles } from '@material-ui/core/styles';
 import { withRouter } from 'react-router-dom';
 import { connect, batch } from 'react-redux';
-import { setPointCloudStrategy, setPointCloudLimit, togglePointCloudSub } from '../../redux/actions/pointCloudSetting';
+import { setPointCloudStrategy, setPointCloudLimit, togglePointCloudSub, showGeometries } from '../../redux/actions/pointCloudSetting';
 const styles = (theme: any) => ({
     root: {
       display: 'flex',
@@ -62,6 +62,7 @@ class PointCloudSetting extends React.Component <{
     setPointCloudSettingStrategy: Function
     setPointCloudLimit: Function
     togglePointCloudSub: Function
+    showGeometries: Function
 
 }, {
   pointSampling: String
@@ -88,8 +89,9 @@ class PointCloudSetting extends React.Component <{
     }
 
     handleChangeShowModelGeo = (e) => {
+      this.props.showGeometries(e.target.checked)
       this.setState({ 
-        showModelGeometry: e.target.value
+        showModelGeometry: e.target.checked
       })
     }
     
@@ -132,7 +134,7 @@ class PointCloudSetting extends React.Component <{
         />
         <FormControlLabel
           value="modelGeometry"
-          control={<Checkbox onChange={this.handleChangeShowModelGeo} value={showModelGeometry} color="primary" />}
+          control={<Checkbox onChange={this.handleChangeShowModelGeo} checked={showModelGeometry} value={showModelGeometry} color="primary" />}
           label="Show Model Geometry"
           labelPlacement="start"
         />
@@ -168,6 +170,7 @@ class PointCloudSetting extends React.Component <{
 
 const mapDispatchToProps = dispatch => ({
   setPointCloudSettingStrategy: strategy => dispatch(setPointCloudStrategy(strategy)),
+  showGeometries: (showGeo) => dispatch(showGeometries(showGeo)),
   setPointCloudLimit: limit => dispatch(setPointCloudLimit(limit)),
   togglePointCloudSub: value => dispatch(togglePointCloudSub(value))
 })

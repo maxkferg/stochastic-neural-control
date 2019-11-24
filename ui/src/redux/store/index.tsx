@@ -7,6 +7,7 @@ import createRootReducer from '../reducers';
 const PLAN_POINT_CLOUD = 'latest';
 const LIMIT_POINT = 1000;
 const SUBSCRIBE_POINT_CLOUD = true
+const SHOW_GEOMETRIES = true
 export interface ApplicationState {
 
 }
@@ -16,7 +17,8 @@ const initialState = {
   pointCloudSetting: {
     strategy: PLAN_POINT_CLOUD,
     limit: LIMIT_POINT,
-    subscribePointCloud: SUBSCRIBE_POINT_CLOUD
+    subscribePointCloud: SUBSCRIBE_POINT_CLOUD,
+    showGeometries: SHOW_GEOMETRIES
   }
 };
 

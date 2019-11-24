@@ -1,4 +1,4 @@
-import { SET_POINT_CLOUD_SETTING_STRATEGY, SET_POINT_CLOUD_LIMIT, TOGGLE_POINT_CLOUD_SUB } from '../actions/pointCloudSetting';
+import { SET_POINT_CLOUD_SETTING_STRATEGY, SET_POINT_CLOUD_LIMIT, TOGGLE_POINT_CLOUD_SUB, SHOW_GEOMETRIES} from '../actions/pointCloudSetting';
 
 export default function pointCloudSetting(state = {}, action) {
     switch (action.type) {
@@ -16,6 +16,11 @@ export default function pointCloudSetting(state = {}, action) {
         return {
           ...state, 
           subscribePointCloud: action.payload.subscribePointCloud
+        }
+      case SHOW_GEOMETRIES: 
+        return {
+          ...state,
+          showGeometries: action.payload.showGeometries
         }
       default:
         return state

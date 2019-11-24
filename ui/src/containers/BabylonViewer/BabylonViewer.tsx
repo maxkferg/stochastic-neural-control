@@ -229,6 +229,7 @@ export interface Props extends WithStyles<typeof styles>{
     deleteMesh: any[]
     toggleGeo: boolean
     points: any[]
+    showGeometries: boolean
     pointCloudLimit: Number
 }
 
@@ -293,7 +294,18 @@ class BabylonViewer extends React.Component<Props, State> {
     componentDidUpdate(){
         // TODO: Detect whether we have extra geometry as well
         // We can not render geometry until the scene is ready
+       
         if (this.state.scene !== null){
+            let assetManager = new BABYLON.AssetsManager(this.state.scene);
+            if (!this.props.showGeometries) {
+                for (let key in this.state.renderedMeshes) {
+                    this.state.renderedMeshes[key].setEnabled(false)
+                } 
+            } else {
+                for (let key in this.state.renderedMeshes) {
+                    this.state.renderedMeshes[key].setEnabled(true)
+                } 
+            }
             let objectsToBeCreated: any[] = [];
             let objectsToBeDeleted: any[] = this.props.deleteMesh;
             for (let newObjectKey in this.props.geometry){
@@ -316,7 +328,7 @@ class BabylonViewer extends React.Component<Props, State> {
                 })
             }
             if (objectsToBeCreated.length){
-                let assetManager = new BABYLON.AssetsManager(this.state.scene);
+                
                 for (let newObject of objectsToBeCreated) {
                     if (this.state.scene){
                         this.createObject(newObject, this.state.scene, assetManager);
@@ -527,7 +539,8 @@ BabylonViewer.propTypes = {
 
 const mapStateToProps = state => ({
     pointCloudLimit: state.pointCloudSetting.limit,
-    pointCloudStrategy: state.pointCloudSetting.strategy
+    pointCloudStrategy: state.pointCloudSetting.strategy,
+    showGeometries:state.pointCloudSetting.showGeometries,
 })
 //@ts-ignore
 

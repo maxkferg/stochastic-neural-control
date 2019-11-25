@@ -299,11 +299,15 @@ class BabylonViewer extends React.Component<Props, State> {
             let assetManager = new BABYLON.AssetsManager(this.state.scene);
             if (!this.props.showGeometries) {
                 for (let key in this.state.renderedMeshes) {
-                    this.state.renderedMeshes[key].setEnabled(false)
-                } 
+                    if (this.state.renderedMeshes[key]) {
+                        this.state.renderedMeshes[key].setEnabled(false)
+                    }
+                }
             } else {
                 for (let key in this.state.renderedMeshes) {
-                    this.state.renderedMeshes[key].setEnabled(true)
+                    if (this.state.renderedMeshes[key]) {
+                        this.state.renderedMeshes[key].setEnabled(true)
+                    }
                 } 
             }
             let objectsToBeCreated: any[] = [];
@@ -363,9 +367,6 @@ class BabylonViewer extends React.Component<Props, State> {
      * Stores the parent mesh  as state.renderedMeshes[id]
      */
     createObject = (newObject: any, scene: BABYLON.Scene, assetManager?: BABYLON.AssetsManager) => {
-        // if (this.props.toggleGeo || (newObject.type !== "floor" && newObject.type !== "wall")) {
-        //     return 
-        // }
         let self = this;
         let manager = assetManager || new BABYLON.AssetsManager(scene);
         let task = manager.addMeshTask(newObject.name, null, newObject.geometry.directory, newObject.geometry.filename);
@@ -379,13 +380,13 @@ class BabylonViewer extends React.Component<Props, State> {
         if (newObject.type=="wall" || newObject.type=="floor"){
             parent.scaling = new BABYLON.Vector3(newObject.scale, newObject.scale, -newObject.scale);
         }
-
+        
         task.onSuccess = function(t: any){
             t.loadedMeshes.forEach((mesh) => {
                 mesh.parent = parent;
             });
             if (newObject.type=="floor"){
-                setupFloor(newObject, parent, t.loadedMeshes, scene);
+                // setupFloor(newObject, parent, t.loadedMeshes, scene);
             } else if (newObject.type=="wall"){
                 setupWall(newObject, parent, scene);
             } else if (newObject.type=="robot"){

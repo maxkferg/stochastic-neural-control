@@ -36,7 +36,7 @@ export default class GeometrySingleton {
               filetype: "obj",
               filename: "baseball.obj",
               directory: "/geometry/objects/baseball/",
-              scale: 0.001,
+              scale: 0.01,
             },
             "box": {
               id: "box-",
@@ -45,7 +45,7 @@ export default class GeometrySingleton {
               filetype: "obj",
               filename: "box.obj",
               directory: "/geometry/objects/box/",
-              scale: 0.001,
+              scale: 0.1,
             },
             "bucket": {
               id: "bucket-",
@@ -54,7 +54,7 @@ export default class GeometrySingleton {
               filetype: "obj",
               filename: "bucket.obj",
               directory: "/geometry/objects/bucket/",
-              scale: 0.001,
+              scale: 0.1,
             },
             "cycle": {
               id: "cycle-",
@@ -63,7 +63,7 @@ export default class GeometrySingleton {
               filetype: "obj",
               filename: "cycle.obj",
               directory: "/geometry/objects/cycle/",
-              scale: 0.001,
+              scale: 0.01,
             },
             "chair": {
               id: "chair-",
@@ -97,18 +97,18 @@ export default class GeometrySingleton {
               name: "hard-hat-",
               type: "object",
               filetype: "obj",
-              filename: "hard-hat.obj",
+              filename: "helmet.obj",
               directory: "/geometry/objects/hard-hat/",
-              scale: 0.001,
+              scale: 0.003,
             },
             "recycle bin": {
               id: "recycle-bin-",
               name: "recycle-bin-",
               type: "object",
               filetype: "obj",
-              filename: "recycle bin.obj",
+              filename: "officebin.obj",
               directory: "/geometry/objects/recycle-bin/",
-              scale: 0.001,
+              scale: 0.02,
             },
             "playground-walls": {
               id: "playground-walls-",

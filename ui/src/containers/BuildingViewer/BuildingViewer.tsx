@@ -76,7 +76,6 @@ class BuildingViewer extends React.Component<Props, State> {
         const meshIdsFromAPI = meshesCurrent.map(el => el.id);
         const meshIdsFromState = this.state.meshesCurrent.map(el => el.id);
         const deleteMesh = difference(meshIdsFromState, meshIdsFromAPI);
-
         this.setState({
           loading: false,
           meshesCurrent,
@@ -92,7 +91,6 @@ class BuildingViewer extends React.Component<Props, State> {
       if (this.props.history.location.pathname.includes("point-cloud")) {
         meshesCurrent.forEach(mesh => {
           if (mesh.type === 'robot') {
-
             if (this.subscriptionPointCloud[mesh.id]) {
               if (!subscribePointCloud) {
                 this.subscriptionPointCloud[mesh.id].unsubscribe()

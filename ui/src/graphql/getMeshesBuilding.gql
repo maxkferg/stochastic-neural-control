@@ -11,6 +11,7 @@ query GetMeshesBuilding($buildingId: String!) {
         depth,
         scale,
         type,
+        building_id,
         geometry {
           filetype
           filename

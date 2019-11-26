@@ -39,7 +39,8 @@ interface State {
   loading: boolean,
   meshesCurrent: any,
   deleteMesh: any[],
-  points: any[]
+  points: any[],
+  marker: boolean
 }
 
 
@@ -58,7 +59,8 @@ class BuildingViewer extends React.Component<Props, State> {
         loading: true,
         meshesCurrent: [],
         deleteMesh: [],
-        points: []
+        points: [],
+        marker: false,
       };
       this.prevPoints = [];
       this.subscriptionPointCloud = {};
@@ -79,12 +81,13 @@ class BuildingViewer extends React.Component<Props, State> {
         this.setState({
           loading: false,
           meshesCurrent,
-          deleteMesh
+          deleteMesh,
+          marker: !this.state.marker
         });
       })
      }
 
-    componentDidUpdate(nextProps) {
+    componentDidUpdate(prevProps) {
       const { subscribePointCloud, pointCloudStrategy } = this.props;
       const { meshesCurrent } = this.state;
       let self = this;
@@ -95,7 +98,7 @@ class BuildingViewer extends React.Component<Props, State> {
               if (!subscribePointCloud) {
                 this.subscriptionPointCloud[mesh.id].unsubscribe()
                 this.subscriptionPointCloud[mesh.id] = null
-              } else if (pointCloudStrategy !== nextProps.pointCloudStrategy) {
+              } else if (pointCloudStrategy !== prevProps.pointCloudStrategy) {
                 this.subscriptionPointCloud[mesh.id].unsubscribe()
                 this.subscriptionPointCloud[mesh.id] = null
                 this.subscriptionPointCloud[mesh.id] = SubscriptionClient.subscribe({
@@ -140,6 +143,28 @@ class BuildingViewer extends React.Component<Props, State> {
           }
         })
       }
+
+      if (this.props.match.params.buildingId !== prevProps.match.params.buildingId) {
+        if (this.subScription) this.subScription.unsubscribe();
+        this.subScription = apollo.watchQuery({
+          query: GET_MESH_BUILDING_QUERY, 
+          pollInterval: POLL_INTERVAL, 
+          variables : { buildingId: this.props.match.params.buildingId }}
+        ).subscribe(data => {
+          let meshesCurrent = data.data.meshesOfBuilding;
+          const meshIdsFromAPI = meshesCurrent.map(el => el.id);
+          const meshIdsFromState = this.state.meshesCurrent.map(el => el.id);
+          const deleteMesh = difference(meshIdsFromState, meshIdsFromAPI);
+
+          this.setState({
+            loading: false,
+            meshesCurrent,
+            deleteMesh,
+            marker: !this.state.marker
+          });
+        })
+    }
+
     }
 
     componentWillUnmount() {
@@ -154,10 +179,15 @@ class BuildingViewer extends React.Component<Props, State> {
     }
 
     public render() {
-      if (this.state.loading) return 'Loading...';
+      // if (this.state.loading) return 'Loading...';
       if (this.state.error) return `Error! ${this.state.error}`;
       //@ts-ignore
-      return <BabylonViewer points={this.state.points} geometry={this.state.meshesCurrent} deleteMesh={this.state.deleteMesh} onSelectedObject={this.props.onSelectedObject} />
+      return <BabylonViewer marker={this.state.marker}
+        points={this.state.points}
+        geometry={this.state.meshesCurrent}
+        deleteMesh={this.state.deleteMesh}
+        onSelectedObject={this.props.onSelectedObject}
+      />
     }
 }
 

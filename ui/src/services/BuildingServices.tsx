@@ -14,7 +14,6 @@ export const getBuildings = async function(variables) {
 }
 
 export const getGuestBuildings = async function () {
-    console.log('vao day')
     return apollo.query({ query: GET_GUEST_BUILDINGS_QUERY });
 }
 

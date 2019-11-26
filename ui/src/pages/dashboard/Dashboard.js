@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Grid,
   Modal,
@@ -17,14 +17,13 @@ import Table from "./components/Table/Table";
 
 // services
 import { getCurrentUser } from '../../redux/selectors/currentUser'
-import { getBuildings, createBuilding, getGuestBuildings } from '../../services/BuildingServices';
+import { createBuilding } from '../../services/BuildingServices';
 
 
 function Dashboard(props) {
   const classes = useStyles();
   const isGuest = localStorage.getItem('role') === 'guest'
-  const [buildings, setBuildings] = useState([]);
-  const { currentUser, history } = props;
+  const { currentUser, history, buildings, isFetchBuildings, setIsFetchBuildings } = props;
   const [open, setOpen] = React.useState(false);
   const [buildingName, setBuildingName] = useState('');
   const handleOpen = () => {
@@ -43,11 +42,7 @@ function Dashboard(props) {
     const building = await createBuilding(variables);
     const { data } = building;
     if (data.createBuilding.id) {
-        const responseApollo = await getBuildings({ ownerId: currentUser.id });
-        const { data } = responseApollo;
-        if (data.building.length) {
-          setBuildings(data.building)
-        }
+        setIsFetchBuildings(!isFetchBuildings)
         handleClose()
         toast('Building created')
     }
@@ -56,20 +51,6 @@ function Dashboard(props) {
   const handleChangeBuildingName = e => {
     setBuildingName(e.target.value)
   }
-
-  useEffect(() => {
-    async function fetchBuildings() {
-      if (currentUser.id || isGuest) {
-        const responseApollo = isGuest ? await getGuestBuildings() : await getBuildings({ ownerId: currentUser.id });
-        const { data } = responseApollo;
-        const buildings = isGuest ? data.guestBuildings : data.building
-        if (buildings.length) {
-          setBuildings(buildings)
-        }
-      }
-    }
-    fetchBuildings()
-  }, [currentUser.id])
 
   return (
     <div className={classes.container}>

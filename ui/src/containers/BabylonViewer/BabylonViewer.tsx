@@ -327,11 +327,12 @@ class BabylonViewer extends React.Component<Props, State> {
                     this.updateObject(prevObject, newObject, this.state.scene)
                 }
             }
-            Object.values(this.state.renderedObjects).forEach(elem => {
-                elem.building_id !== this.props.match.params.buildingId
-                ? delete this.state.renderedObjects[elem.id]
-                : null
-            })
+
+            for (let key in this.state.renderedObjects) {
+                if (this.state.renderedObjects[key]!== this.props.match.params.buildingId) {
+                    delete this.state.renderedObjects[key]
+                }
+            }
 
             this.setState({
                 renderedObjects: this.state.renderedObjects

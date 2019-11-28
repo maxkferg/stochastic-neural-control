@@ -26,7 +26,6 @@ import useStyles from "./styles";
 // components
 import { Badge, Typography } from "../Wrappers/Wrappers";
 import Notification from "../Notification/Notification";
-import BuildingMenu from "../BuildingMenu"
 
 // context
 import {
@@ -68,7 +67,6 @@ function Header(props) {
   const [profileMenu, setProfileMenu] = useState(null);
   const [meshes, setMesh] = useState([]);
   const [buildingMenu, setBuildingMenu] = useState(null)
-
   const handleDelete = async objectId => {
     toast('Mesh is deleted')
     try {
@@ -150,7 +148,7 @@ function Header(props) {
               badgeContent={buildings.length}
               color="warning"
             >
-              <BuildingIcon classes={{ root: classes.headerIcon }} />
+              <BuildingIcon classes={{ root: classes.headerIcon }} /> 
             </Badge>
           </IconButton>
           : null
@@ -244,12 +242,24 @@ function Header(props) {
             </Typography>
           </div>
         </Menu>
-        <BuildingMenu
-          buildingMenu={buildingMenu}
+        <Menu
+          id="notifications-menu"
+          open={Boolean(buildingMenu)}
+          anchorEl={buildingMenu}
           onClose={() => setBuildingMenu(null)}
-          buildings={buildings}
-          selectedBuilding={props.match.params.buildingId}
-        />
+          className={classes.headerMenu}
+          disableAutoFocusItem
+        >
+          {buildings.map(building => (
+            <MenuItem
+              key={building.id}
+              className={classes.headerMenuItem}
+              onClick={() => { history.push(`/app/building/${building.id}/model`)} } 
+            >
+             {building.name} 
+            </MenuItem>
+          ))}
+        </Menu> 
       </Toolbar>
     </AppBar>
   );

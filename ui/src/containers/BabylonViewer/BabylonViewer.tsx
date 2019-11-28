@@ -18,6 +18,7 @@ import 'babylonjs-loaders';
 import * as BABYLON from 'babylonjs';
 import * as CANNON from 'cannon';
 import { connect } from 'react-redux'
+import { withRouter } from 'react-router-dom'
 window.CANNON = CANNON;
 // @ts-ignore
 // @ts-ignore
@@ -231,6 +232,8 @@ export interface Props extends WithStyles<typeof styles>{
     points: any[]
     showGeometries: boolean
     pointCloudLimit: Number
+    marker: boolean
+    match: any
 }
 
 interface State {
@@ -291,11 +294,10 @@ class BabylonViewer extends React.Component<Props, State> {
         return sphere
     }   
     
-    componentDidUpdate(){
+    componentDidUpdate(prevProps){
         // TODO: Detect whether we have extra geometry as well
         // We can not render geometry until the scene is ready
-       
-        if (this.state.scene !== null){
+        if (this.state.scene !== null && this.props.marker !== prevProps.marker){
             let assetManager = new BABYLON.AssetsManager(this.state.scene);
             if (!this.props.showGeometries) {
                 for (let key in this.state.renderedMeshes) {
@@ -325,6 +327,17 @@ class BabylonViewer extends React.Component<Props, State> {
                     this.updateObject(prevObject, newObject, this.state.scene)
                 }
             }
+
+            for (let key in this.state.renderedObjects) {
+                if (this.state.renderedObjects[key]!== this.props.match.params.buildingId) {
+                    delete this.state.renderedObjects[key]
+                }
+            }
+
+            this.setState({
+                renderedObjects: this.state.renderedObjects
+            })
+
             if (this.props.points) {
                 this.removeOldPoints()
                 this.props.points.forEach(point => {
@@ -332,7 +345,6 @@ class BabylonViewer extends React.Component<Props, State> {
                 })
             }
             if (objectsToBeCreated.length){
-                
                 for (let newObject of objectsToBeCreated) {
                     if (this.state.scene){
                         this.createObject(newObject, this.state.scene, assetManager);
@@ -545,4 +557,4 @@ const mapStateToProps = state => ({
 })
 //@ts-ignore
 
-export default connect(mapStateToProps)(withStyles(styles)(BabylonViewer));
+export default connect(mapStateToProps)(withStyles(styles)(withRouter(BabylonViewer)));

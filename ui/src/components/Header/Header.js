@@ -12,6 +12,7 @@ import {
   NotificationsNone as NotificationsIcon,
   Person as AccountIcon,
   ArrowBack as ArrowBackIcon,
+  Domain as BuildingIcon,
 } from "@material-ui/icons";
 import apollo from '../../apollo';
 import { loader } from 'graphql.macro';
@@ -55,7 +56,7 @@ function onClickSignOut(history) {
 function Header(props) {
   const classes = useStyles();
   let querySubscription;
-  const { currentUser, history } = props;
+  const { currentUser, history, buildings } = props;
   // global
   const layoutState = useLayoutState();
   const layoutDispatch = useLayoutDispatch();
@@ -65,7 +66,7 @@ function Header(props) {
   const [notificationsMenu, setNotificationsMenu] = useState(null);
   const [profileMenu, setProfileMenu] = useState(null);
   const [meshes, setMesh] = useState([]);
-
+  const [buildingMenu, setBuildingMenu] = useState(null)
   const handleDelete = async objectId => {
     toast('Mesh is deleted')
     try {
@@ -132,6 +133,26 @@ function Header(props) {
           Lumin Robotics Admin
         </Typography>
         <div className={classes.grow} />
+        {
+          !isGuest
+        ? <IconButton
+            color="inherit"
+            aria-haspopup="true"
+            aria-controls="building-menu"
+            onClick={e => {
+              setBuildingMenu(e.currentTarget);
+            }}
+            className={classes.headerMenuButton}
+          >
+            <Badge
+              badgeContent={buildings.length}
+              color="warning"
+            >
+              <BuildingIcon classes={{ root: classes.headerIcon }} /> 
+            </Badge>
+          </IconButton>
+          : null
+        }
         {
           !isGuest
             ? (<IconButton
@@ -221,6 +242,24 @@ function Header(props) {
             </Typography>
           </div>
         </Menu>
+        <Menu
+          id="notifications-menu"
+          open={Boolean(buildingMenu)}
+          anchorEl={buildingMenu}
+          onClose={() => setBuildingMenu(null)}
+          className={classes.headerMenu}
+          disableAutoFocusItem
+        >
+          {buildings.map(building => (
+            <MenuItem
+              key={building.id}
+              className={classes.headerMenuItem}
+              onClick={() => { history.push(`/app/building/${building.id}/model`)} } 
+            >
+             {building.name} 
+            </MenuItem>
+          ))}
+        </Menu> 
       </Toolbar>
     </AppBar>
   );

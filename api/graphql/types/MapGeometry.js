@@ -1,10 +1,7 @@
 const {
     GraphQLObjectType,
     GraphQLString,
-    GraphQLInt,
     GraphQLList,
-    GraphQLFloat,
-    GraphQLBoolean,
 } = require('graphql');
 const { GraphQLDateTime } = require('graphql-iso-date');
 const MapPolygon = require('./MapPolygon.js')

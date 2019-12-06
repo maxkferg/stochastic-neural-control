@@ -331,7 +331,7 @@ class EditObjectForm extends React.Component<Props, State> {
           variant="outlined"
           label="X"
           type="number"
-          value={this.state.mesh!.x}
+          defaultValue={this.state.mesh!.x}
           onChange={e => {
             this.state.mesh!.x = +e.target.value
             this.setState({
@@ -345,7 +345,7 @@ class EditObjectForm extends React.Component<Props, State> {
           label="Y"
           type="number"
           className={this.classes.textField}
-          value={this.state.mesh!.y}
+          defaultValue={this.state.mesh!.y}
           margin="normal"
           variant="outlined"
           onChange={e => {
@@ -361,7 +361,7 @@ class EditObjectForm extends React.Component<Props, State> {
           label="Z"
           type="number"
           className={this.classes.textField}
-          value={this.state.mesh!.z}
+          defaultValue={this.state.mesh!.z}
           margin="normal"
           variant="outlined"
           onChange={e => {
@@ -377,7 +377,7 @@ class EditObjectForm extends React.Component<Props, State> {
           type="number"
           label="rotation"
           className={this.classes.textField}
-          value={this.state.mesh!.theta}
+          defaultValue={this.state.mesh!.theta}
           margin="normal"
           variant="outlined"
           onChange={e => {

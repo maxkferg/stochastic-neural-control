@@ -59,6 +59,7 @@ const styles = theme => ({
     flexShrink: 0,
   },
   drawerPaper: {
+    marginTop: "60px",
     width: drawerWidth,
   },
   drawerHeader: {
@@ -192,7 +193,6 @@ class PersistentDrawerRight extends React.Component <{
     // @ts-ignore
     const { classes, theme } = this.props;
     const { open } = this.state;
-    console.log(this.props.history)
     return (
       <div className={classes.root}>
         <CssBaseline />

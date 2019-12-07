@@ -28,31 +28,30 @@ import {
 
 function genStructureSideBar(buildingId) {
   const structure = [
-    { id: 0, label: "Buildings", link: `/app/buildings`, icon: <BuildingIcon /> },
     {
-      id: 1,
+      id: 0,
       label: "Model",
       link: `/app/building/${buildingId}/model`,
       icon: <LocationCityIcon />,
       disabled: !buildingId
     },
-    { id: 2, label: "Map", link: `/app/building/${buildingId}/building-map`, icon: <MapIcon />, disabled: !buildingId },
+    { id: 1, label: "Map", link: `/app/building/${buildingId}/building-map`, icon: <MapIcon />, disabled: !buildingId },
     {
-      id: 3,
+      id: 2,
       label: "Slam",
       link: `/app/building/${buildingId}/slam`,
       icon: <SlamIcon />,
       disabled: !buildingId
     },
     {
-      id: 4,
+      id: 3,
       label: "Point Cloud",
       link: `/app/building/${buildingId}/point-cloud`,
       icon: <PointCloudIcon />,
       disabled: !buildingId
     },
-    { id: 5, type: "divider" },
-    { id: 6, label: "Settings", link: "/app/setting", icon: <SettingIcon /> },
+    { id: 4, type: "divider" },
+    { id: 5, label: "Settings", link: "/app/setting", icon: <SettingIcon /> },
   ];
   return structure
 }

@@ -103,31 +103,20 @@ function Header(props) {
       <Toolbar className={classes.toolbar}>
         <IconButton
           color="inherit"
-          onClick={() => toggleSidebar(layoutDispatch)}
+          onClick={() => props.history.push('/app/buildings')}
           className={classNames(
             classes.headerMenuButton,
             classes.headerMenuButtonCollapse,
           )}
         >
-          {layoutState.isSidebarOpened ? (
-            <ArrowBackIcon
-              classes={{
-                root: classNames(
-                  classes.headerIcon,
-                  classes.headerIconCollapse,
-                ),
-              }}
-            />
-          ) : (
-            <MenuIcon
-              classes={{
-                root: classNames(
-                  classes.headerIcon,
-                  classes.headerIconCollapse,
-                ),
-              }}
-            />
-          )}
+        <MenuIcon
+          classes={{
+            root: classNames(
+              classes.headerIcon,
+              classes.headerIconCollapse,
+            ),
+          }}
+        />
         </IconButton>
         <Typography variant="h6" weight="medium" className={classes.logotype}>
           Lumin Robotics Admin

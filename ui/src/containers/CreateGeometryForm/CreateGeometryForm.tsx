@@ -17,7 +17,6 @@ import { withRouter } from 'react-router-dom';
 import GeometrySingleton from '../../services/GeometryFormServices';
 // const CREATE_MESH_QUERY = loader('../../graphql/createMesh.gql');
 
-
 const styles = (theme: any) => ({
   root: {
     display: 'flex',
@@ -77,11 +76,11 @@ interface State {
   directory: string
   labelWidth: number
   currentStep: number
-  x: number
-  y: number
-  z: number
-  theta: number
-  scale: number
+  x: string
+  y: string
+  z: string
+  theta: string
+  scale: string
   width: number
   height: number
   depth: number
@@ -102,14 +101,14 @@ class CreateGeometryForm extends React.Component<Props, State> {
     directory: "",
     currentStep: 0,
     labelWidth: 100,
-    x: 0,
-    y: 0,
-    z: 0,
+    x: '0',
+    y: '0',
+    z: '0',
     width: 0,
     height: 0,
     depth: 0,
-    theta: 0,
-    scale: 1,
+    theta: '0',
+    scale: '1',
     physicsCollision: false,
     physicsStationary: true,
     physicsSimulated: true,
@@ -142,14 +141,14 @@ class CreateGeometryForm extends React.Component<Props, State> {
       filetype: this.state.filetype,
       filename: this.state.filename,
       directory: this.state.directory,
-      x: this.state.x,
-      y: this.state.y,
-      z: this.state.z,
-      scale: this.state.scale,
+      x: parseFloat(this.state.x),
+      y: parseFloat(this.state.y),
+      z: parseFloat(this.state.z),
+      scale: parseFloat(this.state.scale),
       width: this.state.width,
       height: this.state.height,
       depth: this.state.depth,
-      theta: this.state.theta,
+      theta: parseFloat(this.state.theta),
       physicsCollision: this.state.physicsCollision,
       physicsStationary: this.state.physicsStationary,
       physicsSimulated: this.state.physicsSimulated,
@@ -167,10 +166,9 @@ class CreateGeometryForm extends React.Component<Props, State> {
     if (event.target.type === "checkbox"){
       //@ts-ignore
       this.setState({ [event.target.value]: event.target.checked });
-    } else if (event.target.type && event.target.type=="number"){
-      let value = parseFloat(event.target.value);
+    } else if (event.target.type && event.target.type === "number"){
       //@ts-ignore
-      this.setState({ [event.target.name]: value });
+      this.setState({ [event.target.name]: event.target.value });
     } else {
       //@ts-ignore
       this.setState({ [event.target.name]: event.target.value });

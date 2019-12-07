@@ -18,12 +18,13 @@ function getRandomPointsOfRobot(robotId) {
     return PointModel.find({ "robot.id" : robotId}).limit(1)
 }
 function addPointsOfRobot(robot, header, points) {
+    // Use Babylon convention where y axis is upwards
     const insertPoints = points.map(point => {
         const newPoint = {
             position: {
                 x: point[0],
-                y: point[1],
-                z: point[2]
+                y: point[2],
+                z: point[1]
             },
             attribute: {
                 r: point[4] ? point[4] : 0,

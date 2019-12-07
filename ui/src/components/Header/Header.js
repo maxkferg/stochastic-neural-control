@@ -27,12 +27,6 @@ import useStyles from "./styles";
 import { Badge, Typography } from "../Wrappers/Wrappers";
 import Notification from "../Notification/Notification";
 
-// context
-import {
-  useLayoutState,
-  useLayoutDispatch,
-  toggleSidebar,
-} from "../../context/LayoutContext";
 import { getCurrentUser } from '../../redux/selectors/currentUser'
 
 const GET_MESH_BUILDING_QUERY = loader('../../graphql/getMeshesBuilding.gql');
@@ -58,14 +52,12 @@ function Header(props) {
   let querySubscription;
   const { currentUser, history, buildings } = props;
   // global
-  const layoutState = useLayoutState();
-  const layoutDispatch = useLayoutDispatch();
   const isGuest = localStorage.getItem('role') === 'guest'
-  
   // local
   const [notificationsMenu, setNotificationsMenu] = useState(null);
   const [profileMenu, setProfileMenu] = useState(null);
   const [meshes, setMesh] = useState([]);
+  const [activeBuilding, setActiveBuilding] = useState('')
   const [buildingMenu, setBuildingMenu] = useState(null)
   const handleDelete = async objectId => {
     toast('Mesh is deleted')
@@ -86,9 +78,15 @@ function Header(props) {
   }, [])
 
   useEffect(() => {
+
+    setActiveBuilding(buildings[buildings.findIndex(el => el.id === props.match.params.buildingId )])
+  }, [buildings.length])
+
+  useEffect(() => {
     if (!props.match.params.buildingId) {
       return ;
     }
+   
     querySubscription = apollo.watchQuery({
       query: GET_MESH_BUILDING_QUERY,
       variables : { buildingId: props.match.params.buildingId }
@@ -124,7 +122,7 @@ function Header(props) {
         <div className={classes.grow} />
         {
           !isGuest
-        ? <IconButton
+        ? <Button
             color="inherit"
             aria-haspopup="true"
             aria-controls="building-menu"
@@ -137,9 +135,10 @@ function Header(props) {
               badgeContent={buildings.length}
               color="warning"
             >
-              <BuildingIcon classes={{ root: classes.headerIcon }} /> 
+              <BuildingIcon classes={{ root: classes.headerIcon }} />
             </Badge>
-          </IconButton>
+            <span className={classes.buildingName}>{activeBuilding && activeBuilding.name.substring(0, 10) + (activeBuilding.name.length > 10 ? '...' : '')}</span>
+          </Button>
           : null
         }
         {
@@ -239,11 +238,14 @@ function Header(props) {
           className={classes.headerMenu}
           disableAutoFocusItem
         >
-          {buildings.map(building => (
+          {buildings.map((building, key) => (
             <MenuItem
               key={building.id}
+              selected={props.match.params.buildingId === building.id}
               className={classes.headerMenuItem}
-              onClick={() => { history.push(`/app/building/${building.id}/model`)} } 
+              onClick={() => {
+                setActiveBuilding(buildings[key])
+                history.push(`/app/building/${building.id}/model`)} } 
             >
              {building.name} 
             </MenuItem>

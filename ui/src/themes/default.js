@@ -100,9 +100,10 @@ export default {
     MuiListItem: {
       root: {
         "&$selected": {
-          backgroundColor: "#F3F5FF !important",
+          color: 'white',
+          backgroundColor: "#536DFE",
           "&:focus": {
-            backgroundColor: "#F3F5FF",
+            backgroundColor: "#536DFE",
           },
         },
       },

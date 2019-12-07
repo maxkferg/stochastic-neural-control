@@ -29,12 +29,12 @@ export default makeStyles(theme => ({
   },
   linkText: {
     padding: 0,
-    color: theme.palette.text.secondary + "CC",
+    color:  theme.palette.text.primary,
     transition: theme.transitions.create(["opacity", "color"]),
     fontSize: 16,
   },
   linkTextActive: {
-    color: theme.palette.text.primary,
+    color: theme.palette.primary.main,
   },
   linkTextHidden: {
     opacity: 0,

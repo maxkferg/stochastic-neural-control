@@ -293,8 +293,15 @@ class BabylonViewer extends React.Component<Props, State> {
         );
         return sphere
     }   
-    
-    componentDidUpdate(prevProps){
+    shouldComponentUpdate(nextProps) {
+            if (nextProps.match.params.buildingId !== this.props.match.params.buildingId) {
+                this.setState({
+                    renderedObjects: {}
+                })
+            }
+        return true;
+    }
+    componentDidUpdate(prevProps) {
         // TODO: Detect whether we have extra geometry as well
         // We can not render geometry until the scene is ready
         if (this.state.scene !== null && this.props.marker !== prevProps.marker){
@@ -314,25 +321,25 @@ class BabylonViewer extends React.Component<Props, State> {
             }
             let objectsToBeCreated: any[] = [];
             let objectsToBeDeleted: any[] = this.props.deleteMesh;
+            console.log(this.props.geometry, this.state.renderedObjects)
             for (let newObjectKey in this.props.geometry){
+
                 let newObject = this.props.geometry[newObjectKey];
                 let prevObject = this.state.renderedObjects[newObject.id];
                 if (!isObjectValid(newObject)){
                     console.log("Ignoring invalid new object", newObject);
                 } else if (!prevObject){
+                    console.log('create object');
                     objectsToBeCreated.push(newObject)
-                } else if (!isObjectValid(prevObject)){
+                } else if (!isObjectValid(prevObject)) {
                     console.log("Ignoring invalid prev object", prevObject);
                 } else if (isObjectChanged(newObject, prevObject)){
                     this.updateObject(prevObject, newObject, this.state.scene)
                 }
             }
+            
 
-            for (let key in this.state.renderedObjects) {
-                if (this.state.renderedObjects[key]!== this.props.match.params.buildingId) {
-                    delete this.state.renderedObjects[key]
-                }
-            }
+           
 
             this.setState({
                 renderedObjects: this.state.renderedObjects

@@ -40,7 +40,8 @@ from common import train_env_factory
 
 ENV_CONFIG = {
     'headless': True,
-    'building_id': '5d97edec93a71c81fb0fbbf1'
+    #'building_id': '5d97edec93a71c81fb0fbbf1'
+    'building_id': '5dc3dee819dfb1717a23fad9' # Lab
 }
 
 
@@ -83,6 +84,11 @@ def create_parser():
         type=int,
         required=False,
         help="Number of workers per trial")
+    parser.add_argument(
+        "--checkpoint",
+        type=str,
+        required=False,
+        help="Checkpoint to load from")
     return parser
 
 
@@ -94,7 +100,7 @@ def config_from_args(args):
     """
     config = {}
     if args.workers:
-        config["workers"] = args.workers
+        config["num_workers"] = args.workers
     if args.headless:
         config["env_config"] = dict(headless=True)
     if args.render:
@@ -147,6 +153,10 @@ def run(args):
         config = extend_config(config, dict(env_config=ENV_CONFIG))
         config = extend_config(config, config_from_args(args))
 
+        kwargs = {}
+        if args.checkpoint:
+            kwargs['restore'] = args.checkpoint
+
         ray.tune.run(
             settings['run'],
             name=experiment_name,
@@ -154,6 +164,7 @@ def run(args):
             config=config,
             checkpoint_freq=settings['checkpoint_freq'],
             queue_trials=True,
+            **kwargs
         )
 
 
@@ -185,7 +196,7 @@ def run_pbt(args):
                 "critic_learning_rate": log_uniform(1e-3, 1e-5),
                 "entropy_learning_rate": log_uniform(1e-3, 1e-5),
             }
-        })          
+        })
 
     with open(args.config, 'r') as stream:
         experiments = yaml.load(stream, Loader=yaml.Loader)
@@ -210,6 +221,10 @@ def run_pbt(args):
         config = extend_config(config, dict(env_config=ENV_CONFIG))
         config = extend_config(config, config_from_args(args))
 
+        kwargs = {}
+        if args.checkpoint:
+            kwargs['restore'] = args.checkpoint
+
         ray.tune.run(
             settings['run'],
             name=experiment_name,
@@ -217,7 +232,8 @@ def run_pbt(args):
             config=config,
             checkpoint_freq=20,
             max_failures=5,
-            num_samples=6
+            num_samples=6,
+            **kwargs
         )
 
 

@@ -9,7 +9,7 @@ ray rsync-down cluster.yaml ray_results ~/
 export CHECKPOINT=../checkpoints/SACQ_MultiRobot-v0_1b51c0e3_2019-11-05_09-10-27g6ibizk2/checkpoint_4000/checkpoint-4000
 
 python rollout.py --steps 1000 \
-    --checkpoint=checkpoints/October2c/checkpoint_120/checkpoint-120
+    --checkpoint=$CHECKPOINT
 
 python rollout.py --steps 1000 \
     --save-q \
@@ -84,7 +84,8 @@ ENV_OVERIDES = {
     'timestep': 0.1,
     'creation_delay': 0,
     'reset_on_target': False,
-    'building_id': '5dc3fefb14921a7c18cff7e9'
+    #'building_id': '5dc3fefb14921a7c18cff7e9',
+    'building_id': '5dc3dee819dfb1717a23fad9', # Lab
 }
 
 

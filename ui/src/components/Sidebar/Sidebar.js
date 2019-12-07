@@ -51,7 +51,7 @@ function genStructureSideBar(buildingId) {
       disabled: !buildingId
     },
     { id: 4, type: "divider" },
-    { id: 5, label: "Settings", link: "/app/setting", icon: <SettingIcon /> },
+    // { id: 5, label: "Settings", link: "/app/setting", icon: <SettingIcon /> },
   ];
   return structure
 }

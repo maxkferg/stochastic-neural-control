@@ -70,6 +70,7 @@ export default makeStyles(theme => ({
     color: "inherit",
     width: "100%",
   },
+  
   iconDelete: {
     color: 'black'
   },
@@ -90,13 +91,19 @@ export default makeStyles(theme => ({
     display: "flex",
     flexDirection: "column",
   },
+
   headerMenuItem: {
     "&:hover, &:focus": {
       backgroundColor: theme.palette.primary.main,
       color: "white",
     },
   },
+  buildingName: {
+    marginLeft: '4px'
+  },
   headerMenuButton: {
+    display: 'flex',
+    alignItems: 'center',
     marginLeft: theme.spacing(2),
     padding: theme.spacing(0.5),
   },

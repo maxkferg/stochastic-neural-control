@@ -29,9 +29,11 @@ class MeshPositionSubscription extends BaseResolver {
   subscribe(_, args, ctx) {
     const asyncIterator = ctx.pubSub.asyncIterator([MESH_POSITION_TOPIC]);
     // Using withFilter in a method does not seem to be supported
-    return withFilter(() => asyncIterator, (payload, variables) => {
-       return payload.id === args.id;
-    });
+    return asyncIterator;
+
+    //return withFilter(() => asyncIterator, (payload, variables) => {
+    //   return payload.id === args.id;
+    //});
   }
 }
 

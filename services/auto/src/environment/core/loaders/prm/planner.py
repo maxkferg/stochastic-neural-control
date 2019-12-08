@@ -78,7 +78,8 @@ class KDTree:
 
 class PRM():
 
-    def __init__(self):
+    def __init__(self, max_distance=None):
+        self.max_distance = max_distance
         self.graph = None
         self.sample_x = []
         self.sample_y = []
@@ -118,7 +119,7 @@ class PRM():
 
     def _setup(self, sx, sy, gx, gy, ox, oy, rr):
         obkdtree = KDTree(np.vstack((ox, oy)).T)
-        sample_x, sample_y = sample_points(sx, sy, gx, gy, rr, ox, oy, obkdtree)
+        sample_x, sample_y = sample_points(sx, sy, gx, gy, rr, ox, oy, obkdtree, self.max_distance)
         skdtree = KDTree(np.vstack((sample_x, sample_y)).T)
         road_map = generate_roadmap(sample_x, sample_y, rr, obkdtree)
 
@@ -136,7 +137,7 @@ class PRM():
 
     def reset(self, sx, sy, gx, gy, ox, oy, rr):
         obkdtree = KDTree(np.vstack((ox, oy)).T)
-        sample_x, sample_y = sample_points(sx, sy, gx, gy, rr, ox, oy, obkdtree)
+        sample_x, sample_y = sample_points(sx, sy, gx, gy, rr, ox, oy, obkdtree, self.max_distance)
         skdtree = KDTree(np.vstack((sample_x, sample_y)).T)
         road_map = generate_roadmap(sample_x, sample_y, rr, obkdtree)
 
@@ -245,11 +246,17 @@ def plot_road_map(road_map, sample_x, sample_y):  # pragma: no cover
                      [sample_y[i], sample_y[ind]], "-k")
 
 
-def sample_points(sx, sy, gx, gy, rr, ox, oy, obkdtree):
+def sample_points(sx, sy, gx, gy, rr, ox, oy, obkdtree, max_distance=None):
     maxx = max(ox)
     maxy = max(oy)
     minx = min(ox)
     miny = min(oy)
+
+    if max_distance is not None:
+       maxx = min(max_distance, maxx)
+       maxy = min(max_distance, maxy) 
+       minx = max(-max_distance, minx)
+       miny = max(-max_distance, miny)
 
     sample_x, sample_y = [], []
 

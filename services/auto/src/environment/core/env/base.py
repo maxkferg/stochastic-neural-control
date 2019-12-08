@@ -9,6 +9,7 @@ import random
 import logging
 import pybullet
 import os, inspect
+import numpy as np
 from shapely import geometry
 from random import randrange
 from ..utils.geometry import min_distance
@@ -32,7 +33,7 @@ class BaseEnvironment():
         @config.headless: Does not show a GUI if headless is True
         @confg.building_id: The building geometry to use
         """
-        timestep = 0.1 # 100 milliseconds
+        timestep = config.get('base_timestep', 0.1) # 100 milliseconds
         substeps = int(timestep/0.008)
 
         #choose connection method: GUI, DIRECT, SHARED_MEMORY
@@ -203,11 +204,20 @@ class BaseEnvironment():
       @start: The point to start at
       @threshold(depreciated): The minimum distance between the output and the polygon edge
       """
+      MAX_DIST = 10
+
       planner = self.roadmap.planner
       points = list(zip(planner.sample_x, planner.sample_y))
-      if len(points):
+      # Filter by distance
+      close_points = []
+      for point in points:
+        distance = np.sum((np.array(start)-np.array(point))**2)
+        if distance < MAX_DIST**2:
+          close_points.append(point)
+
+      if len(close_points):
         for i in range(ntries):
-          pnt = random.choice(points)
+          pnt = random.choice(close_points)
           rx, _ = self.roadmap.solve(start, pnt)
           if len(rx):
             return list(pnt)

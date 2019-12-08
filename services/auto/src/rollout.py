@@ -8,8 +8,7 @@ ray rsync-down cluster.yaml ray_results ~/
 
 export CHECKPOINT=../checkpoints/SACQ_MultiRobot-v0_1b51c0e3_2019-11-05_09-10-27g6ibizk2/checkpoint_4000/checkpoint-4000
 
-python rollout.py --steps 1000 \
-    --checkpoint=checkpoints/October2c/checkpoint_120/checkpoint-120
+python rollout.py --steps 1000 --checkpoint=$CHECKPOINT
 
 python rollout.py --steps 1000 \
     --save-q \
@@ -68,23 +67,38 @@ FRAME_MULTIPLIER = 1
 FRAME_MULTIPLIER = 5
 EVAL_TIMESTEP = DEFAULT_TIMESTEP/FRAME_MULTIPLIER
 
-RENDER_WIDTH = 1280
+RENDER_WIDTH = 1028
 RENDER_HEIGHT = 720
 
 timestamp = datetime.datetime.now().strftime("%I-%M-%S %p")
-filename = 'videos/video %s.mp4'%timestamp
+filename = '../videos/video %s.mov'%timestamp
 
-video_FourCC = -1#cv2.VideoWriter_fourcc(*"mp4v")
+#video_FourCC = -1#cv2.VideoWriter_fourcc(*"mp4v")
+video_FourCC = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
 video = cv2.VideoWriter(filename, video_FourCC, fps=20, frameSize=(RENDER_WIDTH, RENDER_HEIGHT))
 viridis = cm.get_cmap('viridis')
 
 
+Y2E2 = '5dc3fec814921a6e03cff7e8'
+Y2E2_START = (0,0)
+
+ROOM = '5dc3fefb14921a7c18cff7e9'
+BOTTLENECK = '5dd4b521e725ce079c4c2d5b'
+BOTTLENECK_START = (1,2)
+ROOM_START = (0,0)
+
 ENV_OVERIDES = {
     'headless': False,
-    'timestep': 0.1,
+    #'timestep': 0.1,
+    'timestep': 0.04,
+    'base_timestep': 0.04,
     'creation_delay': 0,
     'reset_on_target': False,
-    'building_id': '5dc3fefb14921a7c18cff7e9'
+    #'building_id': BOTTLENECK,
+    'start_reference': Y2E2_START,
+    #'building_id': '5dcded82ba5dd985cf8f62c9',
+    'building_id': Y2E2
+    #5dcded82ba5dd985cf8f62c9
 }
 
 
@@ -142,6 +156,12 @@ def create_parser(parser_creator=None):
         action='store_true',
         dest='render_q',
         help='Render the q function. Write it to the environment video')
+    parser.add_argument(
+        "--loop",
+        default=False,
+        action='store_true',
+        dest='loop',
+        help='Keep generating more and more videos')
     parser.add_argument(
         "--save-q",
         default=True,
@@ -203,10 +223,6 @@ def get_q_value(env, agent, policy_id, obs):
     feed_dict = {self.obs_t: observation[i], self.act_t: action[i] }
     feed_dict.update(self.extra_compute_action_feed_dict())
     q_value, q_twin_value = self.sess.run([self.q_t, self.twin_q_t], feed_dict=feed_dict)
-
-
-
-
     model_out_t, _ = policy.model({
         "obs": obs_batch,
         "is_training": False,
@@ -326,7 +342,6 @@ def rollout(agent, env_name, num_steps, out=None, no_render=True, render_q=False
                     a_action = _flatten_action(a_action)  # tuple actions
                     action_dict[agent_id] = a_action
                     prev_actions[agent_id] = a_action
-
                     # Custom code for getting Q values
                     #q = get_q_value(env, agent, policy_id, a_obs)
                     #print("Q",q)
@@ -348,8 +363,11 @@ def rollout(agent, env_name, num_steps, out=None, no_render=True, render_q=False
                 reward_total += sum(reward.values())
             else:
                 reward_total += reward
-            if not no_render:
-                env.render()
+            #if not no_render:
+            frame = env.render(width=RENDER_WIDTH, height=RENDER_HEIGHT)
+            bgr = cv2.cvtColor(frame[:,:,:3], cv2.COLOR_RGB2BGR)
+            video.write(bgr)
+
             if out is not None:
                 rollout.append([obs, action, next_obs, reward, done])
             steps += 1
@@ -380,14 +398,13 @@ def run(args, parser):
     if "horizon" in config:
         del config["horizon"]
 
+    ray.init()
+
     # Stop all the actor noise
     config['num_workers'] = 0
     config['evaluation_interval'] = 0
     config['exploration_enabled'] = False
     config = extend_config(config, dict(env_config=ENV_OVERIDES))
-
-
-    ray.init()
 
     if not args.no_render:
         config["monitor"] = True
@@ -406,7 +423,6 @@ def run(args, parser):
 
 
 
-
 if __name__ == "__main__":
     parser = create_parser()
     args = parser.parse_args()
@@ -417,4 +433,3 @@ if __name__ == "__main__":
         cv2.destroyAllWindows()
         video.release()
         raise e
-

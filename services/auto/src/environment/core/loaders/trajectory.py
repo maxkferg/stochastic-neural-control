@@ -75,7 +75,7 @@ class RoadmapPlanner():
 
     def __init__(self, cfg, turtlebot_radius=0.15):
         self.cache = None
-        self.planner = PRM()
+        self.planner = PRM(max_distance=10)
         self.turtlebot_radius = turtlebot_radius
 
 

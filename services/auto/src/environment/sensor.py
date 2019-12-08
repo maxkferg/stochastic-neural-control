@@ -60,7 +60,8 @@ class SensorEnvironment(SingleEnvironment, gym.Env):
             c=robot_orn[1], 
             d=robot_orn[2])
 
-        lidar_pos = add_vec(robot_pos, [0, 0, .25])
+        lidar_pos = add_vec(robot_pos, [0, 0, .23])
+        collision_robots = self.base.walls + self.base.robots + self.base.objects
 
         # Rotate the ray vector and determine intersection
         intersections = []
@@ -78,7 +79,7 @@ class SensorEnvironment(SingleEnvironment, gym.Env):
         # Test as a batch for improved performance
         ray_hits = self.physics.rayTestBatch(ray_from, ray_to)
         for ray in ray_hits:
-            if ray[0] in self.base.walls + self.base.robots:
+            if ray[0] in collision_robots:
                 intersections.append(ray[2]*ray_len)
             else:
                 intersections.append(ray_len)

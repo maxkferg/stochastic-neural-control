@@ -35,7 +35,7 @@ BATTERY_WEIGHT = -0.01
 ROTATION_COST = -0.01
 CRASHED_PENALTY = -1
 MAP_GRID_SCALE = 0.2
-NUM_CHECKPOINTS = 10
+NUM_CHECKPOINTS = 30
 STATE_BUFFER_SIZE = 100
 MIN_EPISODE_REWARD = -1 # Terminate if the reward gets lower than this
 TARGET_DISTANCE_THRESHOLD = 0.6 # Max distance to the target
@@ -123,6 +123,7 @@ class SingleEnvironment():
         self.color = random_color()
         self.verbosity = config["verbosity"]
         self.timestep = config["timestep"] 
+        self.velocity_multiplier = math.sqrt(DEFAULTS["timestep"]/self.timestep)
         self.start_reference = config["start_reference"]
         self.reset_on_target = config["reset_on_target"]
         self.debug = config["debug"]
@@ -131,6 +132,7 @@ class SingleEnvironment():
         self.action_repeat = int(self.timestep / base_env.timestep)
         self.previous_state = None
         self.ckpt_count = 4
+        print("Using velocity multiplier:", self.velocity_multiplier)
 
         # Environment Policies
         self.robot_policy = config['robot_policy']
@@ -165,8 +167,8 @@ class SingleEnvironment():
         self.observation_space = spaces.Dict({
             'robot_theta': spaces.Box(low=-math.pi, high=math.pi, shape=(1,), dtype=np.float32),
             'robot_velocity': spaces.Box(low=-10, high=10, shape=(3,), dtype=np.float32),
-            'target': spaces.Box(low=-20, high=20, shape=(2,), dtype=np.float32),
-            'ckpts': spaces.Box(low=-20, high=20, shape=(self.ckpt_count,2), dtype=np.float32),
+            'target': spaces.Box(low=-50, high=50, shape=(2,), dtype=np.float32),
+            'ckpts': spaces.Box(low=-50, high=50, shape=(self.ckpt_count,2), dtype=np.float32),
         })
 
         if self.geometry_policy=="subscribe":
@@ -209,6 +211,8 @@ class SingleEnvironment():
 
         robot_pos, robot_orn = self.physics.getBasePositionAndOrientation(self.robot.racecarUniqueId)
         state = self.get_state(robot_pos, robot_orn)
+
+        self.camera_orn = robot_orn
 
         # Reset again if the current state is not valid
         if self.termination(state):
@@ -449,11 +453,11 @@ class SingleEnvironment():
 
         obs = {
             'robot_theta': np.array([state["robot_theta"]], dtype=np.float32),
-            'robot_velocity': np.array([
+            'robot_velocity': self.velocity_multiplier * np.array([
                 state["robot_vx"],
                 state["robot_vy"],
                 state["robot_vt"]
-            ], dtype=np.float32),
+            ], dtype=np.float32), 
             'target': encode_target(state),
             'ckpts': encode_checkpoints(state["rel_ckpt_positions"], state["robot_theta"]),
         }
@@ -644,10 +648,13 @@ class SingleEnvironment():
         base_pos, carorn = self.physics.getBasePositionAndOrientation(self.robot.racecarUniqueId)
         state = self.get_state(base_pos, carorn)
 
+        # Follow the robot smoothly
+        self.camera_orn = 0.99*np.array(self.camera_orn) + 0.01*np.array(carorn)
+
         # Position the camera behind the car, slightly above
-        dist = 1
+        dist = 2
         world_up = [0,0,1]
-        dir_vec = np.array(rotate_vector(carorn, [2*dist, 0, 0]))
+        dir_vec = np.array(rotate_vector(self.camera_orn, [2*dist, 0, 0]))
         cam_eye = np.subtract(np.array(base_pos), np.add(dir_vec, np.array([0, 0, -2*dist])))
         cam_up = normalize(world_up - np.multiply(np.dot(world_up, dir_vec), dir_vec))
 

@@ -1,0 +1,5 @@
+mutation deleteBuilding($buildingId: String!) {
+  deleteBuilding(buildingId: $buildingId) {
+    id
+  }
+}

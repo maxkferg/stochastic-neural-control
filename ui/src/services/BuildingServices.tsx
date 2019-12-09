@@ -4,6 +4,7 @@ const CREATE_BUILDING_MUTATION = loader('../graphql/createBuilding.gql');
 const GET_BUILDINGS_QUERY = loader('../graphql/getBuildings.gql');
 const GET_BUILDING_QUERY = loader('../graphql/getBuilding.gql')
 const GET_GUEST_BUILDINGS_QUERY = loader('../graphql/getGuestBuildings.gql')
+const DELETE_BUILDING_MUTATION = loader('../graphql/deleteBuilding.gql');
 
 export const createBuilding = async function(variables) {
     return apollo.mutate({mutation: CREATE_BUILDING_MUTATION, variables});
@@ -15,6 +16,10 @@ export const getBuildings = async function(variables) {
 
 export const getGuestBuildings = async function () {
     return apollo.query({ query: GET_GUEST_BUILDINGS_QUERY });
+}
+
+export const deleteBuilding = function (variables) {
+    return apollo.mutate({ mutation: DELETE_BUILDING_MUTATION, variables})
 }
 
 type getUserBuilding = {

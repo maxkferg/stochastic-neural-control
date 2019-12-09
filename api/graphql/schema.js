@@ -79,6 +79,7 @@ const Mutation = new GraphQLObjectType({
         removeTrajectory: new mutations.TrajectoryMutations.removeTrajectory(Trajectory, "Remove a trajectory", true),
         followTrajectory: new mutations.RobotMutations.followTrajectory(Trajectory, "Instruct a robot to follow a trajectory", true),
         createBuilding: new mutations.BuildingMutation.createBuilding(Building, "Creates a building object", true),
+        deleteBuilding: new mutations.BuildingMutation.deleteBuilding(Building, "Delete a building object", false), 
         updateObject: new mutations.ObjectMutations.updateObject(Mesh, "Update object", false)
     })
 });

@@ -12,16 +12,22 @@ import {
 } from "@material-ui/core";
 // components
 import { Button } from "../../../../components/Wrappers";
+import { deleteBuilding as buildingGraphql } from '../../../../services/BuildingServices';
+
 import { MoreVert as MoreIcon } from "@material-ui/icons";
 const tableHeader = ['name', 'owner', 'status', 'action']
-
 
 function handleClickBuilding(event, buildingId, history) {
   event.stopPropagation()
   history.push(`/app/building/${buildingId}/model`)
 }
 
-export default function TableComponent({ buildings, classes, history }) {
+
+async function deleteBuilding(buildingId) {
+  buildingGraphql({ buildingId })
+}
+
+export default function TableComponent({ buildings, classes, history, getBuildings }) {
   var [isMoreMenuOpen, setMoreMenuOpen] = useState(false);
   var [moreButtonRef, setMoreButtonRef] = useState(null);
   const keys = tableHeader.map(i => i.toUpperCase());
@@ -37,7 +43,8 @@ export default function TableComponent({ buildings, classes, history }) {
       </TableHead>
       <TableBody>
         {buildings.map(({ id, name, owner_id, isDeleted }) => (
-          <TableRow onClick={(e) => handleClickBuilding(e, id, history)} key={id}>
+          <React.Fragment>
+              <TableRow onClick={(e) => handleClickBuilding(e, id, history)} key={id}>
             <TableCell className="pl-3 fw-normal">{name}</TableCell>
             <TableCell>{owner_id}</TableCell>
             <TableCell>
@@ -67,23 +74,25 @@ export default function TableComponent({ buildings, classes, history }) {
               </IconButton>
             </TableCell>
           </TableRow>
+          <Menu
+          id="widget-menu"
+          open={isMoreMenuOpen}
+          anchorEl={moreButtonRef}
+          onClose={() => setMoreMenuOpen(false)}
+          disableAutoFocusItem
+        >
+          <MenuItem>
+            <Typography onClick={e => {
+              e.stopPropagation()
+              deleteBuilding(id)
+              setMoreMenuOpen(false)
+            }}>Delete</Typography>
+          </MenuItem>
+        </Menu>
+          </React.Fragment>
         ))}
       </TableBody>
     </Table>
-    <Menu
-      id="widget-menu"
-      open={isMoreMenuOpen}
-      anchorEl={moreButtonRef}
-      onClose={() => setMoreMenuOpen(false)}
-      disableAutoFocusItem
-    >
-      <MenuItem onClick={() => setMoreMenuOpen(false)}>
-        <Typography>Active</Typography>
-      </MenuItem>
-      <MenuItem>
-        <Typography>Delete</Typography>
-      </MenuItem>
-    </Menu>
     </div>
   );
 }

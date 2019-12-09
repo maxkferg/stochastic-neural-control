@@ -258,7 +258,6 @@ class BabylonViewer extends React.Component<Props, State> {
           scene: null,
           renderedObjects: {},
           renderedMeshes: {},
-         
       };
       this.renderedPoint = []
       this.classes = props.classes;
@@ -292,15 +291,17 @@ class BabylonViewer extends React.Component<Props, State> {
             position.z
         );
         return sphere
-    }   
+    }
+
     shouldComponentUpdate(nextProps) {
-            if (nextProps.match.params.buildingId !== this.props.match.params.buildingId) {
-                this.setState({
-                    renderedObjects: {}
-                })
-            }
+        if (nextProps.match.params.buildingId !== this.props.match.params.buildingId) {
+            this.setState({
+                renderedObjects: {}
+            })
+        }
         return true;
     }
+
     componentDidUpdate(prevProps) {
         // TODO: Detect whether we have extra geometry as well
         // We can not render geometry until the scene is ready
@@ -317,13 +318,12 @@ class BabylonViewer extends React.Component<Props, State> {
                     if (this.state.renderedMeshes[key]) {
                         this.state.renderedMeshes[key].setEnabled(true)
                     }
-                } 
+                }
             }
             let objectsToBeCreated: any[] = [];
             let objectsToBeDeleted: any[] = this.props.deleteMesh;
             console.log(this.props.geometry, this.state.renderedObjects)
             for (let newObjectKey in this.props.geometry){
-
                 let newObject = this.props.geometry[newObjectKey];
                 let prevObject = this.state.renderedObjects[newObject.id];
                 if (!isObjectValid(newObject)){
@@ -337,9 +337,6 @@ class BabylonViewer extends React.Component<Props, State> {
                     this.updateObject(prevObject, newObject, this.state.scene)
                 }
             }
-            
-
-           
 
             this.setState({
                 renderedObjects: this.state.renderedObjects
@@ -373,7 +370,7 @@ class BabylonViewer extends React.Component<Props, State> {
             this.renderedPoint.forEach(point => point.dispose())
             this.renderedPoint = []
         }
-    } 
+    }
 
     updateWindowDimensions() {
       this.setState({ width: window.innerWidth, height: window.innerHeight });
@@ -399,7 +396,7 @@ class BabylonViewer extends React.Component<Props, State> {
         if (newObject.type=="wall" || newObject.type=="floor"){
             parent.scaling = new BABYLON.Vector3(newObject.scale, newObject.scale, -newObject.scale);
         }
-        
+
         task.onSuccess = function(t: any){
             t.loadedMeshes.forEach((mesh) => {
                 mesh.parent = parent;

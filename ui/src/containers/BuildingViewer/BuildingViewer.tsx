@@ -67,12 +67,12 @@ class BuildingViewer extends React.Component<Props, State> {
       this.subscriptionPointCloud = {};
       this.classes = props.classes;
     }
-    
+
     async componentDidMount(){
       let self = this;
       this.subScription = apollo.watchQuery({
-        query: GET_MESH_BUILDING_QUERY, 
-        pollInterval: POLL_INTERVAL, 
+        query: GET_MESH_BUILDING_QUERY,
+        pollInterval: POLL_INTERVAL,
         variables : { buildingId: this.props.match.params.buildingId }}
       ).subscribe(data => {
         let meshesCurrent = data.data.meshesOfBuilding;

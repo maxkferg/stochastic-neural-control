@@ -47,7 +47,9 @@ function AuthenticationRoute({ component: Component, ...rest }) {
             })}
           >
 
-            <div className={classes.fakeToolbar} >
+            <div className={classnames(classes.fakeToolbar, {
+              [classes.widthContentDashboard]: props.history.location.pathname === '/app/buildings'
+            })} >
               <Component
                 buildings={buildings}
                 setIsFetchBuildings={setIsFetchBuildings}

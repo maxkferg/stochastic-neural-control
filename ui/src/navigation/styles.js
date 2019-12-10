@@ -24,6 +24,8 @@ export default makeStyles(theme => ({
   },
   fakeToolbar: {
     ...theme.mixins.toolbar,
-    width: '1200px'
   },
+  widthContentDashboard: { 
+    width: '1200px'
+  }
 }));

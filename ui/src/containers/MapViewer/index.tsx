@@ -9,15 +9,14 @@ import apollo from '../../apollo';
 import Fab from '@material-ui/core/Fab';
 import RefreshIcon from '@material-ui/icons/Refresh';
 import NavigationIcon from '@material-ui/icons/Navigation';
-
 const HEADER = 64
 const MAP_PADDING = 64
 const MAP_GEOMETRY_QUERY = loader('../../graphql/getMapGeometry.gql');
 const TRAJECTORY_QUERY = loader('../../graphql/getTrajectories.gql');
 const GET_ROBOT_QUERY = loader('../../graphql/getRobots.gql');
 const CREATE_TRAJECTORY = loader('../../graphql/createTrajectory.gql');
-
-
+const GET_ROBOT_BUILDING_QUERY = loader('../../graphql/getRobotBuilding.gql');
+const MESH_BUILDING_QUERY = loader('../../graphql/getMeshesBuilding.gql');
 const useStyles = makeStyles(theme => ({
   navigateButton: {
     position: "absolute",
@@ -325,9 +324,10 @@ function MapViewer(props) {
     }
     const { data, error, loading } = useQuery(MAP_GEOMETRY_QUERY, options);
     const { data: trajData, error: trajError} = useQuery(TRAJECTORY_QUERY, options);
-    const { data: robotData, error: robotError} = useQuery(GET_ROBOT_QUERY, options);
+    // const { data: robotData, error: robotError} = useQuery(GET_ROBOT_QUERY, options);
+    
+    const { data: robotData, error: robotError} = useQuery(MESH_BUILDING_QUERY, Object.assign({}, options, { variables: { buildingId:  props.match.params.buildingId, type: 'robot' }}))
     let [ targetPosition, setTargetPosition] = useState([2,2]);
-
     //const classes = useStyles();
     //const theme = useTheme();
 
@@ -370,7 +370,7 @@ function MapViewer(props) {
     }
 
     // Create robots
-    const robots = robotData ? robotData.meshesCurrent : [];
+    const robots = robotData ? robotData.meshesOfBuilding : [];
     const robotElements = robots.map(robot => (
         <Robot key={robot.id} robot={robot} scale={scale} />
     ))

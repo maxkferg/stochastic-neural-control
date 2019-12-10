@@ -5,13 +5,13 @@ const {GraphQLNonNull, GraphQLString} = require('graphql');
  * Return the last visible instance of a particular
  * ObjectId
  */
-class RobotResolver extends BaseResolver {
+class RobotBuildingResolver extends BaseResolver {
 
   get args() {
     return {
-      id: {
+      buildingId: {
         type: new GraphQLNonNull(GraphQLString),
-        description: 'Id for the robot.'
+        description: 'Id for the building.'
       }
     };
   }
@@ -19,8 +19,9 @@ class RobotResolver extends BaseResolver {
   async resolve(parentValue, args, ctx) {
       // Calling super method to check authentication if applicable
       super.resolve(parentValue, args, ctx);
+      const { buildingId } = args;
       try {
-          const robot = await ctx.db.Robot.findById(args.id);
+          const robot = await ctx.db.Robot.find({ building_id: buildingId});
           return robot;
       } catch (e) {
           throw new Error(e);
@@ -28,4 +29,4 @@ class RobotResolver extends BaseResolver {
   }
 }
 
-module.exports = RobotResolver;
+module.exports = RobotBuildingResolver;

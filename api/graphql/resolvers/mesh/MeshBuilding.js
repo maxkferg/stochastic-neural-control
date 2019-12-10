@@ -10,6 +10,10 @@ class MeshBuilding extends BaseResolver {
 
   get args() {
     return {
+      type: {
+        type: GraphQLString,
+        description: 'The mesh type (wall, floor, robot, object)'
+      },
       buildingId: {
         type: new GraphQLNonNull(GraphQLString),
         description: 'Id for the building'

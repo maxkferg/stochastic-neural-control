@@ -9,6 +9,8 @@ export default makeStyles(theme => ({
   content: {
     flexGrow: 1,
     width: `calc(100vw - 240px)`,
+    display: 'flex',
+    justifyContent: 'center'
   },
   paddingContent: {
     padding: theme.spacing(3),
@@ -22,5 +24,6 @@ export default makeStyles(theme => ({
   },
   fakeToolbar: {
     ...theme.mixins.toolbar,
+    width: '1200px'
   },
 }));

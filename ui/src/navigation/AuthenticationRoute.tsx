@@ -39,7 +39,7 @@ function AuthenticationRoute({ component: Component, ...rest }) {
             //@ts-ignored
             <Header history={props.history} buildings={buildings} />
           }
-          <Sidebar />
+          { props.history.location.pathname !== '/app/buildings' ? <Sidebar /> : null }
           <div
             className={classnames(classes.content, {
               [classes.paddingContent]: paddingContent,

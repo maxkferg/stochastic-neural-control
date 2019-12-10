@@ -6,8 +6,6 @@ import About from '../containers/About';
 import Error from '../pages/error/Error';
 import Auth from '../pages/login/Login'
 import Landing from '../containers/Landing';
-import Building from '../containers/Building';
-import Alert from '../components/ALert';
 import DashBoard from '../pages/dashboard/Dashboard';
 import { verifyToken } from '../services/AuthServices';
 import { LayoutProvider } from "../context/LayoutContext";

@@ -11,7 +11,6 @@ import {
   Menu as MenuIcon,
   NotificationsNone as NotificationsIcon,
   Person as AccountIcon,
-  ArrowBack as ArrowBackIcon,
   Domain as BuildingIcon,
 } from "@material-ui/icons";
 import apollo from '../../apollo';

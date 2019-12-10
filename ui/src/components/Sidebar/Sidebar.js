@@ -5,9 +5,7 @@ import {
   LocationCity as LocationCityIcon,
   Map as MapIcon,
   Navigation as SlamIcon,
-  Domain as BuildingIcon,
   ImageAspectRatio as PointCloudIcon,
-  SettingsApplications as SettingIcon
 } from "@material-ui/icons";
 import { useTheme } from "@material-ui/styles";
 import { withRouter } from "react-router-dom";

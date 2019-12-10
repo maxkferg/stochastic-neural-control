@@ -3,12 +3,10 @@ const {
     GraphQLObjectType,
     GraphQLSchema,
     GraphQLString,
-    GraphQLNonNull,
 } = require('graphql');
 
 const resolvers = require('./resolvers');
 const mutations = require('./mutations');
-const auth = require('../auth');
 const User = require('./types/User');
 const Mesh = require('./types/Mesh');
 const Trajectory = require('./types/Trajectory');
@@ -45,6 +43,7 @@ const Query = new GraphQLObjectType({
         users: new resolvers.User.getAllUsers(new GraphQLList(User), "Get all users", true),
         user: new resolvers.User.getUser(User, "Get user by id", true),
         robot: new resolvers.Robot.getRobot(Robot, "Get robot by id", false),
+        getRobotOfBuilding: new resolvers.Robot.getRobotOfBuilding(new GraphQLList(Robot), "Get robot of building", false),
         meshesCurrent: new resolvers.Mesh.getCurrentMeshes(new GraphQLList(Mesh), "Get current meshes", false),
         meshes: new resolvers.Mesh.getAllMeshes(new GraphQLList(Mesh), "Get all meshes", false),
         meshesOfBuilding: new resolvers.Mesh.getMeshBuilding(new GraphQLList(Mesh), "Get all meshes", false),

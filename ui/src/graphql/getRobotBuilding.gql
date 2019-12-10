@@ -1,0 +1,23 @@
+query GetRobotBuilding($buildingId: String!) {
+    getRobotOfBuilding(buildingId: $buildingId) {
+        id
+        name
+        width
+        height
+        depth
+        scale
+        x
+        y
+        z
+        theta
+        geometry {
+          filetype
+          filename
+          directory
+        }
+        physics {
+          collision
+          stationary
+        }
+    }
+}

@@ -1,5 +1,5 @@
-query GetMeshesBuilding($buildingId: String!) {
-    meshesOfBuilding(buildingId: $buildingId, deleted: false) {
+query GetMeshesBuilding($buildingId: String!, $type: String) {
+    meshesOfBuilding(buildingId: $buildingId, type: $type, deleted: false) {
         id,
         x,
         y,

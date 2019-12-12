@@ -37,6 +37,7 @@ function setupConsumer() {
             throw new Error('Add points of robot error', e);
         }
     });
+    
     consumer.on('error', function(error){
         console.log(error);
     })

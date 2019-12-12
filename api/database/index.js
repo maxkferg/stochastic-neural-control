@@ -14,8 +14,9 @@ mongoose.Promise = global.Promise;
 
 function getMongooseModel(domainName, modelsDir) {
     let domain = require(path.join(modelsDir, domainName));
-    let schema = mongoose.Schema(domain.schema);
-    
+    let schema = new mongoose.Schema(domain.schema);
+
+
     //add all the index for the domain to schema
     domain.indexes.forEach((index) => {
         schema.index(index);
@@ -23,15 +24,18 @@ function getMongooseModel(domainName, modelsDir) {
 
     if (domain.hooks) {
         if (domain.hooks.type === 'pre') {
-            schema.post(domain.hooks.query, domain.hooks.callback(doc, next))
+            schema.pre("save", function(doc, next) {
+                domain.hooks.callback(doc, next);
+            });
         }
     }
+
     //initialize the model
     let model = mongoose.model(domainName, schema);
     model.ensureIndexes(function (err) {
         if (err) console.log(err);
     });
-    
+
     return model;
 }
 

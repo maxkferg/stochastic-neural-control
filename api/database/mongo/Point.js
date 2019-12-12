@@ -65,6 +65,7 @@ exports.hooks = {
     callback: async (doc, next) => {
         try {
             const currentPointsGroup = await pointService.countPointsGroupOfRobot(doc.robot.id)
+
             if (currentPointsGroup + doc.length > MAX_POINTS_GROUP_ROBOT) {
                 await pointService.removePointsGroupOfRobot(doc.robot.id);
             }

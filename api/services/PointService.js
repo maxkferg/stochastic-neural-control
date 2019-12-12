@@ -1,13 +1,14 @@
 const mongoose = require('mongoose');
 const pointSchema = require('../database/mongo/Point').schema;
 const PointModel = mongoose.model('point', pointSchema);
+const MAX_POINTS_GROUP_ROBOT = 100000;
 
 function getPointsOfRobot(robotId) {
     return PointModel.find({ "robot.id" : robotId })
 }
 
 function countPointsGroupOfRobot(robotId) {
-    return PointModel.count({ "robot.id" : robotId }) 
+    return PointModel.countDocuments({ "robot.id" : robotId }) 
 }
 
 function removePointsGroupOfRobot(robotId) {
@@ -17,7 +18,16 @@ function removePointsGroupOfRobot(robotId) {
 function getRandomPointsOfRobot(robotId) {
     return PointModel.find({ "robot.id" : robotId}).limit(1)
 }
-function addPointsOfRobot(robot, header, points) {
+
+async function hookPointsTemporary(insertPoints, robotId) {
+    const currentPointsGroup = await countPointsGroupOfRobot(robotId);
+    if (currentPointsGroup + insertPoints.length > MAX_POINTS_GROUP_ROBOT) {
+        await removePointsGroupOfRobot(robotId);
+    }
+}
+
+async function addPointsOfRobot(robot, header, points) {
+
     // Use Babylon convention where y axis is upwards
     const insertPoints = points.map(point => {
         const newPoint = {
@@ -34,6 +44,7 @@ function addPointsOfRobot(robot, header, points) {
         }
         return newPoint;
     });
+    await hookPointsTemporary(insertPoints, robot.id)
 
     const insertPointsGroup = {
         pointsGroup: insertPoints,

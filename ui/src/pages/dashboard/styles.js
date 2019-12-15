@@ -69,10 +69,10 @@ export default makeStyles(theme => ({
     marginTop: '30px'
   },
   submitButton: {
+    width: 110,
     marginTop: '30px',
-    display: 'flex',
+    marginLeft: 450,
     cursor: 'pointer',
-    justifyContent: 'flex-end'
   },
   paperHeader: {
     fontFeatureSettings: 'Roboto,Helvetica Neue,sans-serif',

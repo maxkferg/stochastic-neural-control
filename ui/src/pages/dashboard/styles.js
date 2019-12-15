@@ -50,10 +50,11 @@ export default makeStyles(theme => ({
     backgroundColor: theme.palette.warning.main,
   },
   paper: {
-    padding: '10px',
+    padding: '20px',
     outline: 'none',
     position: 'absolute',
-    width: 400,
+    width: 600,
+    height: 200,
     top: "40%",
     left: "35%",
     borderRadius: theme.modal.border.borderRadius,
@@ -63,15 +64,23 @@ export default makeStyles(theme => ({
     justifyContent: 'center',
     flexDirection: 'column'
   },
-  paperHeader: {
+  textField: {
+    width: 300,
+    marginTop: '30px'
+  },
+  submitButton: {
+    marginTop: '30px',
     display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
+    cursor: 'pointer',
+    justifyContent: 'flex-end'
+  },
+  paperHeader: {
+    fontFeatureSettings: 'Roboto,Helvetica Neue,sans-serif',
+    display: 'flex',
+    justifyContent: 'flex-start',
     width: '100%',
-    height: '70px',
     fontSize: '20px',
-    color: 'white',
-    backgroundColor: theme.palette.primary.main
+    color: 'black',
   },
   performanceLegendWrapper: {
     display: "flex",

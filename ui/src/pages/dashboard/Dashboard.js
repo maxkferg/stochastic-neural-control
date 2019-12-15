@@ -63,7 +63,8 @@ function Dashboard(props) {
         onClose={handleClose}
       >
         <div className={classes.paper}>
-          <div className={classes.paperHeader}>Create Building</div>
+          <div className={classes.paperHeader}>Configure a project for building</div>
+          <div> 
           <TextField  
             onChange={handleChangeBuildingName}
             id="outlined-basic"
@@ -72,15 +73,8 @@ function Dashboard(props) {
             margin="normal"
             variant="outlined"
           />
-          <Button
-            classes={{ root: classes.button }}
-            variant="contained"
-            size="large"
-            color="primary"
-            onClick={handleCreateBuilding}
-          >
-            Create Building
-          </Button>
+          </div>
+          <span className={classes.submitButton} onClick={handleCreateBuilding}>Create Building</span>
         </div>
       </Modal>
       <Grid container spacing={4}>

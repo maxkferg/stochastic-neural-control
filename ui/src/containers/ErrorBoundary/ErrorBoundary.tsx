@@ -1,14 +1,11 @@
 import React from 'react'
+import { ToastContainer, toast } from 'react-toastify';
 
 interface State {
     hasError: boolean
 }
 
-interface Props { 
-
-}
-
-class ErrorBoundary extends React.Component<Props, State> {
+class ErrorBoundary extends React.Component<{}, State> {
     constructor(props) {
         super(props);
         this.state = { hasError: false };
@@ -17,16 +14,17 @@ class ErrorBoundary extends React.Component<Props, State> {
         return { hasError: true };
     }
     componentDidCatch(error, errorInfo) {
-        console.log(error, errorInfo);
+        toast(error, errorInfo);
     }
     render() {
-        console.log('huhu')
         const { hasError } = this.state;
         if (hasError) {
             return <h1>Something went wrong.</h1>;
         }
-        return (
-            this.props.children
+        return (<React.Fragment>
+            <ToastContainer />
+            {this.props.children}
+            </React.Fragment>
         )
     }
 }

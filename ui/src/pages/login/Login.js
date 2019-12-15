@@ -107,6 +107,15 @@ function Login(props) {
               <Typography variant="h1" className={classes.greeting}>
                 Good Morning, User
               </Typography>
+              <Button
+                    size="large"  className={classes.googleButton}
+                    onClick={() => {
+                        localStorage.setItem('role', 'guest')
+                        props.history.push('/app/buildings')
+                    }}
+                >
+                    View buildings as guest
+              </Button>
               <GoogleLogin
                   render={renderProps => (
                     <Button size="large" onClick={renderProps.onClick} className={classes.googleButton}>
@@ -277,6 +286,15 @@ function Login(props) {
                 <Typography className={classes.formDividerWord}>or</Typography>
                 <div className={classes.formDivider} />
               </div>
+              <Button
+                    size="large"  className={classes.googleButton}
+                    onClick={() => {
+                        localStorage.setItem('role', 'guest')
+                        props.history.push('/app/buildings')
+                    }}
+                >
+                    View buildings as guest
+              </Button>
               <GoogleLogin
                 render={renderProps => (
                   <Button size="large" onClick={renderProps.onClick} className={classes.googleButton}>

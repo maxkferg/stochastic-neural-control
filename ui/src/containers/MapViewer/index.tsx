@@ -364,7 +364,7 @@ function MapViewer(props) {
     if (trajectories.length){
       let trajectory = trajectories[trajectories.length-1]
       //defaultTargetPosition = limitPosition(trajectory.endPoint, scale)
-      trajElements = [<MapTrajectory trajectory={trajectory} scale={scale} />]
+      trajElements = [<MapTrajectory key={0} trajectory={trajectory} scale={scale} />]
     } else {
       trajElements = [];
     }

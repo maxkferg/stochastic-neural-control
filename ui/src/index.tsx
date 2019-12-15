@@ -11,14 +11,16 @@ import { createBrowserHistory } from "history"
 import './index.css';
 export const customHistory = createBrowserHistory()
 import Themes from "./themes";
-
+import ErrorBoundary from './containers/ErrorBoundary';
 ReactDOM.render(
   <MuiThemeProvider theme={Themes.default}>
 	  <Provider store={store}>
 	  	<ApolloProvider client={client}>
-			  <Router history={customHistory}>
-			  	<Routers />
-			  </Router>
+			  <ErrorBoundary>
+				<Router history={customHistory}>
+					<Routers />
+				</Router>
+			  </ErrorBoundary>
 	    </ApolloProvider>
 	  </Provider>
   </MuiThemeProvider>,

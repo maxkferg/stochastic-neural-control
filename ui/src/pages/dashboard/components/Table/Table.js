@@ -12,7 +12,7 @@ import {
 } from "@material-ui/core";
 // components
 import { Button } from "../../../../components/Wrappers";
-import { deleteBuilding as buildingGraphql } from '../../../../services/BuildingServices';
+import { deleteBuilding as deleteBuildingGraphql } from '../../../../services/BuildingServices';
 
 import { MoreVert as MoreIcon } from "@material-ui/icons";
 const tableHeader = ['name', 'owner', 'status', 'action']
@@ -22,15 +22,16 @@ function handleClickBuilding(event, buildingId, history) {
   history.push(`/app/building/${buildingId}/model`)
 }
 
-
-async function deleteBuilding(buildingId) {
-  buildingGraphql({ buildingId })
-}
-
-export default function TableComponent({ buildings, classes, history, getBuildings }) {
-  var [isMoreMenuOpen, setMoreMenuOpen] = useState(false);
-  var [moreButtonRef, setMoreButtonRef] = useState(null);
+export default function TableComponent({ buildings, classes, history, setIsFetchBuildings, isFetchBuildings }) {
+  const [isMoreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [moreButtonRef, setMoreButtonRef] = useState(null);
+  const [currentBuilding, setCurrentBuilding] = useState(null);
   const keys = tableHeader.map(i => i.toUpperCase());
+  console.log('akakak', buildings)
+  async function deleteBuilding(buildingId) {
+    await deleteBuildingGraphql({ buildingId });
+    setIsFetchBuildings(!isFetchBuildings);
+  }
   return (
     <div>
     <Table className="mb-0">
@@ -43,8 +44,7 @@ export default function TableComponent({ buildings, classes, history, getBuildin
       </TableHead>
       <TableBody>
         {buildings.map(({ id, name, owner_id, isDeleted }) => (
-          <React.Fragment>
-              <TableRow onClick={(e) => handleClickBuilding(e, id, history)} key={id}>
+            <TableRow onClick={(e) => handleClickBuilding(e, id, history)} key={id}>
             <TableCell className="pl-3 fw-normal">{name}</TableCell>
             <TableCell>{owner_id}</TableCell>
             <TableCell>
@@ -66,7 +66,9 @@ export default function TableComponent({ buildings, classes, history, getBuildin
                 classes={{ root: classes.moreButton }}
                 onClick={(e) => {
                   e.stopPropagation();
+                  setCurrentBuilding(id)
                   setMoreMenuOpen(true)
+                  setMoreButtonRef(e.target)
                 }}
                 buttonRef={setMoreButtonRef}
               >
@@ -74,24 +76,22 @@ export default function TableComponent({ buildings, classes, history, getBuildin
               </IconButton>
             </TableCell>
           </TableRow>
-          <Menu
+        ))}
+      </TableBody>
+      <Menu
           id="widget-menu"
           open={isMoreMenuOpen}
           anchorEl={moreButtonRef}
           onClose={() => setMoreMenuOpen(false)}
           disableAutoFocusItem
-        >
-          <MenuItem>
-            <Typography onClick={e => {
-              e.stopPropagation()
-              deleteBuilding(id)
+          >
+          <MenuItem onClick={e => {
+              deleteBuilding(currentBuilding)
               setMoreMenuOpen(false)
-            }}>Delete</Typography>
+            }}>
+            <Typography>Delete</Typography>
           </MenuItem>
         </Menu>
-          </React.Fragment>
-        ))}
-      </TableBody>
     </Table>
     </div>
   );

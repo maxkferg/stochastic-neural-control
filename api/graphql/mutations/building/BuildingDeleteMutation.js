@@ -16,9 +16,12 @@ class BuildingDeleteMutation extends BaseResolver {
         super.resolve(parentValue, args, ctx);
         try {
             const { buildingId } = args;
-            await ctx.db.Building.deleteOne({ _id: buildingId })
-            return { 
-                id: buildingId
+            const building = await ctx.db.Building.findOneAndDelete({ _id: buildingId })
+            return {
+                id: building._id,
+                owner_id: building.owner_id,
+                name: building.name,
+                isDeleted: true
             }
         } catch (e) {
             throw new Error(e);

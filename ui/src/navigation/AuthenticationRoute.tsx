@@ -22,9 +22,7 @@ function AuthenticationRoute({ component: Component, ...rest }) {
         const responseApollo = isGuest ? await getGuestBuildings() : await getBuildings({ ownerId: currentUser.id });
         const { data } = responseApollo;
         const buildings = isGuest ? data.guestBuildings : data.building
-        if (buildings.length) {
-          setBuildings(buildings)
-        }
+        setBuildings(buildings)
       }
     }
     fetchBuildings()

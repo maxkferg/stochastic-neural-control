@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
   Grid,
   Modal,
-  Button,
   TextField
 } from "@material-ui/core";
 import { connect }from 'react-redux';
@@ -86,7 +85,7 @@ function Dashboard(props) {
             disableWidgetMenu
             bodyClass={classes.tableWidget}
           >
-            <Table classes={classes} history={history} buildings={buildings} />
+            <Table classes={classes} history={history} setIsFetchBuildings={setIsFetchBuildings} isFetchBuildings={isFetchBuildings} buildings={buildings} />
           </Widget>
         </Grid>
       </Grid>

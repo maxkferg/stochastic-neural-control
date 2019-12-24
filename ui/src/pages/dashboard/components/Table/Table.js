@@ -12,19 +12,26 @@ import {
 } from "@material-ui/core";
 // components
 import { Button } from "../../../../components/Wrappers";
+import { deleteBuilding as deleteBuildingGraphql } from '../../../../services/BuildingServices';
+
 import { MoreVert as MoreIcon } from "@material-ui/icons";
 const tableHeader = ['name', 'owner', 'status', 'action']
-
 
 function handleClickBuilding(event, buildingId, history) {
   event.stopPropagation()
   history.push(`/app/building/${buildingId}/model`)
 }
 
-export default function TableComponent({ buildings, classes, history }) {
-  var [isMoreMenuOpen, setMoreMenuOpen] = useState(false);
-  var [moreButtonRef, setMoreButtonRef] = useState(null);
+export default function TableComponent({ buildings, classes, history, setIsFetchBuildings, isFetchBuildings }) {
+  const [isMoreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [moreButtonRef, setMoreButtonRef] = useState(null);
+  const [currentBuilding, setCurrentBuilding] = useState(null);
   const keys = tableHeader.map(i => i.toUpperCase());
+  console.log('akakak', buildings)
+  async function deleteBuilding(buildingId) {
+    await deleteBuildingGraphql({ buildingId });
+    setIsFetchBuildings(!isFetchBuildings);
+  }
   return (
     <div>
     <Table className="mb-0">
@@ -37,7 +44,7 @@ export default function TableComponent({ buildings, classes, history }) {
       </TableHead>
       <TableBody>
         {buildings.map(({ id, name, owner_id, isDeleted }) => (
-          <TableRow onClick={(e) => handleClickBuilding(e, id, history)} key={id}>
+            <TableRow onClick={(e) => handleClickBuilding(e, id, history)} key={id}>
             <TableCell className="pl-3 fw-normal">{name}</TableCell>
             <TableCell>{owner_id}</TableCell>
             <TableCell>
@@ -59,7 +66,9 @@ export default function TableComponent({ buildings, classes, history }) {
                 classes={{ root: classes.moreButton }}
                 onClick={(e) => {
                   e.stopPropagation();
+                  setCurrentBuilding(id)
                   setMoreMenuOpen(true)
+                  setMoreButtonRef(e.target)
                 }}
                 buttonRef={setMoreButtonRef}
               >
@@ -69,21 +78,21 @@ export default function TableComponent({ buildings, classes, history }) {
           </TableRow>
         ))}
       </TableBody>
+      <Menu
+          id="widget-menu"
+          open={isMoreMenuOpen}
+          anchorEl={moreButtonRef}
+          onClose={() => setMoreMenuOpen(false)}
+          disableAutoFocusItem
+          >
+          <MenuItem onClick={e => {
+              deleteBuilding(currentBuilding)
+              setMoreMenuOpen(false)
+            }}>
+            <Typography>Delete</Typography>
+          </MenuItem>
+        </Menu>
     </Table>
-    <Menu
-      id="widget-menu"
-      open={isMoreMenuOpen}
-      anchorEl={moreButtonRef}
-      onClose={() => setMoreMenuOpen(false)}
-      disableAutoFocusItem
-    >
-      <MenuItem onClick={() => setMoreMenuOpen(false)}>
-        <Typography>Active</Typography>
-      </MenuItem>
-      <MenuItem>
-        <Typography>Delete</Typography>
-      </MenuItem>
-    </Menu>
     </div>
   );
 }

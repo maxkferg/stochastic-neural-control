@@ -84,10 +84,10 @@ function setupConsumer(){
         }
 
         // Update socket intermittently 
-        if (SocketUpdatePolicy.shouldUpdate(robotId, state, isChanged)){
-            SocketUpdatePolicy.willUpdate(robotId, state);
-            updateRobotPositionSocket(robotId, x, y, z, theta);
-        }
+        // if (SocketUpdatePolicy.shouldUpdate(robotId, state, isChanged)){
+        //     SocketUpdatePolicy.willUpdate(robotId, state);
+        //     updateRobotPositionSocket(robotId, x, y, z, theta);
+        // }
 
         // Update influxdb intermittently 
         if (InfluxUpdatePolicy.shouldUpdate(robotId, state, isChanged)){

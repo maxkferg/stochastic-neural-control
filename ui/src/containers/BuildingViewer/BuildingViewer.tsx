@@ -88,29 +88,35 @@ class BuildingViewer extends React.Component<Props, State> {
       })
      }
 
-    componentDidUpdate(prevProps) {
+    componentDidUpdate(prevProps, prevState) {
       const { subscribePointCloud, pointCloudStrategy } = this.props;
       const { meshesCurrent } = this.state;
       let self = this;
-      // Subscribe to changes in robot/mesh position
-      for (let i=0; i<meshesCurrent.length; i++) {
-        SubscriptionClient.subscribe({
-          query: SUBSCRIBE_MESH_POSITION,
-        }).subscribe({
-          next (data) {
-            for (let j=0; j<self.state.meshesCurrent.length; j++){
-              if (self.state.meshesCurrent[j].id==data.data.meshPosition.id){
-                let meshCopy = Object.assign({}, self.state.meshesCurrent[j]);
-                meshCopy.x = data.data.meshPosition.position.x
-                meshCopy.y = data.data.meshPosition.position.y
-                meshCopy.z = data.data.meshPosition.position.z
-                meshCopy.theta = data.data.meshPosition.position.theta
-                self.state.meshesCurrent[j] = meshCopy;
-                self.setState({meshesCurrent: self.state.meshesCurrent});
+      if (prevState.meshesCurrent.length !== meshesCurrent.length) {
+        // Subscribe to changes in robot/mesh position
+        for (let i=0; i < meshesCurrent.length; i++) {
+          if (meshesCurrent[i].type === 'robot') {
+            apollo.watchQuery({
+              query: SUBSCRIBE_MESH_POSITION,
+              pollInterval: POLL_INTERVAL,
+              variables: { id: meshesCurrent[i].id }
+            }).subscribe(
+              (data) => {
+                for (let j=0; j< self.state.meshesCurrent.length; j++){
+                  if (self.state.meshesCurrent[j].id==data.data.meshPosition.id){
+                    let meshCopy = Object.assign({}, self.state.meshesCurrent[j]);
+                    meshCopy.x = data.data.meshPosition.position.x
+                    meshCopy.y = data.data.meshPosition.position.y
+                    meshCopy.z = data.data.meshPosition.position.z
+                    meshCopy.theta = data.data.meshPosition.position.theta
+                    self.state.meshesCurrent[j] = meshCopy;
+                    self.setState({meshesCurrent: self.state.meshesCurrent});
+                  }
+                }
               }
-            }
+            )
           }
-        })
+        }
       }
 
       if (this.props.history.location.pathname.includes("point-cloud")) {

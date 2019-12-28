@@ -1,7 +1,6 @@
 const BaseResolver = require('../../BaseResolver');
-const { withFilter } = require('graphql-subscriptions');
-const MESH_POSITION_TOPIC = "mesh_position";
-
+const influx = require('../../../influxdb');
+const Influx = require('influx');
 const {
     GraphQLString,
 } = require('graphql');
@@ -21,19 +20,24 @@ class MeshPositionSubscription extends BaseResolver {
     }
   }
 
-  resolve (payload, args, context, info) {
-    // Manipulate and return the new value
-    return payload;
-  }
-
-  subscribe(_, args, ctx) {
-    const asyncIterator = ctx.pubSub.asyncIterator([MESH_POSITION_TOPIC]);
-    // Using withFilter in a method does not seem to be supported
-    return asyncIterator;
-
-    //return withFilter(() => asyncIterator, (payload, variables) => {
-    //   return payload.id === args.id;
-    //});
+  async resolve (payload, args, context, info) {
+    const { id : robotId } = args;
+    let result = await influx.query(`
+        select * from mesh_position
+        where id = ${Influx.escape.stringLit(robotId)}
+        order by time asc
+        limit 1`
+    )
+    const data = {
+      id: result[0].id,
+      position: {
+        x: result[0].x,
+        y: result[0].y,
+        z: result[0].z,
+        theta: result[0].theta
+      }
+    }
+    return data;
   }
 }
 

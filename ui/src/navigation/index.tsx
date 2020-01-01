@@ -46,7 +46,7 @@ const Routers: React.FC<RoutersProps> = props => {
 	)
 }
 
-const mapDispatchToProps = (dispatch) : RoutersProps=> ({
+const mapDispatchToProps = (dispatch) : RoutersProps => ({
 	setCurrentUser: (payload) => dispatch(setCurrentUser(payload))
 })
 export default connect(null, mapDispatchToProps)(Routers)

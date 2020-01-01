@@ -1,44 +1,48 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Route, Switch } from 'react-router'
 import Model from '../containers/Model';
 import BuildingMap from '../containers/BuildingMap';
 import { getBuilding } from '../services/BuildingServices';
-import { withRouter } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import errorPage from '../pages/error/Error';
-     
-class AppNavigation extends React.Component <{
+
+type urlParams = {
+	buildingId: string
+}
+
+interface AppNavigationProps extends RouteComponentProps<urlParams> {
 	classes: any
-	match: any
 	onSelectedObject: Function
-	createGeometry: Function
-}> {
-	async componentDidMount() {
-		try {
-			const building = await getBuilding({ 
-				buildingId: this.props.match.params.buildingId
-			});
-			if (!building.data.getBuilding.id) {
-				throw new Error('Building not found');
+	onClickAddBtn: Function
+}
+
+const AppNavigation: React.FC<AppNavigationProps> = props => {
+		const { classes, match, history } = props; 
+		useEffect(() => {
+			async function appNavigationDidMount() {
+				try {
+					const building = await getBuilding({ 
+						buildingId: match.params.buildingId
+					});
+					if (!building.data.getBuilding.id) {
+						throw new Error('Building not found');
+					}
+				} catch(error) {
+					const isGuest = localStorage.getItem('role') === 'guest';
+					!isGuest && history.push('/no-match');
+				}
 			}
-		} catch(error) {
-			const isGuest = localStorage.getItem('role') === 'guest';
-			//@ts-ignore
-			!isGuest && this.props.history.push('/no-match');
-		}
-	}
-	
-	render () {
-		const { classes } = this.props;
+			appNavigationDidMount()
+		})
 		return (
 		<Switch>
-			<Route path="/app/building/:buildingId/model" render={_ => <Model {...this.props} />}/>
+			<Route path="/app/building/:buildingId/model" render={_ => <Model {...props} />}/>
 			<Route path="/app/building/:buildingId/building-map" render={() => <BuildingMap classes={classes}/>} />
 			<Route path="/app/building/:buildingId/slam" render={_ => <h1>In Progress</h1>}/>
-			<Route path="/app/building/:buildingId/point-cloud" render={() => <Model {...this.props} />} />
+			<Route path="/app/building/:buildingId/point-cloud" render={() => <Model {...props} />} />
 			<Route component={errorPage} />
 	  	</Switch>
 	)
-	}
 }
-//@ts-ignore
+
 export default withRouter(AppNavigation)

@@ -15,7 +15,7 @@ const BUFFER_POINT = 10000;
 const GET_MESH_BUILDING_QUERY = loader('../../graphql/getMeshesBuilding.gql');
 const SUBSCRIBE_MESH_POSITION = loader('../../graphql/subscribeMesh.gql');
 const POLL_INTERVAL = 5000 // 5 seconds
-const POLL_INTERVAL_BOT_POSITION = 500
+const POLL_INTERVAL_BOT_POSITION = 100
 const SUB_POINTS_ROBOT = loader('../../graphql/subscribePointsOfRobot.gql');
 const styles = (theme: Theme) => ({
   fab: {

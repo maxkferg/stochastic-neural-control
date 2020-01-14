@@ -102,7 +102,7 @@ class RobotVelocityProducer {
         },
       }
     }
-    
+
     let payload = [{
       topic: 'robot.commands.velocity_human',
       attributes: 1,

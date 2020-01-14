@@ -82,7 +82,7 @@ class MapBuilder():
                 print("Deleting robot from map (%s)"%map_object["name"])
                 self.graphql_client.execute(deleteMapGeometry,
                     {"id": map_object["id"]}
-                )                
+                )
             if mesh_id not in mesh_lookup or mesh_lookup[mesh_id]["deleted"]:
                 print("Deleting map geometry for %s"%map_object["name"])
                 self.graphql_client.execute(deleteMapGeometry,

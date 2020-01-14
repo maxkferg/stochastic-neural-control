@@ -1,6 +1,7 @@
 const BaseResolver = require('../../BaseResolver');
-const influx = require('../../../influxdb');
-const Influx = require('influx');
+const { withFilter } = require('graphql-subscriptions');
+const MESH_POSITION_TOPIC = "mesh_position";
+
 const {
     GraphQLString,
 } = require('graphql');
@@ -20,24 +21,18 @@ class MeshPositionSubscription extends BaseResolver {
     }
   }
 
-  async resolve (payload, args, context, info) {
-    const { id : robotId } = args;
-    let result = await influx.query(`
-        select * from mesh_position
-        where id = ${Influx.escape.stringLit(robotId)}
-        order by time asc
-        limit 1`
-    )
-    const data = {
-      id: result[0].id,
-      position: {
-        x: result[0].x,
-        y: result[0].y,
-        z: result[0].z,
-        theta: result[0].theta
-      }
+  resolve (payload, args, context, info) {
+    return payload
+  }
+
+  async subscribe(rootValue, args, ctx) {
+    const asyncIterator = ctx.pubSub.asyncIterator([MESH_POSITION_TOPIC]);
+
+    function isMatch(payload, variables){
+      return payload.id === args.id;
     }
-    return data;
+
+    return withFilter(() => asyncIterator, isMatch)(rootValue, args, ctx)
   }
 }
 

@@ -40,7 +40,7 @@ function isString(message){
 /**
  * setupConsumer
  * Setup a consumer that copies data from Kafka to Influx
- * New 
+ *
  */
 function setupConsumer(){
     let x = 0;
@@ -83,13 +83,13 @@ function setupConsumer(){
             return
         }
 
-        // Update socket intermittently 
-        // if (SocketUpdatePolicy.shouldUpdate(robotId, state, isChanged)){
-        //     SocketUpdatePolicy.willUpdate(robotId, state);
-        //     updateRobotPositionSocket(robotId, x, y, z, theta);
-        // }
+        // Update socket intermittently
+        if (SocketUpdatePolicy.shouldUpdate(robotId, state, isChanged)){
+             SocketUpdatePolicy.willUpdate(robotId, state);
+             updateRobotPositionSocket(robotId, x, y, z, theta);
+        }
 
-        // Update influxdb intermittently 
+        // Update influxdb intermittently
         if (InfluxUpdatePolicy.shouldUpdate(robotId, state, isChanged)){
             InfluxUpdatePolicy.willUpdate(robotId, state);
             updateRobotPositionInflux(robotId, x, y, z, theta);

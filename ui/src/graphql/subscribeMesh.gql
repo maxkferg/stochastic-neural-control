@@ -1,4 +1,4 @@
-query SubscribeMesh($id: String) {
+subscription SubscribeMesh($id: String) {
     meshPosition(id: $id) {
         id,
         position {

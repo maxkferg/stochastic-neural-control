@@ -14,7 +14,7 @@ from environment.core.robots.robot_messages import get_odom_message
 
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
 
-KAFKA_ACTION_TOPIC = "robot.commands.velocity_pred"
+KAFKA_ACTION_TOPIC = "robot.commands.velocity"
 KAFKA_GROUP_NAME = "Simulator Service"
 NULL_ACTION = [0,0]
 MAX_ACTION_LIFE = 0.3 # seconds

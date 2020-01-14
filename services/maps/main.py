@@ -82,7 +82,7 @@ class MapBuilder():
                 print("Deleting robot from map (%s)"%map_object["name"])
                 self.graphql_client.execute(deleteMapGeometry,
                     {"id": map_object["id"]}
-                )                
+                )
             if mesh_id not in mesh_lookup or mesh_lookup[mesh_id]["deleted"]:
                 print("Deleting map geometry for %s"%map_object["name"])
                 self.graphql_client.execute(deleteMapGeometry,
@@ -240,19 +240,20 @@ class MapBuilder():
                 if ob["type"]=="floor":
                     continue
                 if ob['geometry']['filename'] is None:
-                    print("Could not get geometry for ", name)
+                    print("Failed. Could not get geometry for ", name)
                     continue
                 logging.info('Processing {}'.format(ob['name']))
                 try:
                     mesh = self._download_geometry_resource(ob)
                 except urllib.error.HTTPError:
-                    logging.error("Could not download: %s"%name)
+                    logging.error("Failed. Could not download: %s"%name)
                     continue
                 except Exception as e:
-                    logging.error("Could not download: %s %s"%(e,name))
+                    logging.error("Failed. Could not download: %s %s"%(e,name))
                     continue
                 if type(mesh) is trimesh.scene.Scene:
-                    logging.error("Could not process scene for: %s"%name)
+                    logging.error("Failed. Could not process scene for: %s"%name)
+                    logging.error("Try installing trimesh==2.38.42")
                     continue
                 offset = np.array([ob['x'], ob['y'], ob['z']])
                 mesh = self._transform_mesh(mesh, offset, ob["theta"], ob["scale"])

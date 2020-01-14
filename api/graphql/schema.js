@@ -22,7 +22,7 @@ const Subscription = new GraphQLObjectType({
     name: 'RootSubscription',
     description: 'Root Subscription',
     fields: () => ({
-        // meshPosition: new resolvers.Mesh.subscribeMeshPosition(MeshPosition, "Get notified when any mesh moves", false),
+        meshPosition: new resolvers.Mesh.subscribeMeshPosition(MeshPosition, "Get notified when any mesh moves", false),
         pointCloud: new resolvers.Point.pointCloudSubscription(PointType.PointsGroup, "Subscribe points group cloud", false),
     })
 });
@@ -48,7 +48,6 @@ const Query = new GraphQLObjectType({
         meshes: new resolvers.Mesh.getAllMeshes(new GraphQLList(Mesh), "Get all meshes", false),
         meshesOfBuilding: new resolvers.Mesh.getMeshBuilding(new GraphQLList(Mesh), "Get all meshes", false),
         meshBuilding: new resolvers.Mesh.getMesh(Mesh, "Get mesh by id", false),
-        meshPosition: new resolvers.Mesh.subscribeMeshPosition(MeshPosition, "Get notified when any mesh moves", false),
         mesh: new resolvers.Mesh.getMesh(Mesh, "Get mesh by id", false),
         mapGeometry: new resolvers.MapGeometry.getMapGeometry(new GraphQLList(MapGeometry), "Get all Map Geometry", false),
         trajectory: new resolvers.Trajectory.getTrajectory(Trajectory, "Get a single trajectory", false),

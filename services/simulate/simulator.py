@@ -14,7 +14,7 @@ from environment.core.robots.robot_messages import get_odom_message
 
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
 
-KAFKA_ACTION_TOPIC = "robot.commands.velocity_pred"
+KAFKA_ACTION_TOPIC = "robot.commands.velocity"
 KAFKA_GROUP_NAME = "Simulator Service"
 NULL_ACTION = [0,0]
 MAX_ACTION_LIFE = 0.3 # seconds
@@ -28,7 +28,7 @@ class Simulator():
     Listens to control commands for each object in Kafka
     Publishes updated object locations to Kafka
     """
-    def __init__(self, config, timestep=0.4):
+    def __init__(self, config, timestep=0.1):
         self.robots = {}
         self.timestep = timestep
         self.kafka_producer = self._setup_kafka_producer(config["Kafka"]["host"])
@@ -101,12 +101,11 @@ class Simulator():
 
             for i in range(self.action_repeat):
                 self.env.step()
-                print(".", end="")
+                self._publish_robot_states()
+                print(".", end="", flush=True)
             print()
             steps += 1
-
-            self._publish_robot_states()
-            time.sleep(0.4)
+            time.sleep(0.1)
 
 
     def run(self):

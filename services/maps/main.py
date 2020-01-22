@@ -160,6 +160,26 @@ class MapBuilder():
         return mesh
 
 
+    def _as_mesh(self, scene_or_mesh):
+        """
+        Convert a possible scene to a mesh.
+
+        If conversion occurs, the returned mesh has only vertex and face data.
+        """
+        if isinstance(scene_or_mesh, trimesh.Scene):
+            if len(scene_or_mesh.geometry) == 0:
+                mesh = None  # empty scene
+            else:
+                # we lose texture information here
+                mesh = trimesh.util.concatenate(
+                    tuple(trimesh.Trimesh(vertices=g.vertices, faces=g.faces)
+                        for g in scene_or_mesh.geometry.values()))
+        else:
+            assert(isinstance(mesh, trimesh.Trimesh))
+            mesh = scene_or_mesh
+        return mesh
+
+
     def _download_geometry_resource(self, geometry_object):
         """
         Download the file from `url` and save it locally under `file_name`
@@ -252,8 +272,8 @@ class MapBuilder():
                     logging.error("Failed. Could not download: %s %s"%(e,name))
                     continue
                 if type(mesh) is trimesh.scene.Scene:
-                    logging.error("Failed. Could not process scene for: %s"%name)
-                    logging.error("Try installing trimesh==2.38.42")
+                    mesh = self._as_mesh(mesh)
+
                     continue
                 offset = np.array([ob['x'], ob['y'], ob['z']])
                 mesh = self._transform_mesh(mesh, offset, ob["theta"], ob["scale"])

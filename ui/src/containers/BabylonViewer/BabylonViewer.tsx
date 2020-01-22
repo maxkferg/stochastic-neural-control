@@ -301,25 +301,27 @@ class BabylonViewer extends React.Component<Props, State> {
         }
         return true;
     }
-
+    enableGeometries = () => {
+        if (!this.props.showGeometries) {
+            for (let key in this.state.renderedMeshes) {
+                if (this.state.renderedMeshes[key]) {
+                    this.state.renderedMeshes[key].setEnabled(false)
+                }
+            }
+        } else {
+            for (let key in this.state.renderedMeshes) {
+                if (this.state.renderedMeshes[key]) {
+                    this.state.renderedMeshes[key].setEnabled(true)
+                }
+            }
+        }
+    }
     componentDidUpdate(prevProps) {
         // TODO: Detect whether we have extra geometry as well
         // We can not render geometry until the scene is ready
+        this.enableGeometries()
         if (this.state.scene !== null && this.props.marker !== prevProps.marker){
             let assetManager = new BABYLON.AssetsManager(this.state.scene);
-            if (!this.props.showGeometries) {
-                for (let key in this.state.renderedMeshes) {
-                    if (this.state.renderedMeshes[key]) {
-                        this.state.renderedMeshes[key].setEnabled(false)
-                    }
-                }
-            } else {
-                for (let key in this.state.renderedMeshes) {
-                    if (this.state.renderedMeshes[key]) {
-                        this.state.renderedMeshes[key].setEnabled(true)
-                    }
-                }
-            }
             let objectsToBeCreated: any[] = [];
             let objectsToBeDeleted: any[] = this.props.deleteMesh;
             console.log(this.props.geometry, this.state.renderedObjects)

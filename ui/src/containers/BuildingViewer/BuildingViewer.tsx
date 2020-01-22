@@ -97,25 +97,30 @@ class BuildingViewer extends React.Component<Props, State> {
         // Subscribe to changes in robot/mesh position
         for (let i=0; i < meshesCurrent.length; i++) {
           if (meshesCurrent[i].type === 'robot') {
-            apollo.watchQuery({
+            // Subscribe to changes in robot/mesh position
+            SubscriptionClient.subscribe({
               query: SUBSCRIBE_MESH_POSITION,
-              pollInterval: POLL_INTERVAL_BOT_POSITION,
-              variables: { id: meshesCurrent[i].id }
-            }).subscribe(
-              (data) => {
-                for (let j=0; j< self.state.meshesCurrent.length; j++){
-                  if (self.state.meshesCurrent[j].id==data.data.meshPosition.id){
+              variables: {
+                id: meshesCurrent[i].id
+              }
+            }).subscribe({
+              next (data) {
+                for (let j=0; j<self.state.meshesCurrent.length; j++){
+                  if (self.state.meshesCurrent[j].id == data.data.meshPosition.id){
                     let meshCopy = Object.assign({}, self.state.meshesCurrent[j]);
                     meshCopy.x = data.data.meshPosition.position.x
                     meshCopy.y = data.data.meshPosition.position.y
                     meshCopy.z = data.data.meshPosition.position.z
                     meshCopy.theta = data.data.meshPosition.position.theta
                     self.state.meshesCurrent[j] = meshCopy;
-                    self.setState({meshesCurrent: self.state.meshesCurrent});
+                    self.setState({
+                      marker: !self.state.marker,
+                      meshesCurrent: self.state.meshesCurrent
+                    });
                   }
                 }
               }
-            )
+            })
           }
         }
       }

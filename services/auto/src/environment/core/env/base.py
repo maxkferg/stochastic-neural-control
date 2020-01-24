@@ -63,10 +63,10 @@ class BaseEnvironment():
         self.roadmap.set_map(self.building_map)
 
         for i in range(10):
-          try:
-            self.roadmap.solve(default_start, default_target)
+          path = self.roadmap.solve(default_start, default_target)
+          if len(path):  
             return
-          except ValueError as e:
+          else:
             print("Failed to find a path from {} to {}".format(default_start, default_target))
         raise e          
 

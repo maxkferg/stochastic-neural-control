@@ -14,12 +14,11 @@ platform:
 bottleneck:
   timestep: 0.1
   reset_on_target: False
-  start_reference: [1,2]
-  target_min_distance: 5
-  target_max_distance: 50
-  default_start: [1,2]
-  default_target: [1,8]
-  building_id: "5dd491f7e725ce1a784acf5b"
+  target_min_distance: 4
+  target_max_distance: 100
+  default_start: [1,1]
+  default_target: [7,1]
+  building_id: "5dd4b521e725ce079c4c2d5b"
   checkpoint: "../checkpoints/SACQ_MultiRobot-v0_1b51c0e3_2019-11-05_09-10-27g6ibizk2/checkpoint_4000/checkpoint-4000"
 
 room:

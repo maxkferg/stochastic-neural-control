@@ -3,7 +3,7 @@ seeker-sacq:
     run: SACQ
     checkpoint_freq: 50
     stop:
-        episode_reward_mean: 2
+        episode_reward_mean: 20
     config:
         # === Environment ===
         horizon: 100

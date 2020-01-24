@@ -48,6 +48,7 @@ SCENARIO = scenarios["bottleneck"]
 
 SCENARIO.update({
     'headless': True,
+    'reset_on_target': True
 })
 
 

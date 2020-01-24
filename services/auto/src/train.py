@@ -159,6 +159,7 @@ def run(args):
             name=experiment_name,
             stop=settings['stop'],
             config=config,
+            
             restore=SCENARIO["checkpoint"],
             checkpoint_freq=settings['checkpoint_freq'],
             queue_trials=True,

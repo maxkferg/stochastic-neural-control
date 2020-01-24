@@ -64,6 +64,7 @@ class BaseEnvironment():
 
         for i in range(10):
           path = self.roadmap.solve(default_start, default_target)
+          print("Path:", path)
           if len(path):  
             return
           else:

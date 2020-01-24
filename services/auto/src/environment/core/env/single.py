@@ -49,7 +49,8 @@ DEFAULTS = {
     'robot_policy': 'random',
     'geometry_policy': 'initial',
     'reset_on_target': False,
-    'start_reference': [-1,0],
+    'default_start': [-1,0],
+    'default_target': [1,1],
     'timestep': 0.4, # Robot makes a decision every 0.4 s
     'verbosity': 0,
     'debug': False,
@@ -124,8 +125,11 @@ class SingleEnvironment():
         self.verbosity = config["verbosity"]
         self.timestep = config["timestep"] 
         self.velocity_multiplier = math.sqrt(DEFAULTS["timestep"]/self.timestep)
-        self.start_reference = config["start_reference"]
+        self.default_start = config["default_start"]
+        self.default_target = config["default_target"]
         self.reset_on_target = config["reset_on_target"]
+        self.target_min_distance = config.get("target_min_distance")
+        self.target_max_distance = config.get("target_max_distance")
         self.debug = config["debug"]
         self.renders = config["renders"]
         self.isDiscrete = config["is_discrete"]
@@ -246,7 +250,7 @@ class SingleEnvironment():
     def reset_robot_position(self):
         """Move the robot to a new position"""
         if self.robot_policy=="random":
-            start = self.base.get_reachable_point(self.start_reference)
+            start = self.base.get_reachable_point(self.default_start)
             start = start + [0.1]
             theta = 2*math.pi*random.random()
             orn = pybullet.getQuaternionFromEuler((0, 0, theta))
@@ -266,7 +270,11 @@ class SingleEnvironment():
     def reset_target_position(self):
         """Move the target to a new position"""
         if self.target_policy=="random":
-            position = self.base.get_reachable_point(self.start_reference)
+            position = self.base.get_reachable_point(
+                self.default_start,
+                self.target_min_distance,
+                self.target_max_distance
+            )
         elif self.target_policy=="api":
             raise NotImplimentedError("API Target not implemented")
         else:

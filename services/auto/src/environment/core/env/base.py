@@ -53,12 +53,22 @@ class BaseEnvironment():
         self.floors = []
         self.objects = []
         self.build()
+
         # Setup the PRM planner. Used for target selection and checkpoints
         # Solve a simple search problem to prebuild the roadmap
+        default_start = config['default_start']
+        default_target = config['default_target']
         self.building_map = self.loader.map.cached()
         self.roadmap = self.loader.roadmap_planner
         self.roadmap.set_map(self.building_map)
-        self.roadmap.solve((0,0),(1,1))
+
+        for i in range(10):
+          try:
+            self.roadmap.solve(default_start, default_target)
+            return
+          except ValueError as e:
+            print("Failed to find a path from {} to {}".format(default_start, default_target))
+        raise e          
 
 
     def build(self):
@@ -195,24 +205,30 @@ class BaseEnvironment():
             robot.set_pose(pose['position'], pose['orientation'])
 
 
-    def _sample_floor_point(self, start, ntries=10):
+    def _sample_floor_point(self, start, min_distance=None, max_distance=None, ntries=10):
       """
       Return a point that is reachable from the start point.
       Works by finding what map polygon the point lays within. Creates a
       traversable region by subtracting other polygons. Selects a random
       point in the traversable region.
       @start: The point to start at
+      @min_distance: The minimum distance to the sampled point
+      @max_distance: The maximum distance to the sampled point
       @threshold(depreciated): The minimum distance between the output and the polygon edge
       """
-      MAX_DIST = 10
+      if min_distance is None:
+        min_distance = 0
+
+      if max_distance is None:
+        max_distance = np.Inf
 
       planner = self.roadmap.planner
       points = list(zip(planner.sample_x, planner.sample_y))
-      # Filter by distance
+
       close_points = []
       for point in points:
         distance = np.sum((np.array(start)-np.array(point))**2)
-        if distance < MAX_DIST**2:
+        if distance > min_distance**2 and distance < max_distance**2:
           close_points.append(point)
 
       if len(close_points):
@@ -222,13 +238,16 @@ class BaseEnvironment():
           if len(rx):
             return list(pnt)
 
-    def get_reachable_point(self, start, threshold=0.3):
+
+    def get_reachable_point(self, start, min_distance=None, max_distance=None, threshold=0.3):
       """
       Return a point that is probably reachable from the start point.
       Works by finding what map polygon the point lays within. Creates a
       traversable region by subtracting other polygons. Selects a random
       point in the traversable region.
       @start: The point to start at
+      @min_distance: The minimum distance to the target
+      @max_distance: The maximum distance to the target
       @threshold: The minimum distance between the output and the polygon edge
       """
       start_point = geometry.Point(start[0], start[1])
@@ -236,9 +255,10 @@ class BaseEnvironment():
       external_polygons = []
 
       # Try a quick hack. Uses the motion planner points
-      point = self._sample_floor_point(start, ntries=20)
+      point = self._sample_floor_point(start, min_distance, max_distance, ntries=20)
       if point:
         return point
+      print("Failed to find point with motion planner")
 
       for obj in building_map:
         for polygon in obj['external_polygons']:

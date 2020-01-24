@@ -38,10 +38,17 @@ from environment.core.utils.config import extend_config
 from common import train_env_factory
 
 
-ENV_CONFIG = {
-    'headless': True,
-    'building_id': '5d97edec93a71c81fb0fbbf1'
-}
+with open("scenarios/scenarios.yaml") as stream:
+    scenarios = yaml.safe_load(stream)
+
+
+# Choose a scenario to rollout
+SCENARIO = scenarios["bottleneck"]
+
+
+SCENARIO.update({
+    'headless': False,
+})
 
 
 # Only show errors and warnings
@@ -94,7 +101,7 @@ def config_from_args(args):
     """
     config = {}
     if args.workers:
-        config["workers"] = args.workers
+        config["num_workers"] = args.workers
     if args.headless:
         config["env_config"] = dict(headless=True)
     if args.render:
@@ -144,7 +151,7 @@ def run(args):
         print("Running %s"%experiment_name)
         config = settings['config']
         config = extend_config(config, get_callbacks())
-        config = extend_config(config, dict(env_config=ENV_CONFIG))
+        config = extend_config(config, dict(env_config=SCENARIO))
         config = extend_config(config, config_from_args(args))
 
         ray.tune.run(
@@ -207,7 +214,7 @@ def run_pbt(args):
         })
         # Hard overrides from this file and the commandline
         config = extend_config(config, get_callbacks())
-        config = extend_config(config, dict(env_config=ENV_CONFIG))
+        config = extend_config(config, dict(env_config=SCENARIO))
         config = extend_config(config, config_from_args(args))
 
         ray.tune.run(
@@ -241,7 +248,7 @@ def run_trials(args):
         })
         # Hard overrides from this file and the commandline
         config = extend_config(config, get_callbacks())
-        config = extend_config(config, dict(env_config=ENV_CONFIG))
+        config = extend_config(config, dict(env_config=SCENARIO))
         config = extend_config(config, config_from_args(args))
 
         ray.tune.run(

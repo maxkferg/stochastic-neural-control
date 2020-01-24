@@ -66,7 +66,6 @@ DEFAULT_TIMESTEP = 0.1
 FRAME_MULTIPLIER = 1
 FRAME_MULTIPLIER = 5
 EVAL_TIMESTEP = DEFAULT_TIMESTEP/FRAME_MULTIPLIER
-
 RENDER_WIDTH = 1028
 RENDER_HEIGHT = 720
 
@@ -78,29 +77,18 @@ video_FourCC = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
 video = cv2.VideoWriter(filename, video_FourCC, fps=20, frameSize=(RENDER_WIDTH, RENDER_HEIGHT))
 viridis = cm.get_cmap('viridis')
 
+with open("scenarios/scenarios.yaml") as stream:
+    scenarios = yaml.safe_load(stream)
 
-Y2E2 = '5dc3fec814921a6e03cff7e8'
-Y2E2_START = (0,0)
 
-ROOM = '5dc3fefb14921a7c18cff7e9'
-BOTTLENECK = '5dd4b521e725ce079c4c2d5b'
-BOTTLENECK_START = (1,2)
-ROOM_START = (0,0)
+# Choose a scenario to rollout
+SCENARIO = scenarios["bottleneck"]
 
-ENV_OVERIDES = {
+SCENARIO.update({
     'headless': False,
-    #'timestep': 0.1,
-    'timestep': 0.04,
-    'base_timestep': 0.04,
     'creation_delay': 0,
     'reset_on_target': False,
-    #'building_id': BOTTLENECK,
-    'start_reference': Y2E2_START,
-    #'building_id': '5dcded82ba5dd985cf8f62c9',
-    'building_id': Y2E2
-    #5dcded82ba5dd985cf8f62c9
-}
-
+})
 
 
 
@@ -115,7 +103,6 @@ def create_parser(parser_creator=None):
     parser.add_argument(
         "--checkpoint",
         type=str,
-        required=True,
         help="Checkpoint from which to roll out.")
 
     required_named = parser.add_argument_group("required named arguments")
@@ -209,8 +196,6 @@ def get_q_value(env, agent, policy_id, obs):
     filtered_obs = agent.workers.local_worker().filters[policy_id](
         preprocessed, update=False)
 
-    print(dir(agent.get_policy(policy_id)))
-
     res = agent.get_policy(policy_id).compute_single_action(
         filtered_obs,
         state,
@@ -218,7 +203,6 @@ def get_q_value(env, agent, policy_id, obs):
         prev_reward,
         info,
         clip_actions=True)
-    print(res)
 
     feed_dict = {self.obs_t: observation[i], self.act_t: action[i] }
     feed_dict.update(self.extra_compute_action_feed_dict())
@@ -378,7 +362,7 @@ def rollout(agent, env_name, num_steps, out=None, no_render=True, render_q=False
 
 
 def run(args, parser):
-    checkpoint_file = os.path.expanduser(args.checkpoint)
+    checkpoint_file = args.checkpoint or SCENARIO["checkpoint"]
     config_dir = os.path.dirname(checkpoint_file)
     config_dir = os.path.expanduser(config_dir)
     config_path = os.path.join(config_dir, "params.pkl")
@@ -404,7 +388,7 @@ def run(args, parser):
     config['num_workers'] = 0
     config['evaluation_interval'] = 0
     config['exploration_enabled'] = False
-    config = extend_config(config, dict(env_config=ENV_OVERIDES))
+    config = extend_config(config, dict(env_config=SCENARIO))
 
     if not args.no_render:
         config["monitor"] = True

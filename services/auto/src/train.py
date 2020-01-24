@@ -47,7 +47,7 @@ SCENARIO = scenarios["bottleneck"]
 
 
 SCENARIO.update({
-    'headless': False,
+    'headless': True,
 })
 
 
@@ -159,6 +159,7 @@ def run(args):
             name=experiment_name,
             stop=settings['stop'],
             config=config,
+            restore=SCENARIO["checkpoint"],
             checkpoint_freq=settings['checkpoint_freq'],
             queue_trials=True,
         )
@@ -221,6 +222,7 @@ def run_pbt(args):
             settings['run'],
             name=experiment_name,
             scheduler=pbt_scheduler,
+            restore=SCENARIO["checkpoint"],
             config=config,
             checkpoint_freq=20,
             max_failures=5,
@@ -255,6 +257,7 @@ def run_trials(args):
             settings['run'],
             name=experiment_name,
             config=settings['config'],
+            restore=SCENARIO["checkpoint"],
             checkpoint_freq=20,
             max_failures=4,
             num_samples=4

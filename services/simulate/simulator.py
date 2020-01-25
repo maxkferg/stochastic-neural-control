@@ -14,10 +14,13 @@ from environment.core.robots.robot_messages import get_odom_message
 
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
 
-KAFKA_ACTION_TOPIC = "robot.commands.velocity"
+KAFKA_ACTION_TOPIC = "robot.commands.velocity_pred"
 KAFKA_GROUP_NAME = "Simulator Service"
 NULL_ACTION = [0,0]
 MAX_ACTION_LIFE = 0.3 # seconds
+
+SIM_TIMESTEP = 0.02
+TARGET_FPS = 8
 
 
 class Simulator():
@@ -28,20 +31,24 @@ class Simulator():
     Listens to control commands for each object in Kafka
     Publishes updated object locations to Kafka
     """
-    def __init__(self, config, timestep=0.1):
+    def __init__(self, config):
         self.robots = {}
-        self.timestep = timestep
+        self.target_fps = TARGET_FPS
         self.kafka_producer = self._setup_kafka_producer(config["Kafka"]["host"])
         self.kafka_consumer = self._setup_kafka_consumer(config["Kafka"]["host"])
         self.kafka_consumer.poll()
         self.kafka_consumer.seek_to_end()
         logging.info("Created TurtleBot Simulator:")
         logging.info(json.dumps(config, indent=2))
+        logging.info("Target FPS: %.2f"%self.target_fps)
+
+        config['base_timestep'] = SIM_TIMESTEP
         self.env = BaseEnvironment(config=config)
         self.env.start()
-        self.action_repeat = int(self.timestep / self.env.timestep)
-        logging.info("Using base timestep %.3f"%self.env.timestep)
-        logging.info("Using action_repeat %i"%self.action_repeat)
+
+        #self.action_repeat = int(self.timestep / self.env.timestep)
+        #logging.info("Using base timestep %.3f"%self.env.timestep)
+        #logging.info("Using action_repeat %i"%self.action_repeat)
         for robot in self.env.robots:
             self.robots[robot.id] = robot
 
@@ -64,7 +71,6 @@ class Simulator():
             message = get_odom_message(robot_id, position, orientation)
             message = json.dumps(message).encode('utf-8')
             future = self.kafka_producer.send('robot.events.odom', message)
-            logging.info("Sent robot.events.odom message for robot %s"%robot_id)
 
 
     def run_sync(self):
@@ -90,7 +96,7 @@ class Simulator():
                     else:
                         robot = self.robots[robot_id]
                         robot.applyAction(action)
-                        logging.info("Robot {} action {}".format(robot_id, action))
+                        logging.info("Robot {:3s} action {}".format(robot_id, action))
 
             # Stop moving the robot if messages are not flowing
             for robot_id in self.robots:
@@ -109,10 +115,10 @@ class Simulator():
 
 
     def run(self):
-        self.run_sync()
+        self.run_async()
 
 
-    def _run(self):
+    def run_async(self):
         logging.info("\n\n --- Starting simulation loop --- \n")
         linear_velocity = 0
         angular_velocity = 0
@@ -144,24 +150,22 @@ class Simulator():
                     robot = self.robots[robot_id]
                     robot.applyAction(NULL_ACTION)
 
-            for i in self.action_repeat:
-                self.env.step()
-                print(".", end="", flush=True)
+            self.env.step()
+            print(".", end="", flush=True)
             steps+=1
 
-            # Push robot position at about 20 Hz
-            if steps%24==0:
-                self._publish_robot_states()
+            # Push robot position
+            self._publish_robot_states()
 
-            # Try and maintain 240 FPS to match the bullet simulation speed
-            duration = time.time()-start
+            # Try and maintain 10 FPS to match the bullet simulation speed
+            duration = time.time() - start
             fps = steps/duration
-            if fps<240:
+            if fps < self.target_fps:
                 self.env.step()
                 steps +=1
-            if fps>240:
-                time.sleep(max(0, steps/240-duration))
-            if steps%240==0:
+            if fps > self.target_fps:
+                time.sleep(max(0, steps/self.target_fps - duration))
+            if steps % self.target_fps < 1:
                 logging.info("Current simulation speed  {:.3f}".format(fps))
 
 

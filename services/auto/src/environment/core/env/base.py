@@ -63,13 +63,13 @@ class BaseEnvironment():
         self.roadmap.set_map(self.building_map)
 
         for i in range(10):
-          path = self.roadmap.solve(default_start, default_target)
-          print("Path:", path)
-          if len(path):  
+          rx,ry = self.roadmap.solve(default_start, default_target)
+          print("Path:", rx)
+          if len(rx):  
             return
           else:
             print("Failed to find a path from {} to {}".format(default_start, default_target))
-        raise e          
+        raise ValueError("Could not find a suitable roadmap")          
 
 
     def build(self):
@@ -217,11 +217,11 @@ class BaseEnvironment():
       @max_distance: The maximum distance to the sampled point
       @threshold(depreciated): The minimum distance between the output and the polygon edge
       """
-      if min_distance is None:
-        min_distance = 0
+      #if min_distance is None:
+      min_distance = 0
 
-      if max_distance is None:
-        max_distance = np.Inf
+      #if max_distance is None:
+      max_distance = 1000
 
       planner = self.roadmap.planner
       points = list(zip(planner.sample_x, planner.sample_y))

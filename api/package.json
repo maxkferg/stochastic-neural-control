@@ -15,7 +15,7 @@
   "author": "Max Ferguson",
   "license": "ISC",
   "dependencies": {
-    "@google-cloud/storage": "^3.1.0",
+    "@google-cloud/storage": "^4.3.0",
     "@koa/cors": "^3.0.0",
     "@types/node": "^12.6.8",
     "apollo-server-koa": "^2.9.0",

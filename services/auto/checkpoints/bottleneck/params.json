@@ -1,0 +1,46 @@
+{
+  "callbacks": {
+    "on_episode_end": "<function on_episode_end at 0x7f67f6623170>",
+    "on_episode_start": "<function on_episode_start at 0x7f67f66233b0>",
+    "on_episode_step": "<function on_episode_step at 0x7f67f6623320>"
+  },
+  "compress_observations": true,
+  "env": "MultiRobot-v0",
+  "env_config": {
+    "building_id": "5dd4b521e725ce079c4c2d5b",
+    "checkpoint": "../checkpoints/SACQ_MultiRobot-v0_1b51c0e3_2019-11-05_09-10-27g6ibizk2/checkpoint_4000/checkpoint-4000",
+    "creation_delay": 10,
+    "default_start": [
+      1,
+      1
+    ],
+    "default_target": [
+      7,
+      1
+    ],
+    "headless": true,
+    "reset_on_target": true,
+    "target_max_distance": 100,
+    "target_min_distance": 4,
+    "timestep": 0.1
+  },
+  "evaluation_interval": 10,
+  "evaluation_num_episodes": 20,
+  "horizon": 100,
+  "learning_starts": 50000,
+  "min_iter_time_s": 60,
+  "model": {
+    "custom_model": "sensor",
+    "use_lstm": false
+  },
+  "num_gpus": 1,
+  "num_gpus_per_worker": 0,
+  "num_workers": 7,
+  "optimization": {
+    "actor_learning_rate": 0.0001,
+    "critic_learning_rate": 0.0001,
+    "entropy_learning_rate": 0.0001
+  },
+  "tau": 0.005,
+  "use_state_preprocessor": true
+}

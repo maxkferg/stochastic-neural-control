@@ -52,7 +52,7 @@ class RobotMutation extends BaseResolver {
   async resolve(parentValue, args, ctx) {
     // Call super method to check authentication if applicable
     super.resolve(parentValue, args, ctx);
-    
+
     let robot = {}
 
     if (typeof args.mesh_id !== 'undefined'){
@@ -125,7 +125,7 @@ class TopicProxyManager {
     for (let topic of topics){
       if (!this.currentProxies[topic]){
         this.currentProxies[topic] = new TopicProxy(topic, this.toTopic)
-        logger.info("Create kafka proxy:", topic);
+        logger.info("Created proxy:", topic, " -> ", this.toTopic);
       }
     }
   }
@@ -143,27 +143,51 @@ class TopicProxy{
     const kafkaHost = config.get("Kafka.host");
     const client = new kafka.KafkaClient({kafkaHost: kafkaHost});
     const producer = new kafka.HighLevelProducer(client);
-    this.consumer = new kafka.Consumer(
+    logger.info("Created consumer for: ", kafkaHost)
+
+    client.on('error', function(error) {
+      logger.error(error);
+    });
+
+    const consumer = new kafka.Consumer(
         client,
-        [{ topic: fromTopic }],
+        [{
+          topic: fromTopic,
+          partition: 0
+        }],
         {
           autoCommit: true,
-          groupId: 'robot-topic-proxy',
+          groupId: 'control-topic-proxy',
+          fromOffset: 'latest',
         }
     );
-    this.consumer.on('message', function(message){
-      console.log(message)
+    this.consumer = consumer
+
+    consumer.on('message', function(message){
       const payload = {
         topic: toTopic,
         messages: [message.value]
       }
       producer.send([payload], function(err,data){
-        if (err) console.error("Error sending robot control:",err);
+        if (err) {
+          logger.error("Error sending robot control:", err);
+        }
       })
     })
+
+    consumer.on('error', function(err) {
+      logger.error('error', err);
+    });
+
+    process.on('SIGINT', function() {
+        consumer.close(true, function() {
+          process.exit();
+      });
+    });
   }
 
   close(){
+    logger.warn("Stopped kafka consumer");
     this.consumer.close();
   }
 }

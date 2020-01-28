@@ -8,7 +8,7 @@ const Consumer = kafka.Consumer;
 const kafkaHost = config.get("Kafka.host");
 const POINT_CLOUD_TOPIC = "point_cloud_topic";
 const KAFKA_POINT_CLOUD_TOPIC = "robot.sensors.pointcloud";
-Logger.info("Creating Kafka Consumer (Point cloud): ");
+Logger.info("Creating Kafka Consumer (Point cloud): ", kafkaHost);
 const client = new kafka.KafkaClient({kafkaHost});
 
 const consumer = new Consumer(

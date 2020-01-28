@@ -93,7 +93,11 @@ class ObservationGenerator():
         """
         for env in self.env.values():
             self.odom_buffer.tick()
-            message, _ = self.odom_buffer.get_last_message(env.robot.id)
+            try:
+                message, _ = self.odom_buffer.get_last_message(env.robot.id)
+            except ValueError as err:
+                logging.error(err)
+                continue
             pose = message["pose"]["pose"]
             position = [
                 pose['position']['x'],
@@ -145,12 +149,7 @@ class ObservationGenerator():
         """
         while True:
             started = time.time()
-            try:
-                self._sync_simulator()
-            except ValueError as err:
-                logging.error(err)
-                time.sleep(1)
-                continue
+            self._sync_simulator()
             for env in self.env.values():
                 observation = env.observe()
                 #time_passed = time.time() - started

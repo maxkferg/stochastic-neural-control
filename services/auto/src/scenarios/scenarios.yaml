@@ -2,7 +2,7 @@ lab:
   timestep: 0.1
   reset_on_target: False
   default_start: [0,0]
-  default_target: [0,1]
+  default_target: [-1,1]
   building_id: 5dc3dee819dfb1717a23fad9
 
 y2e2:

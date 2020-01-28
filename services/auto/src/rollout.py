@@ -63,14 +63,13 @@ python rollout.py --steps 1000 \
 ENVIRONMENT = "MultiRobot-v0"
 RESET_ON_TARGET = True
 DEFAULT_TIMESTEP = 0.1
-FRAME_MULTIPLIER = 1
 FRAME_MULTIPLIER = 5
 EVAL_TIMESTEP = DEFAULT_TIMESTEP/FRAME_MULTIPLIER
 RENDER_WIDTH = 1028
 RENDER_HEIGHT = 720
 
 timestamp = datetime.datetime.now().strftime("%I-%M-%S %p")
-filename = '../videos/video %s.mov'%timestamp
+filename = '../videos/video-%s.mov'%timestamp
 
 #video_FourCC = -1#cv2.VideoWriter_fourcc(*"mp4v")
 video_FourCC = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
@@ -88,6 +87,8 @@ SCENARIO.update({
     'headless': False,
     'creation_delay': 0,
     'reset_on_target': False,
+    'timestep': EVAL_TIMESTEP,
+    'base_timestep': EVAL_TIMESTEP
 })
 
 

@@ -17,7 +17,7 @@ logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:
 class KafkaBuffer():
     """
     Keep track of the last message in a Kafka stream
-    Only trackes messages for @robot_ids
+    Only tracks messages for @robot_ids
     """
     def __init__(self, topic, robot_ids, kafka_host, kafka_group_name):
         self.topic = topic
@@ -30,6 +30,7 @@ class KafkaBuffer():
         # Seek to the end of the kafka stream
         self.consumer.poll()
         self.consumer.seek_to_end()
+
 
     def get_last_message(self, robot_id):
         """

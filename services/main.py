@@ -100,15 +100,23 @@ control_parser.add_argument('--config', type=str, default="prod", help='API Conf
 control_parser.add_argument('--render', action="store_true", default=False, help='Display the environment')
 
 
+with open("auto/src/scenarios/scenarios.yaml") as stream:
+    scenarios = yaml.safe_load(stream)
+
+# Choose a scenario to rollout
+SCENARIO = scenarios["lab"]
+
+
 def observe_subcommand(args, api_config):
     """
     Observe Subcommand
     """
     print("Creating Observation generator for ", args.building_id)
     headless = not args.render
+    SCENARIO.update(api_config)
     service = ObservationGenerator(
         args.building_id,
-        api_config,
+        SCENARIO,
         min_timestep=args.min_timestep,
         headless=headless,
         verbosity=args.verbosity)

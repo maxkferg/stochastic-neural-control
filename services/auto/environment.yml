@@ -1,16 +1,21 @@
 name: sim
 channels:
+  - anaconda
   - conda-forge
   - defaults
 dependencies:
   - pip
-  - python
+  - python=3.7
   - numpy
+  - opencv
+  - pandas
   - pillow
   - psutil
   - readline
   - rtree
   - setuptools
+  - tensorflow
+  - tensorboard
   - sqlite
   - tk
   - wheel
@@ -26,10 +31,8 @@ dependencies:
     - gym
     - jupyter
     - kafka-python
-    - keras-applications
     - numpy
     - lz4
-    - opencv-python-headless
     - plotly
     - pybullet
     - pyprind
@@ -41,14 +44,11 @@ dependencies:
     - setproctitle
     - shapely
     - tabulate
-    - tensorboard
-    - tensorflow-gpu
-    - tensorflow-estimator
-    - tensorflow-probability
     - termcolor
+    - tensorflow-probability==0.8.0
     - tqdm
     - transforms3d
     - trimesh
-    - https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-0.8.0.dev6-cp37-cp37m-manylinux1_x86_64.whl
+    - ray
 prefix: /usr/local/miniconda3/envs/sim
 

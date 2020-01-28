@@ -149,7 +149,6 @@ class TopicProxy{
         {
           autoCommit: true,
           groupId: 'robot-topic-proxy',
-          fromOffset: 'latest',
         }
     );
     this.consumer.on('message', function(message){

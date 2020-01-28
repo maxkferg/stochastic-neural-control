@@ -14,6 +14,7 @@ const MAX_UPDATE_INTERVAL = 10 * 1000 // Always update every 10s
 const kafkaHost = config.get("Kafka.host");
 Logger.info("Creating Kafka Consumer (robot IMU): ", kafkaHost);
 const client = new kafka.KafkaClient({ kafkaHost: kafkaHost });
+
 const consumer = new kafka.Consumer(
 	client,
 	[{ topic: 'robot.sensors.imu', partition: 0 }],

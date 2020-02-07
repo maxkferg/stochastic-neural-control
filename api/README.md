@@ -48,17 +48,3 @@ kubectl set image deployment/api-deployment api=digitalpoints/api:production-$TA
 
 ### Future additions
 * Add a simple logger capabale of handling different log levels
-
-### Contribution
-
-* Fork and make pull requests please!
-* Report any bugs and improvements.
-
-### Author
-
-Suroor Wijdan [@suroorwijdan](https://github.com/suroorwijdan)
-
-
-### License
-
-BSD-3-Clause

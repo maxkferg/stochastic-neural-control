@@ -29,7 +29,7 @@ const producer = new kafka.HighLevelProducer(client);
 Logger.info("Creating Kafka Consumer (robot.sensors.map): ", kafkaHost);
 const consumer = new Consumer(
     client,
-    [{ topic: 'robot.sensors.imu', partition: 0 }],
+    [{ topic: 'robot.sensors.map', partition: 0 }],
     { autoCommit: true }
 );
 
@@ -76,7 +76,9 @@ function mapToImage(imagePixels, width, height){
 	var png = new PNG({
 	    width: width,
 	    height: height,
-	    filterType: -1
+	}).parse( imageData, function(error, data)
+	{
+		console.log(error, data)
 	});
 
 	for (var y = 0; y < png.height; y++) {

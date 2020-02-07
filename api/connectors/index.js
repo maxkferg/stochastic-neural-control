@@ -4,7 +4,7 @@ async function start(db){
 	require('./robotPosition');
 	require('./robotImu');
 	require('./pointCloud');
-	//require('./robotMap');
+	require('./robotMap');
 	geometryConnector(db)
 }
 

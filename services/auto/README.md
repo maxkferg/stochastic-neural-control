@@ -1,4 +1,4 @@
-# Autonomous Navigation Service
+# Safe Neural Control
 
 A service for learning autonomous control and applying it to real or simulated robots.
 

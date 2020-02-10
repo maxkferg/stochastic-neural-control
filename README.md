@@ -1,5 +1,18 @@
-# Digital Points
-A real-time geometry server for applications in robotics and building management.
+# Safe Neural Control
+
+This repository contains:
+1) A building simulator for simulating the movement of robots in various building scenarios
+
+2) A web-based editor for creating and viewing navigation scenarios
+
+3) An autonomous mobile robot control algorithm that uses pointcloud data for control [Safe Neural Control](services/auto)
+
+4) Benchmark navigation tasks exposed as [gym environments](services/auto/src/environment)
+
+
+## Building Scenario Editor
+
+The building scenario editor allows navgation scenarios to be created and edited from the web browser. It also helps when managing the movement of real mobile robots in a building. However, this part of the codebase is not strictly required for simulating robot behavior or training navigation algorithms. For training navigation algorithms see the [SNC](services/auto) service.
 
 ![Digital Points UI](docs/screenshot.png)
 
@@ -13,14 +26,14 @@ docker-compose up
 
 Start the API
 ```
-cd ui 
+cd ui
 npm i
 npm start
 ```
 
 Start the UI
 ```
-cd ui 
+cd ui
 npm i
 npm start
 ```

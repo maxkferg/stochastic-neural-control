@@ -40,7 +40,7 @@ class KafkaBuffer():
             raise ValueError(f"No data for robot {robot_id} on {self.topic}")
         lag = time.time() - self.msg_received[robot_id]
         if lag > 10:
-            logging.warn(f"Data for {robot_id} is {lag:i} seconds old")
+            logging.warn(f"Data for {robot_id} is {lag:.2f} seconds old")
         return self.msg_buffer[robot_id], lag
 
 

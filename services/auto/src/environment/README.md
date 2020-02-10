@@ -35,8 +35,6 @@ The stairwell environment uses the same building geometry as the facility enviro
 ## Cafe
 The cafe environment is designed to test the robot navigation in a crowded open space. The cafe geometry is relatively open, but by default the environment contains six mobile robots and 14 randomly placed stationary objects.
 
-![Cafe Scenario](/docs/scenarios/cafe.png)
-
 ## Platform
 In some scenarios a mobile robot must be able to navigate a space with a high probability of falls. The platform environment is a suspended platform with no walls. By default, three mobile robots are placed on the platform. The simulation is terminated immediately if the robot falls off the platform.
 

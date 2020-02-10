@@ -24,7 +24,7 @@ The laboratory environment is a relatively small but crowded indoor environment.
 ## Facility
 This is a very large single-story facility with 16 rooms and long corridors. Rooms are connected to the corridors with doors, all of which are assumed to be open. On average, the target can be reached within about 90 steps.
 
-![Facility Scenario](/docs/scenarios/y2-small.png)
+![Facility Scenario](/docs/scenarios/Y2-small.png)
 
 ## Stairwell
 The stairwell environment uses the same building geometry as the facility environment but concentrates robot movement to a building stairwell. The simulation is terminated immediately if the robot falls down the stairs. The target is randomly placed near the stairwell to increase the difficulty of the navigation task.

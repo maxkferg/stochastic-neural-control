@@ -1,13 +1,13 @@
 # Safe Neural Control
 
 This repository contains:
-1) A building simulator for simulating the movement of robots in various building scenarios
+1) A building simulator for simulating the movement of robots in various building scenarios. [[ui](ui)] [[api server](api)]
 
-2) A web-based editor for creating and viewing navigation scenarios
+2) A web-based editor for creating and viewing navigation scenarios. [[source](ui)]
 
-3) An autonomous mobile robot control algorithm that uses pointcloud data for control [Safe Neural Control](services/auto)
+3) An autonomous mobile robot control algorithm that uses pointcloud data for control. [[Safe Neural Control](services/auto)]
 
-4) Benchmark navigation tasks exposed as [gym environments](services/auto/src/environment)
+4) Benchmark navigation tasks. [[Gym environments](services/auto/src/environment)]
 
 
 ## Building Scenario Editor

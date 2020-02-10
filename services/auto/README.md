@@ -1,8 +1,18 @@
 # Safe Neural Control
 
-A service for learning autonomous control and applying it to real or simulated robots.
+This repository contains:
+1) A building simulator for simulating the movement of robots in various building scenarios. [[ui](/ui)] [[api server](/api)]
+
+2) A web-based editor for creating and viewing navigation scenarios. [[source](ui)]
+
+3) An autonomous mobile robot control algorithm that uses pointcloud data for control.
+
+4) Benchmark navigation tasks. [[Gym environments](/services/auto/src/environment)]
 
 ![Digital Building Model Demo](https://raw.githubusercontent.com/maxkferg/dbm/master/src/assets/results/readme.gif)
+
+
+## Safe Neural Control Service
 
 In training mode:
 - The cluster pulls building geometry from a training building
@@ -19,19 +29,20 @@ In visualization mode:
 - The service subscribes to building geometry and robot position, keeping the model current
 - The service writes trajectories and Q-values to the server
 
+
 # Quick Start
 
 Training
 ```sh
 ray attach --tmux cluster.yaml
-python train.py configs/mapper-apex-td3.yaml
+python train.py configs/seeker-sacq-test.yaml --dev
 ```
 
 Testing
 ```sh
 export API=http://api.digitalpoints.io/graphql
 export KAFKA=http://kafka
-python rollout.py --run APEX_DDPG --env MultiRobot-v0
+python rollout.py --run SACQ --env MultiRobot-v0
 ```
 
 

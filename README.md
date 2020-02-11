@@ -14,7 +14,7 @@ This repository contains:
 
 The building scenario editor allows navgation scenarios to be created and edited from the web browser. It also helps when managing the movement of real mobile robots in a building. However, this part of the codebase is not strictly required for simulating robot behavior or training navigation algorithms. For training navigation algorithms see the [SNC](services/auto) service.
 
-![Digital Points UI](https://raw.githubusercontent.com/maxkferg/digital-points/master/docs/screenshot.png)
+![Digital Points UI](https://raw.githubusercontent.com/maxkferg/safe-neural-control/master/docs/screenshot.png)
 
 ## Quick start
 

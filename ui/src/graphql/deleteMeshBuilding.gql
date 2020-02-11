@@ -1,0 +1,7 @@
+mutation DeleteMesh($id: String!) {
+	mesh(id: $id, deleted: true) {
+	  id
+	  name
+	  deleted
+	}
+}

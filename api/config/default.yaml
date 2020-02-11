@@ -1,0 +1,30 @@
+# Api webserver
+Webserver:
+  port: 8888
+
+# InfluxDB config
+Influx:
+  host: 'localhost'
+  dbName: geometry_db
+
+# Kafka config
+Kafka:
+  host: 'kafka-0.digitalpoints.io:19092'
+
+# Mongo config
+Mongo:
+  host: 'mongodb://localhost:27017/digitalpoints'
+
+# Controllable Robot ID
+Robot:
+  id: '5d745809f5bb087745000001'
+  name: 'robot-496'
+
+# JWT Login secret
+JWT:
+  secret: 'NotSoSecretAfterAll'
+
+# Google
+GOOGLE:
+  PROJECT_ID: 'stanford-projects'
+  ROBOT_MAP_BUCKET: 'digital-points-maps'

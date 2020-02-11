@@ -1,0 +1,15 @@
+# Api webserver
+API:
+  host: 'http://api.digitalpoints.io/graphql'
+  websocket: 'ws://api.digitalpoints.io/graphql'
+  token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZDk3ZWRjMDkzYTcxYzM0MjAwZmJiZjAiLCJlbWFpbCI6Im1heGtmZXJnQGdtYWlsLmNvbSIsImlhdCI6MTU3MDIzODI5N30.ksc52k4DnS0hzv7EDikV_PW_asA5SliSlDJyk_o5b2Q"
+
+# Geometry endpoint
+Geometry:
+  host: 'http://www.digitalpoints.io/'
+
+# Kafka config
+Kafka:
+  host: 'kafka-0.digitalpoints.io:19092'
+
+building_id: '5d984a7c6f1886dacf9c730d'

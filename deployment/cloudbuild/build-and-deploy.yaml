@@ -1,0 +1,139 @@
+# In this directory, run the following command to build this builder.
+# $ gcloud builds submit . --config=cloudbuild.yaml
+
+steps:
+
+######################## UI #########################
+# Pull cached image
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'setup-ui'
+  args: 
+  - 'pull'
+  - 'gcr.io/$PROJECT_ID/digital-points-ui:latest'
+
+# Build
+- name: 'gcr.io/cloud-builders/docker'
+  dir: ui
+  args:
+  - 'build'
+  - '--tag=gcr.io/$PROJECT_ID/digital-points-ui:$BUILD_ID'
+  - '--tag=gcr.io/$PROJECT_ID/digital-points-ui:latest'
+  - '--cache-from=gcr.io/$PROJECT_ID/digital-points-ui:latest'
+  - '--file=Dockerfile'
+  - '.'
+  id: 'build-ui'
+  waitFor: ['setup-ui']
+
+# Push
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/digital-points-ui:$BUILD_ID']
+  id: 'push-ui'
+
+# Push latest tag
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/digital-points-ui:latest']
+  id: 'push-ui-latest'
+
+# Deploy
+- name: 'gcr.io/cloud-builders/kubectl'
+  id: 'deploy-ui'
+  args:
+  - set
+  - image
+  - deployment/ui-deployment
+  - ui=gcr.io/$PROJECT_ID/digital-points-ui:$BUILD_ID
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=us-west2-c'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=digital-building-model'
+
+
+######################## API #########################
+# Pull cached image
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'setup-api'
+  args: 
+  - 'pull'
+  - 'gcr.io/$PROJECT_ID/digital-points-api:latest'
+  waitFor: ['-']
+
+# Build
+- name: 'gcr.io/cloud-builders/docker'
+  dir: api
+  args:
+  - 'build'
+  - '--tag=gcr.io/$PROJECT_ID/digital-points-api:$BUILD_ID'
+  - '--tag=gcr.io/$PROJECT_ID/digital-points-api:latest'
+  - '--cache-from=gcr.io/$PROJECT_ID/digital-points-api:latest'
+  - '--file=Dockerfile'
+  - '.'
+  id: 'build-api'
+  waitFor: ['setup-api']
+
+# Push
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/digital-points-api:$BUILD_ID']
+  id: 'push-api'
+
+# Push latest tag
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/digital-points-api:latest']
+  id: 'push-api-latest'
+
+# Deploy
+- name: 'gcr.io/cloud-builders/kubectl'
+  id: 'deploy-api'
+  args:
+  - set
+  - image
+  - deployment/api-deployment
+  - api=gcr.io/$PROJECT_ID/digital-points-api:$BUILD_ID
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=us-west2-c'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=digital-building-model'
+
+
+######################## SERVICES #########################
+# Build
+- name: 'gcr.io/cloud-builders/docker'
+  dir: services
+  args:
+  - 'build'
+  - '--tag=gcr.io/$PROJECT_ID/digital-points-services:$BUILD_ID'
+  - '--tag=gcr.io/$PROJECT_ID/digital-points-services:latest'
+  - '--cache-from=gcr.io/$PROJECT_ID/digital-points-services'
+  - '.'
+  id: 'build-services'
+  waitFor: ['-']
+
+# Push
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/digital-points-services:$BUILD_ID']
+  id: 'push-services'
+
+# Push latest tag
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/digital-points-services:latest']
+  id: 'push-services-latest'
+
+# Deploy
+#- name: 'gcr.io/cloud-builders/kubectl'
+#  id: 'deploy-services'
+#  args:
+#  - set
+#  - image
+#  - deployment
+#  - service=gcr.io/$PROJECT_ID/digital-points-services:$BUILD_ID
+#  env:
+#  - 'CLOUDSDK_COMPUTE_ZONE=us-west2-c'
+#  - 'CLOUDSDK_CONTAINER_CLUSTER=digital-building-model'
+
+
+images:
+- 'gcr.io/$PROJECT_ID/digital-points-ui:latest'
+- 'gcr.io/$PROJECT_ID/digital-points-ui:$BUILD_ID'
+- 'gcr.io/$PROJECT_ID/digital-points-api:latest'
+- 'gcr.io/$PROJECT_ID/digital-points-api:$BUILD_ID'
+- 'gcr.io/$PROJECT_ID/digital-points-services:latest'
+- 'gcr.io/$PROJECT_ID/digital-points-services:$BUILD_ID'
+
+timeout: '30m'

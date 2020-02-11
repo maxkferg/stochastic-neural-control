@@ -1,0 +1,103 @@
+# In this directory, run the following command to build this builder.
+# $ gcloud builds submit . --config=cloudbuild.yaml
+
+steps:
+
+
+######################## UI #########################
+# Pull cached image
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'setup-ui'
+  args: 
+  - 'pull'
+  - 'gcr.io/$PROJECT_ID/digital-points-ui:latest'
+
+# Build
+- name: 'gcr.io/cloud-builders/docker'
+  dir: ui
+  args:
+  - 'build'
+  - '--tag=gcr.io/$PROJECT_ID/digital-points-ui:$BUILD_ID'
+  - '--tag=gcr.io/$PROJECT_ID/digital-points-ui:latest'
+  - '--cache-from=gcr.io/$PROJECT_ID/digital-points-ui:latest'
+  - '--file=Dockerfile'
+  - '.'
+  id: 'build-ui'
+  waitFor: ['setup-ui']
+
+# Push
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/digital-points-ui:$BUILD_ID']
+  id: 'push-ui'
+
+# Push latest
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/digital-points-ui:latest']
+  id: 'push-ui-latest'
+
+
+######################## API #########################
+# Pull cached image
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'setup-api'
+  args: 
+  - 'pull'
+  - 'gcr.io/$PROJECT_ID/digital-points-api:latest'
+
+# Build
+- name: 'gcr.io/cloud-builders/docker'
+  dir: api
+  args:
+  - 'build'
+  - '--tag=gcr.io/$PROJECT_ID/digital-points-api:$BUILD_ID'
+  - '--tag=gcr.io/$PROJECT_ID/digital-points-api:latest'
+  - '--cache-from=gcr.io/$PROJECT_ID/digital-points-api:latest'
+  - '--file=Dockerfile'
+  - '.'
+  id: 'build-api'
+  waitFor: ['setup-api']
+
+# Push
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/digital-points-api:$BUILD_ID']
+  id: 'push-api'
+
+# Push latest
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/digital-points-api:latest']
+  id: 'push-api-latest'
+
+
+######################## SERVICES #########################
+# Build
+- name: 'gcr.io/cloud-builders/docker'
+  dir: services
+  args:
+  - 'build'
+  - '--tag=gcr.io/$PROJECT_ID/digital-points-services:$BUILD_ID'
+  - '--tag=gcr.io/$PROJECT_ID/digital-points-services:latest'
+  - '--cache-from=gcr.io/$PROJECT_ID/digital-points-services'
+  - '.'
+  id: 'build-services'
+  waitFor: ['-']
+
+# Push
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/digital-points-services:$BUILD_ID']
+  id: 'push-services'
+
+# Push latest
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/digital-points-services:latest']
+  id: 'push-services-latest'
+
+
+images:
+- 'gcr.io/$PROJECT_ID/digital-points-ui:latest'
+- 'gcr.io/$PROJECT_ID/digital-points-ui:$BUILD_ID'
+- 'gcr.io/$PROJECT_ID/digital-points-api:latest'
+- 'gcr.io/$PROJECT_ID/digital-points-api:$BUILD_ID'
+- 'gcr.io/$PROJECT_ID/digital-points-services:latest'
+- 'gcr.io/$PROJECT_ID/digital-points-services:$BUILD_ID'
+
+timeout: '20m'

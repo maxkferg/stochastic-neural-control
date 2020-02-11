@@ -1,0 +1,126 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ray
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ray-head
+  namespace: ray
+spec:
+  ports:
+    - name: redis-primary
+      port: 6379
+      targetPort: 6379
+    - name: redis-shard-0
+      port: 6380
+      targetPort: 6380
+    - name: redis-shard-1
+      port: 6381
+      targetPort: 6381
+    - name: object-manager
+      port: 12345
+      targetPort: 12345
+    - name: node-manager
+      port: 12346
+      targetPort: 12346
+  selector:
+    component: ray-head
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ray-head
+  namespace: ray
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: ray-head
+      type: ray
+  template:
+    metadata:
+      labels:
+        component: ray-head
+        type: ray
+    spec:
+      #affinity:
+      #  podAntiAffinity:
+      #    requiredDuringSchedulingIgnoredDuringExecution:
+      #    - labelSelector:
+      #        matchLabels:
+      #          type: ray
+      #      topologyKey: kubernetes.io/hostname
+      volumes:                          
+        - name: dshm
+          emptyDir:
+            medium: Memory
+      containers:
+        - name: ray-head
+          image: digitalpoints/trainer:gpu
+          imagePullPolicy: Always
+          command: [ "/bin/bash", "-c", "--" ]
+          args:
+            - "ray start --head --object-store-memory=50000000000 --redis-max-memory=20000000000 --redis-port=6379 --redis-shard-ports=6380,6381 --object-manager-port=12345 --node-manager-port=12346 --node-ip-address=$MY_POD_IP && sleep 360000"
+          ports:
+            - containerPort: 6379
+            - containerPort: 6380
+            - containerPort: 6381
+            - containerPort: 12345
+            - containerPort: 12346
+          env:
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP              
+          volumeMounts:                 
+            - mountPath: /dev/shm
+              name: dshm
+          resources:
+            requests:
+              cpu: 12
+            limits:
+              nvidia.com/gpu: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ray-worker
+  namespace: ray
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      component: ray-worker
+      type: ray
+  template:
+    metadata:
+      labels:
+        component: ray-worker
+        type: ray
+    spec:
+      volumes:                          
+        - name: dshm
+          emptyDir:
+            medium: Memory
+      containers:
+        - name: ray-worker
+          image: digitalpoints/trainer:latest
+          imagePullPolicy: Always
+          command: ["/bin/bash", "-c", "--"]
+          args: ["ray start --object-store-memory=50000000000 --redis-max-memory=20000000000 --node-ip-address=$MY_POD_IP --redis-address=$(python -c 'import socket;import sys; sys.stdout.write(socket.gethostbyname(\"ray-head\"));sys.stdout.flush()'):6379 --object-manager-port=12345 --node-manager-port=12346 --block"]
+          ports:
+            - containerPort: 12345
+            - containerPort: 12346
+          env:
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          volumeMounts:                 
+            - mountPath: /dev/shm
+              name: dshm
+          resources:
+            requests:
+              cpu: 48

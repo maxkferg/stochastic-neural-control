@@ -1,0 +1,15 @@
+mutation CreateTrajectory($startPoint: [Float]!, $endPoint: [Float]!) {
+  createTrajectory(
+    startPoint: $startPoint,
+    endPoint: $endPoint,
+  ) {
+    id
+    frame
+    startPoint
+    endPoint
+    points
+    isDeleted
+    isSafe
+    isReady
+  }
+}

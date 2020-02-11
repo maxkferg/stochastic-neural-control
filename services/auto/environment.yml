@@ -1,0 +1,54 @@
+name: sim
+channels:
+  - anaconda
+  - conda-forge
+  - defaults
+dependencies:
+  - pip
+  - python=3.7
+  - numpy
+  - opencv
+  - pandas
+  - pillow
+  - psutil
+  - readline
+  - rtree
+  - setuptools
+  - tensorflow
+  - tensorboard
+  - sqlite
+  - tk
+  - wheel
+  - x264
+  - xz
+  - yaml
+  - zlib
+  - pip:
+    - astar
+    - colored-traceback
+    - graphql-python
+    - graphqlclient
+    - gym
+    - jupyter
+    - kafka-python
+    - numpy
+    - lz4
+    - plotly
+    - pybullet
+    - pyprind
+    - pyyaml
+    - pyquaternion
+    - requests
+    - scikit-image
+    - scipy
+    - setproctitle
+    - shapely
+    - tabulate
+    - termcolor
+    - tensorflow-probability==0.8.0
+    - tqdm
+    - transforms3d
+    - trimesh
+    - ray
+prefix: /usr/local/miniconda3/envs/sim
+

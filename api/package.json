@@ -1,0 +1,45 @@
+{
+  "name": "koa-graphql-boilerplate",
+  "version": "1.0.0",
+  "description": "A geometry API",
+  "main": "app.js",
+  "scripts": {
+    "test": "test",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "koa",
+    "graphql",
+    "nodejs"
+  ],
+  "author": "Max Ferguson",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/storage": "^3.1.0",
+    "@koa/cors": "^3.0.0",
+    "@types/node": "^12.6.8",
+    "apollo-server-koa": "^2.9.0",
+    "async": "^2.6.2",
+    "bcrypt": "^3.0.6",
+    "config": "^3.2.2",
+    "dotenv": "^5.0.1",
+    "google-auth-library": "^5.2.2",
+    "graphql": "^14.2.2",
+    "graphql-iso-date": "^3.6.1",
+    "graphql-subscriptions": "^1.1.0",
+    "influx": "^5.0.7",
+    "js-yaml": "^3.13.1",
+    "jsonschema": "^1.2.4",
+    "jsonwebtoken": "^8.2.0",
+    "kafka-node": "^4.1.1",
+    "koa": "^2.7.0",
+    "koa-graphql": "^0.8.0",
+    "koa-jwt": "^3.3.0",
+    "koa-router": "^7.4.0",
+    "mongoose": "^5.6.7",
+    "objectid": "^3.2.1",
+    "pino": "^5.13.1",
+    "pino-pretty": "^3.2.0",
+    "quaternion-to-euler": "^0.5.0"
+  }
+}

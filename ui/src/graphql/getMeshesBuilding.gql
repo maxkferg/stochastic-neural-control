@@ -1,0 +1,25 @@
+query GetMeshesBuilding($buildingId: String!, $type: String) {
+    meshesOfBuilding(buildingId: $buildingId, type: $type, deleted: false) {
+        id,
+        x,
+        y,
+        z,
+        theta,
+        name,
+        width,
+        height,
+        depth,
+        scale,
+        type,
+        building_id,
+        geometry {
+          filetype
+          filename
+          directory
+        }
+        physics {
+          collision
+          stationary
+        }
+    }
+}

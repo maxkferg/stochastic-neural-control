@@ -1,0 +1,8 @@
+mutation MoveRobot($robotId: String!, $linear: Float!, $angular: Float!) {
+  moveRobot(linear: $linear, rotation: $angular, duration: 1500, robotId: $robotId) {
+    actions {
+      linear
+      rotation
+    }
+  }
+}

@@ -1,0 +1,23 @@
+query GetRobot {
+    meshesCurrent(deleted: false, type: "robot") {
+        id
+        name
+        width
+        height
+        depth
+        scale
+        x
+        y
+        z
+        theta
+        geometry {
+          filetype
+          filename
+          directory
+        }
+        physics {
+          collision
+          stationary
+        }
+    }
+}

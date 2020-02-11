@@ -1,0 +1,16 @@
+ingress:
+  enabled: true
+  hosts:
+    - "grafana.digitalpoints.io"
+
+persistence:
+  enabled: true
+  storageClassName: "standard"
+  size: 10Gi
+
+service:
+  type: LoadBalancer
+  externalPort: 80
+
+adminUser: admin
+adminPassword: password

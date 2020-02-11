@@ -1,0 +1,7 @@
+*.pyc
+.DS_Store
+volumes
+zk-single-kafka-single
+services/maps/tmp/
+services/simulator/tmp/
+services/auto/videos/

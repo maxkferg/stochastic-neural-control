@@ -1,0 +1,46 @@
+lab:
+  timestep: 0.1
+  reset_on_target: False
+  default_start: [0,0]
+  default_target: [-1,1]
+  building_id: 5dc3dee819dfb1717a23fad9
+
+lab-turtlebot:
+  timestep: 0.1
+  reset_on_target: False
+  default_start: [-1,0]
+  default_target: [-1,1]
+  scale_throttle: 0.3
+  scale_steering: 0.3
+  building_id: 5dc3dee819dfb1717a23fad9
+  checkpoint: "auto/checkpoints/bottleneck/checkpoint_6300/checkpoint-6300"
+
+
+y2e2:
+  timestep: 0.1
+  reset_on_target: False
+  start_reference: [0,0]
+  building_id: 5dc3fec814921a6e03cff7e8
+
+platform:
+  timestep: 0.1
+  reset_on_target: False
+  start_reference: [0,0]
+  building_id: "5dd481e6e725ce37174a2f94"
+  checkpoint: "../checkpoints/SACQ_MultiRobot-v0_1b51c0e3_2019-11-05_09-10-27g6ibizk2/checkpoint_4000/checkpoint-4000"
+
+bottleneck:
+  timestep: 0.1
+  reset_on_target: False
+  target_min_distance: 4
+  target_max_distance: 100
+  default_start: [1,1]
+  default_target: [7,1]
+  building_id: "5dd4b521e725ce079c4c2d5b"
+  checkpoint: "../checkpoints/bottleneck/checkpoint_6300/checkpoint-6300"
+
+room:
+  timestep: 0.1
+  reset_on_target: False
+  start_reference: [0,0]
+  building_id: "5dc3fefb14921a7c18cff7e9"

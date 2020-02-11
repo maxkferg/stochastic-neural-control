@@ -1,0 +1,42 @@
+
+
+namespace: kube-system
+
+## Enable possibility to skip login
+enableSkipLogin: true
+
+## Serve application over HTTP without TLS
+enableInsecureLogin: true
+
+service:
+  type: NodePort
+  externalPort: 80
+
+rbac:
+  clusterAdminRole: true
+
+ingress:
+  ## If true, Kubernetes Dashboard Ingress will be created.
+  enabled: true
+
+  ## Kubernetes Dashboard Ingress annotations
+  ##
+  ## Add custom labels
+  # labels:
+  #   key: value
+  # annotations:
+  #   kubernetes.io/ingress.class: nginx
+  #   kubernetes.io/tls-acme: 'true'
+  ## If you plan to use TLS backend with enableInsecureLogin set to false
+  ## (default), you need to uncomment the below.
+  ## If you use ingress-nginx < 0.21.0
+  #   nginx.ingress.kubernetes.io/secure-backends: "true"
+  ## if you use ingress-nginx >= 0.21.0
+  #   nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+
+  paths:
+    - /
+    - /*
+
+  hosts:
+    - dashboard.digitalpoints.io

@@ -1,0 +1,65 @@
+seeker-apex-td3:
+    run: APEX_DDPG
+    checkpoint_freq: 50
+    stop:
+        episode_reward_mean: 5
+    config:
+        # === Environment ===
+        env: MultiRobot-v0
+        env_config:
+            headless: True
+
+        # === Tricks ====
+        twin_q: True
+        policy_delay: 2
+        smooth_target_policy: True
+        target_noise_clip: 0.5
+        horizon: 100
+
+        # === Model ===
+        actor_hiddens: [256]
+        critic_hiddens: [256]
+        n_step: 1
+        gamma: 0.99
+        env_config: {}
+        model:
+            use_lstm: False
+            custom_model: "mink"
+            custom_options: {}
+
+        # === Exploration ===
+        exploration_should_anneal: True
+        schedule_max_timesteps: 1000000 # 1 million
+        exploration_ou_noise_scale: 0.2
+        tau: 1.0 # 1
+
+        # === Replay buffer ===
+        buffer_size: 400000
+        prioritized_replay: True
+        prioritized_replay_alpha: 0.6
+        prioritized_replay_beta: 0.4
+        prioritized_replay_eps: 0.000001
+        clip_rewards: False
+        optimizer:
+            num_replay_buffer_shards: 8
+
+        # === Optimization ===
+        actor_lr: 0.0001
+        critic_lr: 0.0005
+        use_huber: True
+        huber_threshold: 1.0
+        l2_reg: 0.000001
+        learning_starts: 100000
+        sample_batch_size: 40
+        train_batch_size: 1024
+        min_iter_time_s: 30
+
+        # === Parallelism ===
+        num_gpus: 1
+        num_workers: 8
+        num_cpus_per_worker: 8
+        num_envs_per_worker: 8
+        remote_worker_envs: True
+
+        # === Resources ===
+        num_cpus_for_driver: 12

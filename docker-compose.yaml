@@ -1,0 +1,71 @@
+version: '2.1'
+services:
+  #ui:
+  #  build: ./ui
+  #  image: digitalpoints/ui
+  #  ports:
+  #    - '3000:80'
+  #  depends_on:
+  #    - api
+
+
+  #api:
+  #  build: ./api
+  #  ports:
+  #    - '8888:8888'
+  #  links:
+  #    - mongo
+  #    - influxdb
+  #  environment:
+  #    - JWT_SECRET=docker
+  #    - INFLUX_HOST=influxdb
+  #    - MONGO_HOST=mongodb://mongo:27017
+  #    - KAFKA_HOST=kafka-0.digitalpoints.io:19092
+
+  influxdb:
+    image: influxdb:latest
+    ports:
+      - '8086:8086'
+    volumes:
+      - influxdb-storage:/var/lib/influxdb
+    environment:
+      - INFLUXDB_DB=db0
+      - INFLUXDB_ADMIN_USER=${INFLUXDB_USERNAME}
+      - INFLUXDB_ADMIN_PASSWORD=${INFLUXDB_PASSWORD}
+
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "4000:3000"
+    env_file:
+      - 'env.grafana'
+    links:
+      - influxdb
+    volumes:
+      # Data persistency
+      # sudo mkdir -p /srv/docker/grafana/data; chown 472:472 /srv/docker/grafana/data
+      - ./volumes/grafana/data:/var/lib/grafana
+
+
+  mongo:
+    image: mongo
+    ports:
+    - "27017:27017"
+  #  volumes:
+  #    # Data persistency
+  #    - ./volumes/mongo:/data/db
+
+
+  # Run this to start the databases
+  start_dependencies:
+    image: dadarek/wait-for-dependencies
+    depends_on:
+    - mongo
+    - influxdb
+    command: influxdb:8086 mongo:27017
+
+
+volumes:
+  influxdb-storage:

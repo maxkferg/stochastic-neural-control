@@ -1,0 +1,24 @@
+query GetMeshesById($id: String!) {
+    mesh(id: $id) {
+        id,
+        x,
+        y,
+        z,
+        theta,
+        name,
+        width,
+        height,
+        depth,
+        scale,
+        type,
+        geometry {
+          filetype
+          filename
+          directory
+        }
+        physics {
+          collision
+          stationary
+        }
+    }
+}

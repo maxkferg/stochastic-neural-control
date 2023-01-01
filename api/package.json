@@ -21,7 +21,7 @@
     "apollo-server-koa": "^2.9.0",
     "async": "^2.6.2",
     "bcrypt": "^3.0.6",
-    "config": "^3.2.2",
+    "config": "^3.3.8",
     "dotenv": "^5.0.1",
     "google-auth-library": "^5.2.2",
     "graphql": "^14.2.2",
